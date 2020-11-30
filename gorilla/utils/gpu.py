@@ -12,7 +12,7 @@ import torch
 import numpy as np
 from gpustat import GPUStatCollection
 
-from .misc import convert_list_str
+from ..core import convert_list_str
 
 # init
 pynvml.nvmlInit()

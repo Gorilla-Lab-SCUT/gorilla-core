@@ -6,8 +6,6 @@ import time
 import numpy as np
 import torch
 
-from gorilla.parallel import DataContainer
-
 def check(*args, **kwargs):
     """
     Usage:
@@ -54,11 +52,7 @@ def check(*args, **kwargs):
         elif isinstance(arg, torch.Tensor):
             print("{}{}: type={} size={} dtype={}".format(" "*ind, kw, strip(type(arg)), arg.size(), arg.dtype))
         elif isinstance(arg, (int, float)):
-            print("{}{}: type={} value={}".format(" "*ind, kw, strip(type(arg)), arg))            
-        # some data type only for gorilla-core
-        elif isinstance(arg, DataContainer):
-            print("{}{}: type={}".format(" "*ind, kw, strip(type(arg))))
-            go("", arg.data, dl, ind+4)
+            print("{}{}: type={} value={}".format(" "*ind, kw, strip(type(arg)), arg))
         else:
             try:
                 print("{}{}: type={} len={}".format(" "*ind, kw, strip(type(arg)), len(arg)))
@@ -82,8 +76,6 @@ def display(name, param):
             param.mean().item(), param.shape))
     elif isinstance(param, str):
         print("{}: {}".format(name, param))
-    elif isinstance(param, DataContainer):
-        print("a DataContainer")
     else:
         raise NotImplementedError("type {}".format(type(param)))
 

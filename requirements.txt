@@ -14,4 +14,3 @@ addict
 opencv-python
 plyfile
 scikit-image
-torch_scatter

@@ -4,9 +4,13 @@ import sys
 from glob import glob
 from setuptools import dist, setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
-
-import torch
-from torch.utils.cpp_extension import CUDAExtension, CppExtension, BuildExtension
+try:
+    import torch
+    from torch.utils.cpp_extension import CUDAExtension, CppExtension, BuildExtension
+    EXT_TYPE = "pytorch"
+except ModuleNotFoundError:
+    from Cython.Distutils import build_ext as BuildExtension
+    print("Skip building ext ops due to the absence of torch.")
 
 
 def get_requirements(filename="requirements.txt"):
@@ -106,7 +110,7 @@ if __name__ == "__main__":
         license="MIT",
         install_requires=get_requirements(),
         packages=find_packages(exclude=["tests"]),
-        cmdclass={"build_ext": BuildExtension},
+        # cmdclass={"build_ext": BuildExtension},
         zip_safe=False
     )
 
