@@ -1,0 +1,17 @@
+numpy
+scipy
+tqdm
+open3d==0.9.0.0
+torch>=1.1.0
+trimesh
+torchvision
+tensorboard
+terminaltables
+gpustat
+pynvml
+pyyaml
+addict
+opencv-python
+plyfile
+scikit-image
+torch_scatter
