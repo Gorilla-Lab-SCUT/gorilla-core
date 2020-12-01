@@ -435,4 +435,18 @@ def _named_modules_with_dup(
         yield from _named_modules_with_dup(module, submodule_prefix)
 
 
+def resume_checkpoint(model, cfg):
+    if not os.path.isfile(cfg.resume):
+        raise ValueError('The file to be resumed is not existed', cfg.resume)
 
+    print("==> loading checkpoints '{}'".format(cfg.resume))
+    state = torch.load(cfg.resume)
+
+    if cfg.method == "DANN":
+        model.G_f.load_state_dict(state["G_f"])
+        model.G_y.load_state_dict(state["G_y"])
+        model.G_d.load_state_dict(state["G_d"])
+    else:
+        raise NotImplementedError("method: {}".format(cfg.method))
+
+    return model
