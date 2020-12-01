@@ -101,7 +101,7 @@ def get_extensions():
 
 if __name__ == "__main__":
     setup(
-        name = "gorilla",
+        name = "gorilla-core",
         version = get_version(),
         author = "Gorilla Authors",
         author_email = "mszhihaoliang@mail.scut.edu.cn",
