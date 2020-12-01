@@ -11,6 +11,7 @@ pynvml
 pyyaml
 yacs
 termcolor
+tabulate
 
 opencv-python
 scikit-image
