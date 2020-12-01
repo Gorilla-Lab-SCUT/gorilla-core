@@ -6,7 +6,11 @@ import torch
 
 from yacs.config import CfgNode
 
-from .lr_scheduler import WarmupMultiStepLR, WarmupCosineLR, WarmupPolyLR
+from .lr_scheduler import (CosineAnnealingLR, CyclicLR, ExponentialLR,
+                           MultiStepLR, OneCycleLR, StepLR, LambdaLR,
+                           WarmupMultiStepLR, WarmupCosineLR, WarmupPolyLR)
+from ..core import is_seq_of
+
 
 _GradientClipperInput = Union[torch.Tensor, Iterable[torch.Tensor]]
 _GradientClipper = Callable[[_GradientClipperInput], None]
@@ -215,10 +219,9 @@ def get_default_optimizer_params(
 
     return params
 
-
 # TODO: fix this builder function
 def build_lr_scheduler(
-    cfg: CfgNode, optimizer: torch.optim.Optimizer, lr_scheduler_name: str=None
+    cfg: CfgNode, optimizer: torch.optim.Optimizer, lr_scheduler_name: str=None, lambda_func=None
 ) -> torch.optim.lr_scheduler._LRScheduler:
     r"""
     Build a LR scheduler from config.
@@ -227,14 +230,49 @@ def build_lr_scheduler(
         name = cfg.LR_SCHEDULER_NAME
     else:
         name = lr_scheduler_name
-    if name == "WarmupMultiStepLR":
-        return WarmupMultiStepLR(
+    if name == "LambdaLR":
+        assert isinstance(lambda_func, Callable) or \
+            is_seq_of(lambda_func, Callable), "lambda_func is invalid"
+        assert lambda_func is not None
+        return LambdaLR(
             optimizer,
-            cfg.STEPS,
-            cfg.GAMMA,
-            warmup_factor=cfg.WARMUP_FACTOR,
-            warmup_iters=cfg.WARMUP_ITERS,
-            warmup_method=cfg.WARMUP_METHOD,
+            lambda_func
+        )
+    elif name == "StepLR":
+        return StepLR(
+            optimizer,
+            cfg.STEP_SIZE,
+            cfg.GAMMA
+        )
+    elif name == "MultiStepLR":
+        return MultiStepLR(
+            optimizer,
+            cfg.MILESTONES,
+            cfg.GAMMA
+        )
+    elif name == "CosineAnnealingLR":
+        return CosineAnnealingLR(
+            optimizer,
+            cfg.T_MAX,
+            cfg.ETA_MIN
+        )
+    elif name == "CyclicLR":
+        return CyclicLR(
+            optimizer,
+            cfg.BASE_LR,
+            cfg.MAX_LR,
+            step_size_up=cfg.STEP_SIZE_UP,
+            gamma=cfg.GAMMA
+        )
+    elif name == "OneCycleLR": # TODO: complete
+        return OneCycleLR(
+            optimizer,
+            cfg.MAX_LR
+        )
+    elif name == "ExponentialLR":
+        return ExponentialLR(
+            optimizer,
+            cfg.GAMMA
         )
     elif name == "WarmupMultiStepLR":
         return WarmupMultiStepLR(
