@@ -21,4 +21,7 @@ from .debug import (check, display, set_seed, check_rand_state, myTimer)
 from .checkpoint import (_load_checkpoint, load_checkpoint, load_state_dict, load_url_dist,
                          resume, save_checkpoint, weights_to_cpu, get_state_dict, is_module_wrapper)
 
+from .io import (BaseFileHandler, JsonHandler, PickleHandler, YamlHandler, TxtHandler,
+                 dump, load, register_handler, dict_from_file, list_from_file)
+
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
