@@ -10,13 +10,16 @@ import sys
 import tempfile
 import warnings
 import inspect
+import typing
+from collections import defaultdict
 
-from urllib.request import urlopen
-from urllib.parse import urlparse
-from tqdm import tqdm
+import tabulate
 import torch
 import torch.nn as nn
 import numpy as np
+from urllib.request import urlopen
+from urllib.parse import urlparse
+from tqdm import tqdm
 
 from .debug import display
 
@@ -45,6 +48,7 @@ def _get_torch_home():
         os.getenv(ENV_TORCH_HOME,
                   os.path.join(os.getenv(ENV_XDG_CACHE_HOME, DEFAULT_CACHE_DIR), 'torch')))
     return torch_home
+
 
 def load_state_dict_from_url(url, model_dir=None, map_location=None, progress=True):
     r"""Loads the Torch serialized object at the given URL.
@@ -97,6 +101,7 @@ def load_state_dict_from_url(url, model_dir=None, map_location=None, progress=Tr
         _download_url_to_file(url, cached_file, hash_prefix, progress=progress)
     return torch.load(cached_file, map_location=map_location)
 
+
 def _download_url_to_file(url, dst, hash_prefix, progress):
     file_size = None
     u = urlopen(url)
@@ -139,6 +144,7 @@ def _download_url_to_file(url, dst, hash_prefix, progress):
         f.close()
         if os.path.exists(f.name):
             os.remove(f.name)
+
 
 def check_model(input_size, model, layer_wise=False, keep_hook=False):
     r"""Use an all-one input tensor to flow through the entire network, to check
@@ -287,6 +293,7 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
     print("Check done.")
     # return summary
 
+
 def check_params(model1, model2="", key=".", detailed=False):
     """
     Single model version (model2 has passed nothing):
@@ -333,6 +340,7 @@ def check_params(model1, model2="", key=".", detailed=False):
 
         except StopIteration:
             m2_next = False
+
 
 def check_grad(model1, model2=""):
     """
@@ -399,6 +407,7 @@ def check_grad(model1, model2=""):
             # print("stop2")
             m2_next = False
 
+
 def check_optimizer(optimizer):
     r"""Check state of optimizer for reproduce other's work.
     Usage:
@@ -418,6 +427,7 @@ def check_optimizer(optimizer):
         for num in param_group["params"]:
             for key in keys:
                 display("{} of layer {}".format(key, num), state[num][key])
+
 
 def register_hook(model,
                   trigger="backward",
@@ -596,4 +606,111 @@ def register_hook(model,
     model.apply(_register_hook)
 
     return hooks
+
+
+def parameter_count(model: nn.Module) -> typing.DefaultDict[str, int]:
+    """
+    Count parameters of a model and its submodules.
+    Args:
+        model: a torch module
+    Returns:
+        dict (str-> int): the key is either a parameter name or a module name.
+        The value is the number of elements in the parameter, or in all
+        parameters of the module. The key "" corresponds to the total
+        number of parameters of the model.
+    """
+    r = defaultdict(int)
+    for name, prm in model.named_parameters():
+        size = prm.numel()
+        name = name.split(".")
+        for k in range(0, len(name) + 1):
+            prefix = ".".join(name[:k])
+            r[prefix] += size
+    return r
+
+
+def parameter_count_table(model: nn.Module, max_depth: int = 3) -> str:
+    """
+    Format the parameter count of the model (and its submodules or parameters)
+    in a nice table. It looks like this:
+    ::
+        | name                            | #elements or shape   |
+        |:--------------------------------|:---------------------|
+        | model                           | 37.9M                |
+        |  backbone                       |  31.5M               |
+        |   backbone.fpn_lateral3         |   0.1M               |
+        |    backbone.fpn_lateral3.weight |    (256, 512, 1, 1)  |
+        |    backbone.fpn_lateral3.bias   |    (256,)            |
+        |   backbone.fpn_output3          |   0.6M               |
+        |    backbone.fpn_output3.weight  |    (256, 256, 3, 3)  |
+        |    backbone.fpn_output3.bias    |    (256,)            |
+        |   backbone.fpn_lateral4         |   0.3M               |
+        |    backbone.fpn_lateral4.weight |    (256, 1024, 1, 1) |
+        |    backbone.fpn_lateral4.bias   |    (256,)            |
+        |   backbone.fpn_output4          |   0.6M               |
+        |    backbone.fpn_output4.weight  |    (256, 256, 3, 3)  |
+        |    backbone.fpn_output4.bias    |    (256,)            |
+        |   backbone.fpn_lateral5         |   0.5M               |
+        |    backbone.fpn_lateral5.weight |    (256, 2048, 1, 1) |
+        |    backbone.fpn_lateral5.bias   |    (256,)            |
+        |   backbone.fpn_output5          |   0.6M               |
+        |    backbone.fpn_output5.weight  |    (256, 256, 3, 3)  |
+        |    backbone.fpn_output5.bias    |    (256,)            |
+        |   backbone.top_block            |   5.3M               |
+        |    backbone.top_block.p6        |    4.7M              |
+        |    backbone.top_block.p7        |    0.6M              |
+        |   backbone.bottom_up            |   23.5M              |
+        |    backbone.bottom_up.stem      |    9.4K              |
+        |    backbone.bottom_up.res2      |    0.2M              |
+        |    backbone.bottom_up.res3      |    1.2M              |
+        |    backbone.bottom_up.res4      |    7.1M              |
+        |    backbone.bottom_up.res5      |    14.9M             |
+        |    ......                       |    .....             |
+    Args:
+        model: a torch module
+        max_depth (int): maximum depth to recursively print submodules or
+            parameters
+    Returns:
+        str: the table to be printed
+    """
+    count: typing.DefaultDict[str, int] = parameter_count(model)
+    # pyre-fixme[24]: Generic type `tuple` expects at least 1 type parameter.
+    # pyre-fixme[24]: Generic type `tuple` expects at least 1 type parameter.
+    param_shape: typing.Dict[str, typing.Tuple] = {
+        k: tuple(v.shape) for k, v in model.named_parameters()
+    }
+
+    # pyre-fixme[24]: Generic type `tuple` expects at least 1 type parameter.
+    # pyre-fixme[24]: Generic type `tuple` expects at least 1 type parameter.
+    table: typing.List[typing.Tuple] = []
+
+    def format_size(x: int) -> str:
+        if x > 1e5:
+            return "{:.1f}M".format(x / 1e6)
+        if x > 1e2:
+            return "{:.1f}K".format(x / 1e3)
+        return str(x)
+
+    def fill(lvl: int, prefix: str) -> None:
+        if lvl >= max_depth:
+            return
+        for name, v in count.items():
+            if name.count(".") == lvl and name.startswith(prefix):
+                indent = " " * (lvl + 1)
+                if name in param_shape:
+                    table.append((indent + name, indent + str(param_shape[name])))
+                else:
+                    table.append((indent + name, indent + format_size(v)))
+                    fill(lvl + 1, name + ".")
+
+    table.append(("model", format_size(count.pop(""))))
+    fill(0, "")
+
+    old_ws = tabulate.PRESERVE_WHITESPACE
+    tabulate.PRESERVE_WHITESPACE = True
+    tab = tabulate.tabulate(
+        table, headers=["name", "#elements or shape"], tablefmt="pipe"
+    )
+    tabulate.PRESERVE_WHITESPACE = old_ws
+    return tab
 

@@ -1,7 +1,7 @@
 numpy
 scipy
 tqdm
-open3d==0.9.0.0
+open3d==0.8.0.0
 torch>=1.1.0
 torchvision
 tensorboard
@@ -11,6 +11,7 @@ pynvml
 pyyaml
 yacs
 termcolor
+tabulate
 
 opencv-python
 scikit-image
