@@ -9,4 +9,6 @@ from .misc import (concat_list, convert_list, convert_list_str, convert_list_int
 
 from .env import set_random_seed
 
+from .collect_env import collect_env_info
+
 __all__ = [k for k in globals().keys() if not k.startswith("_")]

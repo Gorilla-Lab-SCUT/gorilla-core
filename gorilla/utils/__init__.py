@@ -24,4 +24,6 @@ from .checkpoint import (_load_checkpoint, load_checkpoint, load_state_dict, loa
 from .io import (BaseFileHandler, JsonHandler, PickleHandler, YamlHandler, TxtHandler,
                  dump, load, register_handler, dict_from_file, list_from_file)
 
+from .memory import retry_if_cuda_oom
+
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
