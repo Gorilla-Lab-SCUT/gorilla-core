@@ -5,6 +5,8 @@ import random
 import torch
 import numpy as np
 
+from .dist import get_dist_info
+
 def set_random_seed(seed, deterministic=False, use_rank_shift=False):
     r"""Set random seed.
     Args:
@@ -17,7 +19,7 @@ def set_random_seed(seed, deterministic=False, use_rank_shift=False):
             have different random seed in different threads. Default: False.
     """
     if use_rank_shift:
-        rank, _ = mmcv.runner.get_dist_info()
+        rank, _ = get_dist_info()
         seed += rank
     random.seed(seed)
     np.random.seed(seed)

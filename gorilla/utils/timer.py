@@ -102,11 +102,11 @@ def check_time(timer_id):
     :Example:
 
     >>> import time
-    >>> import mmcv
+    >>> import gorilla
     >>> for i in range(1, 6):
     >>>     # simulate a code block
     >>>     time.sleep(i)
-    >>>     mmcv.check_time("task1")
+    >>>     gorilla.check_time("task1")
     2.000
     3.000
     4.000
