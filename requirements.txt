@@ -9,7 +9,8 @@ terminaltables
 gpustat
 pynvml
 pyyaml
-yacs
+addict
+yapf
 termcolor
 tabulate
 
