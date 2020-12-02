@@ -360,7 +360,7 @@ def get_state_dict(module, destination=None, prefix="", keep_vars=False):
     return destination
 
 def resume_checkpoint(model, cfg):
-    if not os.path.isfile(cfg.resume):
+    if not osp.isfile(cfg.resume):
         raise ValueError('The file to be resumed is not existed', cfg.resume)
 
     print("==> loading checkpoints '{}'".format(cfg.resume))

@@ -2,6 +2,7 @@
 import importlib
 import numpy as np
 import os
+import os.path as osp
 import re
 import subprocess
 import sys
@@ -33,8 +34,8 @@ def get_env_module():
 
 def detect_compute_compatibility(CUDA_HOME, so_file):
     try:
-        cuobjdump = os.path.join(CUDA_HOME, "bin", "cuobjdump")
-        if os.path.isfile(cuobjdump):
+        cuobjdump = osp.join(CUDA_HOME, "bin", "cuobjdump")
+        if osp.isfile(cuobjdump):
             output = subprocess.check_output(
                 "'{}' --list-elf '{}'".format(cuobjdump, so_file), shell=True
             )
@@ -77,13 +78,13 @@ def collect_env_info():
         import gorilla  # noqa
 
         data.append(
-            ("gorilla", gorilla.__version__ + " @" + os.path.dirname(gorilla.__file__))
+            ("gorilla", gorilla.__version__ + " @" + osp.dirname(gorilla.__file__))
         )
     except ImportError:
         data.append(("gorilla", "failed to import"))
         
     data.append(get_env_module())
-    data.append(("PyTorch", torch_version + " @" + os.path.dirname(torch.__file__)))
+    data.append(("PyTorch", torch_version + " @" + osp.dirname(torch.__file__)))
     data.append(("PyTorch debug build", torch.version.debug))
 
     data.append(("GPU available", has_gpu))
@@ -97,10 +98,10 @@ def collect_env_info():
             data.append(("GPU " + ",".join(devids), name))
 
         if has_rocm:
-            msg = " - invalid!" if not os.path.isdir(ROCM_HOME) else ""
+            msg = " - invalid!" if not osp.isdir(ROCM_HOME) else ""
             data.append(("ROCM_HOME", str(ROCM_HOME) + msg))
         else:
-            msg = " - invalid!" if not os.path.isdir(CUDA_HOME) else ""
+            msg = " - invalid!" if not osp.isdir(CUDA_HOME) else ""
             data.append(("CUDA_HOME", str(CUDA_HOME) + msg))
 
             cuda_arch_list = os.environ.get("TORCH_CUDA_ARCH_LIST", None)
@@ -112,7 +113,7 @@ def collect_env_info():
         data.append(
             (
                 "torchvision",
-                str(torchvision.__version__) + " @" + os.path.dirname(torchvision.__file__),
+                str(torchvision.__version__) + " @" + osp.dirname(torchvision.__file__),
             )
         )
         if has_cuda:

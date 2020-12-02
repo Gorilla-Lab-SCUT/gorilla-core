@@ -1,9 +1,9 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
-from collections import OrderedDict
+import os
+import os.path as osp
 import pprint
 import errno
 import hashlib
-import os
 import shutil
 import re
 import sys
@@ -11,7 +11,7 @@ import tempfile
 import warnings
 import inspect
 import typing
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import tabulate
 import torch
@@ -44,9 +44,9 @@ ENV_XDG_CACHE_HOME = 'XDG_CACHE_HOME'
 DEFAULT_CACHE_DIR = '~/.cache'
 
 def _get_torch_home():
-    torch_home = os.path.expanduser(
+    torch_home = osp.expanduser(
         os.getenv(ENV_TORCH_HOME,
-                  os.path.join(os.getenv(ENV_XDG_CACHE_HOME, DEFAULT_CACHE_DIR), 'torch')))
+                  osp.join(os.getenv(ENV_XDG_CACHE_HOME, DEFAULT_CACHE_DIR), 'torch')))
     return torch_home
 
 
@@ -80,7 +80,7 @@ def load_state_dict_from_url(url, model_dir=None, map_location=None, progress=Tr
 
     if model_dir is None:
         torch_home = _get_torch_home()
-        model_dir = os.path.join(torch_home, 'checkpoints')
+        model_dir = osp.join(torch_home, 'checkpoints')
 
     try:
         os.makedirs(model_dir)
@@ -93,9 +93,9 @@ def load_state_dict_from_url(url, model_dir=None, map_location=None, progress=Tr
             raise
 
     parts = urlparse(url)
-    filename = os.path.basename(parts.path)
-    cached_file = os.path.join(model_dir, filename)
-    if not os.path.exists(cached_file):
+    filename = osp.basename(parts.path)
+    cached_file = osp.join(model_dir, filename)
+    if not osp.exists(cached_file):
         sys.stderr.write('Downloading: "{}" to {}\n'.format(url, cached_file))
         hash_prefix = HASH_REGEX.search(filename).group(1)
         _download_url_to_file(url, cached_file, hash_prefix, progress=progress)
@@ -116,7 +116,7 @@ def _download_url_to_file(url, dst, hash_prefix, progress):
     # We deliberately save it in a temp file and move it after
     # download is complete. This prevents a local working checkpoint
     # being overriden by a broken download.
-    dst_dir = os.path.dirname(dst)
+    dst_dir = osp.dirname(dst)
     f = tempfile.NamedTemporaryFile(delete=False, dir=dst_dir)
 
     try:
@@ -142,7 +142,7 @@ def _download_url_to_file(url, dst, hash_prefix, progress):
         shutil.move(f.name, dst)
     finally:
         f.close()
-        if os.path.exists(f.name):
+        if osp.exists(f.name):
             os.remove(f.name)
 
 

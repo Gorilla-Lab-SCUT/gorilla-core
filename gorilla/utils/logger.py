@@ -1,4 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+import os.path as osp
 import atexit
 import functools
 import logging
@@ -81,10 +82,10 @@ def setup_logger(
         if output.endswith(".txt") or output.endswith(".log"):
             filename = output
         else:
-            filename = os.path.join(output, "log.txt")
+            filename = osp.join(output, "log.txt")
         if distributed_rank > 0:
             filename = filename + ".rank{}".format(distributed_rank)
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        os.makedirs(osp.dirname(filename), exist_ok=True)
 
         fh = logging.StreamHandler(_cached_log_stream(filename))
         fh.setLevel(logging.DEBUG)
@@ -119,7 +120,7 @@ def _find_caller():
     frame = sys._getframe(2)
     while frame:
         code = frame.f_code
-        if os.path.join("utils", "logger.") not in code.co_filename:
+        if osp.join("utils", "logger.") not in code.co_filename:
             mod_name = frame.f_globals["__name__"]
             if mod_name == "__main__":
                 mod_name = "gorilla"
