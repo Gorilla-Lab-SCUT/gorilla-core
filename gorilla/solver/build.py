@@ -102,7 +102,7 @@ def build_lr_scheduler(
             cfg.GAMMA
         )
     elif name == "PolyLR":
-        return WarmupPolyLR(
+        return PolyLR(
             optimizer,
             cfg.MAX_ITER,
             power=cfg.POLY_LR_POWER,

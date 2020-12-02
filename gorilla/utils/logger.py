@@ -9,8 +9,6 @@ from collections import Counter
 from tabulate import tabulate
 from termcolor import colored
 
-from detectron2.utils.file_io import PathManager
-
 
 class _ColorfulFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
@@ -86,7 +84,7 @@ def setup_logger(
             filename = os.path.join(output, "log.txt")
         if distributed_rank > 0:
             filename = filename + ".rank{}".format(distributed_rank)
-        PathManager.mkdirs(os.path.dirname(filename))
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
 
         fh = logging.StreamHandler(_cached_log_stream(filename))
         fh.setLevel(logging.DEBUG)
@@ -100,7 +98,7 @@ def setup_logger(
 # with the same file name can safely write to the same file.
 @functools.lru_cache(maxsize=None)
 def _cached_log_stream(filename):
-    io = PathManager.open(filename, "a")
+    io = open(filename, "a")
     atexit.register(io.close)
     return io
 
