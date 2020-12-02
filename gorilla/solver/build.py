@@ -7,6 +7,7 @@ import torch
 from .lr_scheduler import (CosineAnnealingLR, CyclicLR, ExponentialLR,
                            MultiStepLR, OneCycleLR, StepLR, LambdaLR, PolyLR,
                            WarmupMultiStepLR, WarmupCosineLR, WarmupPolyLR)
+                           
 from ..core import is_seq_of
 
 
@@ -16,124 +17,52 @@ def bulid_solver(model, dataloaders, optimizer, lr_scheduler, cfg):
         return solver_DANN(model, dataloaders, optimizer, lr_scheduler, cfg)
 
 
-def build_optimizer(cfg: CfgNode, model: torch.nn.Module, optimizer_type=None) -> torch.optim.Optimizer:
+def build_optimizer(cfg: [CfgNode, Dict], model: torch.nn.Module, optimizer_type=None) -> torch.optim.Optimizer:
     r"""
     Build an optimizer from config.
     """
-    if optimizer_type is None:
-        optimizer_type = cfg.OPTIMIZER_TYPE
+    if optimizer_type is not None:
+        if isinstance(cfg, CfgNode):
+            cfg.optimizer_type = optimizer_type
+            cfg = dict(cfg)
+        elif isinstance(cfg, Dict):
+            cfg["optimizer_type"] = optimizer_type
+        else:
+            raise TypeError("cfg must be CfgNode or Dict, but got {}".format(type(cfg)))
 
-    if optimizer_type == "SGD":
-        return torch.optim.SGD(
-            model.parameters(),
-            cfg.BASE_LR,
-            momentum=cfg.MOMENTUM,
-            nesterov=cfg.NESTEROV
-        )
-    elif optimizer_type == "Adam":
-        return torch.optim.Adam(
-            model.parameters(),
-            cfg.BASE_LR,
-            weight_decay=cfg.WEIGHT_DECAY,
-            amsgrad=cfg.AMSGRAD)
-    elif optimizer_type == "AdamW":
-        return torch.optim.Adam(
-            model.parameters(),
-            cfg.BASE_LR,
-            betas=cfg.BETAS,
-            weight_decay=cfg.WEIGHT_DECAY,
-            amsgrad=cfg.AMSGRAD)
-    else:
-        raise NotImplementedError("no optimizer type {}".format(optimizer_type))
+    optimizer_type = cfg.pop("optimizer_type")
+
+    cfg["params"] = filter(lambda p: p.requires_grad, model.parameters())
+
+    optimizer_caller = getattr(torch.optim, optimizer_type)
+    return optimizer_caller(**cfg)
 
 
 def build_lr_scheduler(
-    cfg: CfgNode, optimizer: torch.optim.Optimizer, lr_scheduler_name: str=None, lambda_func=None
+    cfg: [CfgNode, Dict], optimizer: torch.optim.Optimizer, lr_scheduler_name: str=None, lambda_func=None
 ) -> torch.optim.lr_scheduler._LRScheduler:
     r"""
     Build a LR scheduler from config.
     """
-    if lr_scheduler_name is None:
-        name = cfg.LR_SCHEDULER_NAME
-    else:
-        name = lr_scheduler_name
-    if name == "LambdaLR":
+    if lr_scheduler_name is not None:
+        if isinstance(cfg, CfgNode):
+            cfg.lr_scheduler_name = lr_scheduler_name
+            cfg = dict(cfg)
+        elif isinstance(cfg, Dict):
+            cfg["lr_scheduler_name"] = lr_scheduler_name
+        else:
+            raise TypeError("cfg must be CfgNode or Dict, but got {}".format(type(cfg)))
+    
+    lr_scheduler_name = cfg.pop("lr_scheduler_name")
+    cfg["optimizer"] = optimizer
+
+    # specificial for LambdaLR
+    if lr_scheduler_name == "LambdaLR":
+        assert lambda_func is not None
         assert isinstance(lambda_func, Callable) or \
             is_seq_of(lambda_func, Callable), "lambda_func is invalid"
-        assert lambda_func is not None
-        return LambdaLR(
-            optimizer,
-            lambda_func
-        )
-    elif name == "StepLR":
-        return StepLR(
-            optimizer,
-            cfg.STEP_SIZE,
-            cfg.GAMMA
-        )
-    elif name == "MultiStepLR":
-        return MultiStepLR(
-            optimizer,
-            cfg.MILESTONES,
-            cfg.GAMMA
-        )
-    elif name == "CosineAnnealingLR":
-        return CosineAnnealingLR(
-            optimizer,
-            cfg.T_MAX,
-            cfg.ETA_MIN
-        )
-    elif name == "CyclicLR":
-        return CyclicLR(
-            optimizer,
-            cfg.BASE_LR,
-            cfg.MAX_LR,
-            step_size_up=cfg.STEP_SIZE_UP,
-            gamma=cfg.GAMMA
-        )
-    elif name == "OneCycleLR": # TODO: complete
-        return OneCycleLR(
-            optimizer,
-            cfg.MAX_LR
-        )
-    elif name == "ExponentialLR":
-        return ExponentialLR(
-            optimizer,
-            cfg.GAMMA
-        )
-    elif name == "PolyLR":
-        return PolyLR(
-            optimizer,
-            cfg.MAX_ITER,
-            power=cfg.POLY_LR_POWER,
-            constant_ending=cfg.POLY_LR_CONSTANT_ENDING,
-        )
-    elif name == "WarmupCosineLR":
-        return WarmupCosineLR(
-            optimizer,
-            cfg.MAX_ITER,
-            warmup_factor=cfg.WARMUP_FACTOR,
-            warmup_iters=cfg.WARMUP_ITERS,
-            warmup_method=cfg.WARMUP_METHOD,
-        )
-    elif name == "WarmupPolyLR":
-        return WarmupPolyLR(
-            optimizer,
-            cfg.MAX_ITER,
-            warmup_factor=cfg.WARMUP_FACTOR,
-            warmup_iters=cfg.WARMUP_ITERS,
-            warmup_method=cfg.WARMUP_METHOD,
-            power=cfg.POLY_LR_POWER,
-            constant_ending=cfg.POLY_LR_CONSTANT_ENDING,
-        )
-    elif name == "WarmupMultiStepLR":
-        return WarmupMultiStepLR(
-            optimizer,
-            cfg.STEPS,
-            cfg.GAMMA,
-            warmup_factor=cfg.WARMUP_FACTOR,
-            warmup_iters=cfg.WARMUP_ITERS,
-            warmup_method=cfg.WARMUP_METHOD,
-        )
-    else:
-        raise ValueError("Unknown LR scheduler: {}".format(name))
+        cfg["lr_lambda"] = lambda_func
+    
+    scheduler_caller = globals()[lr_scheduler_name]
+    return scheduler_caller(**cfg)
+
