@@ -6,8 +6,8 @@ from collections import OrderedDict
 from contextlib import contextmanager
 import torch
 
-from gorilla.utils.comm import get_world_size, is_main_process
-from gorilla.utils.logger import log_every_n_seconds
+from ..core import get_world_size, is_main_process
+# from ..utils.logger import log_every_n_seconds # TODO: replace
 
 
 class DatasetEvaluator:
@@ -149,13 +149,13 @@ def inference_on_dataset(model, data_loader, evaluator):
             if idx >= num_warmup * 2 or seconds_per_img > 5:
                 total_seconds_per_img = (time.perf_counter() - start_time) / iters_after_start
                 eta = datetime.timedelta(seconds=int(total_seconds_per_img * (total - idx - 1)))
-                log_every_n_seconds(
-                    logging.INFO,
-                    "Inference done {}/{}. {:.4f} s / img. ETA={}".format(
-                        idx + 1, total, seconds_per_img, str(eta)
-                    ),
-                    n=5,
-                )
+                # log_every_n_seconds(
+                #     logging.INFO,
+                #     "Inference done {}/{}. {:.4f} s / img. ETA={}".format(
+                #         idx + 1, total, seconds_per_img, str(eta)
+                #     ),
+                #     n=5,
+                # )
 
     # Measure the time only for this worker (before the synchronization barrier)
     total_time = time.perf_counter() - start_time
