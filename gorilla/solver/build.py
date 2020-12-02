@@ -5,14 +5,13 @@ from ..config import Config
 import torch
 
 from . import lr_scheduler
-                           
+from .base_solver import BaseSolver
+
 from ..core import is_seq_of
 
 
 def bulid_solver(model, dataloaders, optimizer, lr_scheduler, cfg):
-    if cfg.method == "DANN":
-        from .solvers.solver_dann import solver_DANN
-        return solver_DANN(model, dataloaders, optimizer, lr_scheduler, cfg)
+    return BaseSolver(model, dataloaders, optimizer, lr_scheduler, cfg)
 
 
 def build_optimizer(cfg: [Config, Dict], model: torch.nn.Module, optimizer_type=None) -> torch.optim.Optimizer:

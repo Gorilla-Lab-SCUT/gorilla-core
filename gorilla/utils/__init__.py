@@ -16,7 +16,7 @@ from .timer import (Timer, check_time)
 
 from .model import (check_model, check_grad, check_params, check_optimizer, register_hook, parameter_count, parameter_count_table)
 
-from .debug import (check, display, set_seed, check_rand_state, myTimer)
+from .debug import (check, display, check_rand_state, myTimer)
 
 from .checkpoint import (_load_checkpoint, load_checkpoint, load_state_dict, load_url_dist,
                          resume, save_checkpoint, weights_to_cpu, get_state_dict, is_module_wrapper)

@@ -75,10 +75,10 @@ class Timer:
         self._t_last = time()
         return self._t_last - self._t_start
 
-    def since_last_check(self):
+    def since_last(self):
         """Time since the last checking.
 
-        Either :func:`since_start` or :func:`since_last_check` is a checking
+        Either :func:`since_start` or :func:`since_last ` is a checking
         operation.
 
         Returns (float): Time in seconds.
