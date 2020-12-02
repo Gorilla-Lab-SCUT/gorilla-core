@@ -1,11 +1,8 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Gorilla-Lab. All rights reserved.
 
-from .launch import *
-# from .train_loop import *
-# Copyright (c) Facebook, Inc. and its affiliates.
 from .build import build_lr_scheduler, build_optimizer, bulid_solver
-from .lr_scheduler import (WarmupCosineLR, WarmupMultiStepLR,
-                           CosineAnnealingLR, CyclicLR, ExponentialLR,
+from .lr_scheduler import (WarmupCosineLR, WarmupMultiStepLR, WarmupPolyLR,
+                           CosineAnnealingLR, CyclicLR, ExponentialLR, PolyLR,
                            MultiStepLR, OneCycleLR, StepLR, LambdaLR)
 
 

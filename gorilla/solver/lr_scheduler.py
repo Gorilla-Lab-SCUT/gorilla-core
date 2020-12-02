@@ -16,6 +16,45 @@ import torch
 from torch.optim.lr_scheduler import (CosineAnnealingLR, CyclicLR, ExponentialLR,
                                       MultiStepLR, OneCycleLR, StepLR, LambdaLR)
 
+
+class PolyLR(torch.optim.lr_scheduler._LRScheduler):
+    """
+    Poly learning rate schedule used to train DeepLab.
+    Paper: DeepLab: Semantic Image Segmentation with Deep Convolutional Nets,
+        Atrous Convolution, and Fully Connected CRFs.
+    Reference: https://github.com/tensorflow/models/blob/21b73d22f3ed05b650e85ac50849408dd36de32e/research/deeplab/utils/train_utils.py#L337  # noqa
+    """
+
+    def __init__(
+        self,
+        optimizer: torch.optim.Optimizer,
+        max_iters: int,
+        last_epoch: int = -1,
+        power: float = 0.9,
+        constant_ending: float = 0.0,
+    ):
+        self.max_iters = max_iters
+        self.power = power
+        self.constant_ending = constant_ending
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self) -> List[float]:
+        if self.constant_ending > 0:
+            # Constant ending lr.
+            if (
+                math.pow((1.0 - self.last_epoch / self.max_iters), self.power)
+                < self.constant_ending
+            ):
+                return [base_lr * self.constant_ending for base_lr in self.base_lrs]
+        return [
+            base_lr * math.pow((1.0 - self.last_epoch / self.max_iters), self.power)
+            for base_lr in self.base_lrs
+        ]
+
+    def _compute_values(self) -> List[float]:
+        # The new interface
+        return self.get_lr()
+
 class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(
         self,
@@ -121,7 +160,7 @@ class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
         warmup_factor = _get_warmup_factor_at_iter(
             self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
         )
-        if self.constant_ending > 0 and warmup_factor == 1.0:
+        if self.constant_ending > 0 or warmup_factor == 1.0:
             # Constant ending lr.
             if (
                 math.pow((1.0 - self.last_epoch / self.max_iters), self.power)

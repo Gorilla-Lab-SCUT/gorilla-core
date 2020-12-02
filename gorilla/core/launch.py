@@ -4,7 +4,7 @@ import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
-from gorilla.utils import comm
+from . import comm
 
 __all__ = ["launch"]
 

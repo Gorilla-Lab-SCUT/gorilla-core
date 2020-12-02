@@ -1,9 +1,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Type, Union
+
 from yacs.config import CfgNode
 import torch
 
 from .lr_scheduler import (CosineAnnealingLR, CyclicLR, ExponentialLR,
-                           MultiStepLR, OneCycleLR, StepLR, LambdaLR,
+                           MultiStepLR, OneCycleLR, StepLR, LambdaLR, PolyLR,
                            WarmupMultiStepLR, WarmupCosineLR, WarmupPolyLR)
 from ..core import is_seq_of
 
@@ -99,6 +101,13 @@ def build_lr_scheduler(
             optimizer,
             cfg.GAMMA
         )
+    elif name == "PolyLR":
+        return WarmupPolyLR(
+            optimizer,
+            cfg.MAX_ITER,
+            power=cfg.POLY_LR_POWER,
+            constant_ending=cfg.POLY_LR_CONSTANT_ENDING,
+        )
     elif name == "WarmupCosineLR":
         return WarmupCosineLR(
             optimizer,
@@ -116,6 +125,15 @@ def build_lr_scheduler(
             warmup_method=cfg.WARMUP_METHOD,
             power=cfg.POLY_LR_POWER,
             constant_ending=cfg.POLY_LR_CONSTANT_ENDING,
+        )
+    elif name == "WarmupMultiStepLR":
+        return WarmupMultiStepLR(
+            optimizer,
+            cfg.STEPS,
+            cfg.GAMMA,
+            warmup_factor=cfg.WARMUP_FACTOR,
+            warmup_iters=cfg.WARMUP_ITERS,
+            warmup_method=cfg.WARMUP_METHOD,
         )
     else:
         raise ValueError("Unknown LR scheduler: {}".format(name))
