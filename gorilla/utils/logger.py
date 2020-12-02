@@ -32,10 +32,10 @@ class _ColorfulFormatter(logging.Formatter):
 
 @functools.lru_cache()  # so that calling setup_logger multiple times won't add many handlers
 def setup_logger(
-    output=None, distributed_rank=0, *, color=True, name="detectron2", abbrev_name=None
+    output=None, distributed_rank=0, *, color=True, name="gorilla", abbrev_name=None
 ):
     """
-    Initialize the detectron2 logger and set its verbosity level to "DEBUG".
+    Initialize the gorilla logger and set its verbosity level to "DEBUG".
 
     Args:
         output (str): a file name or a directory to save log. If None, will not save log file.
@@ -44,7 +44,7 @@ def setup_logger(
         name (str): the root module name of this logger
         abbrev_name (str): an abbreviation of the module, to avoid long names in logs.
             Set to "" to not log the root module in logs.
-            By default, will abbreviate "detectron2" to "d2" and leave other
+            By default, will abbreviate "gorilla" to "d2" and leave other
             modules unchanged.
 
     Returns:
@@ -55,7 +55,7 @@ def setup_logger(
     logger.propagate = False
 
     if abbrev_name is None:
-        abbrev_name = "d2" if name == "detectron2" else name
+        abbrev_name = "d2" if name == "gorilla" else name
 
     plain_formatter = logging.Formatter(
         "[%(asctime)s] %(name)s %(levelname)s: %(message)s", datefmt="%m/%d %H:%M:%S"
@@ -122,7 +122,7 @@ def _find_caller():
         if os.path.join("utils", "logger.") not in code.co_filename:
             mod_name = frame.f_globals["__name__"]
             if mod_name == "__main__":
-                mod_name = "detectron2"
+                mod_name = "gorilla"
             return mod_name, (code.co_filename, frame.f_lineno, code.co_name)
         frame = frame.f_back
 
