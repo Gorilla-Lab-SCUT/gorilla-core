@@ -26,7 +26,6 @@ class BaseSolver(ABC):
             self.iters_per_epoch = cfg.iters_per_epoch
         self.do_before_training()
         self.writer = SummaryWriter(log_dir=cfg.log)
-        # self.logger = Logger(os.path.join(cfg.log, "log.txt"))
 
     def do_before_training(self):
         # init data iterators
@@ -81,5 +80,4 @@ class BaseSolver(ABC):
         pass
 
     def quit(self):
-        # note that self.logger don't need to close
         self.writer.close()

@@ -1,12 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Type, Union
 
-from yacs.config import CfgNode
+from ..config import Config
 import torch
 
-from .lr_scheduler import (CosineAnnealingLR, CyclicLR, ExponentialLR,
-                           MultiStepLR, OneCycleLR, StepLR, LambdaLR, PolyLR,
-                           WarmupMultiStepLR, WarmupCosineLR, WarmupPolyLR)
+from . import lr_scheduler
                            
 from ..core import is_seq_of
 
@@ -17,18 +15,12 @@ def bulid_solver(model, dataloaders, optimizer, lr_scheduler, cfg):
         return solver_DANN(model, dataloaders, optimizer, lr_scheduler, cfg)
 
 
-def build_optimizer(cfg: [CfgNode, Dict], model: torch.nn.Module, optimizer_type=None) -> torch.optim.Optimizer:
+def build_optimizer(cfg: [Config, Dict], model: torch.nn.Module, optimizer_type=None) -> torch.optim.Optimizer:
     r"""
     Build an optimizer from config.
     """
     if optimizer_type is not None:
-        if isinstance(cfg, CfgNode):
-            cfg.optimizer_type = optimizer_type
-            cfg = dict(cfg)
-        elif isinstance(cfg, Dict):
-            cfg["optimizer_type"] = optimizer_type
-        else:
-            raise TypeError("cfg must be CfgNode or Dict, but got {}".format(type(cfg)))
+        cfg["optimizer_type"] = optimizer_type
 
     optimizer_type = cfg.pop("optimizer_type")
 
@@ -39,19 +31,13 @@ def build_optimizer(cfg: [CfgNode, Dict], model: torch.nn.Module, optimizer_type
 
 
 def build_lr_scheduler(
-    cfg: [CfgNode, Dict], optimizer: torch.optim.Optimizer, lr_scheduler_name: str=None, lambda_func=None
+    cfg: [Config, Dict], optimizer: torch.optim.Optimizer, lr_scheduler_name: str=None, lambda_func=None
 ) -> torch.optim.lr_scheduler._LRScheduler:
     r"""
     Build a LR scheduler from config.
     """
     if lr_scheduler_name is not None:
-        if isinstance(cfg, CfgNode):
-            cfg.lr_scheduler_name = lr_scheduler_name
-            cfg = dict(cfg)
-        elif isinstance(cfg, Dict):
-            cfg["lr_scheduler_name"] = lr_scheduler_name
-        else:
-            raise TypeError("cfg must be CfgNode or Dict, but got {}".format(type(cfg)))
+        cfg["lr_scheduler_name"] = lr_scheduler_name
     
     lr_scheduler_name = cfg.pop("lr_scheduler_name")
     cfg["optimizer"] = optimizer
@@ -63,6 +49,6 @@ def build_lr_scheduler(
             is_seq_of(lambda_func, Callable), "lambda_func is invalid"
         cfg["lr_lambda"] = lambda_func
     
-    scheduler_caller = globals()[lr_scheduler_name]
+    scheduler_caller = getattr(lr_scheduler, lr_scheduler_name)
     return scheduler_caller(**cfg)
 
