@@ -1,14 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-from .compat import downgrade_config, upgrade_config
 from yacs.config import CfgNode
 from .config import get_cfg, global_cfg, set_global_cfg, configurable
 
-__all__ = [
-    "CfgNode",
-    "get_cfg",
-    "global_cfg",
-    "set_global_cfg",
-    "downgrade_config",
-    "upgrade_config",
-    "configurable",
-]
+__all__ = [k for k in globals().keys() if not k.startswith("_")]

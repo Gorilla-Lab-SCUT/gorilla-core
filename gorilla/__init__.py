@@ -7,4 +7,5 @@ from .fileio import *
 from .nn import *
 from .losses import *
 from .solver import *
+from .config import *
 
