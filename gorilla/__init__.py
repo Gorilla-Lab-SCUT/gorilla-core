@@ -8,4 +8,5 @@ from .nn import *
 from .losses import *
 from .solver import *
 from .config import *
+from .evaluation import *
 

@@ -7,6 +7,9 @@ from .misc import (concat_list, convert_list, convert_list_str, convert_list_int
                    iter_cast, slice_list, concat_list, check_prerequisites,
                    deprecated_api_warning, is_seq_of, is_list_of, is_tuple_of)
 
+from .comm import (get_world_size, get_rank, get_local_rank, get_local_size, is_main_process,
+                   synchronize, gather, all_gather, shared_random_seed, reduce_dict)
+
 from .env import set_random_seed
 
 from .collect_env import collect_env_info

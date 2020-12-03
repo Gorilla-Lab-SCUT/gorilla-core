@@ -20,6 +20,7 @@ else:
                           "the dependencies to use torch.utils.tensorboard "
                           "(applicable to PyTorch 1.1 or higher)")
 
+from .log_buffer import LogBuffer
 
 class BaseSolver(metaclass=ABCMeta):
     r"""Base class of model solver."""
@@ -35,6 +36,7 @@ class BaseSolver(metaclass=ABCMeta):
         self.logger = logger
         self.writer = SummaryWriter(log_dir=cfg.log)
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
+        self.log_buffer = LogBuffer()
         
         # the hooks container (optional)
         self._hooks = []
