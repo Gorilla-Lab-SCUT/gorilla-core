@@ -95,7 +95,7 @@ def collect_env_info():
         for k in range(torch.cuda.device_count()):
             cap = ".".join(
                 (str(x) for x in torch.cuda.get_device_capability(k)))
-            name = torch.cuda.get_device_name(k) + f" (arch={cap})"
+            name = torch.cuda.get_device_name(k) + " (arch={})".format(cap)
             devices[name].append(str(k))
         for name, devids in devices.items():
             data.append(("GPU " + ",".join(devids), name))

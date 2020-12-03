@@ -6,6 +6,7 @@ import platform
 import shutil
 import sys
 import tempfile
+from typing import Optional
 from argparse import Action, ArgumentParser
 from collections import abc
 from importlib import import_module
@@ -30,8 +31,8 @@ class ConfigDict(Dict):
         try:
             value = super(ConfigDict, self).__getattr__(name)
         except KeyError:
-            ex = AttributeError(
-                "`{}` object has no attribute `{}`".format(self.__class__.__name__, name))
+            ex = AttributeError("`{}` object has no attribute `{}`".format(
+                self.__class__.__name__, name))
         except Exception as e:
             ex = e
         else:
@@ -81,7 +82,6 @@ class Config(object):
         "Config [path: /home/gorilla_lab/code/gorilla/configs/test.py]: "
         "{"item1": [1, 2], "item2": {"a": 0}, "item3": True, "item4": "test"}"
     """
-
     @staticmethod
     def _validate_py_syntax(filename):
         with open(filename) as f:
@@ -90,7 +90,8 @@ class Config(object):
             ast.parse(content)
         except SyntaxError as e:
             raise SyntaxError(
-                "There are syntax errors in config file {}: {}".format(filename, e))
+                "There are syntax errors in config file {}: {}".format(
+                    filename, e))
 
     @staticmethod
     def _substitute_predefined_vars(filename, temp_config_name):
@@ -107,11 +108,11 @@ class Config(object):
 
         with open(filename, "r") as f:
             config_file = f.read()
-            
+
         for key, value in support_templates.items():
             regexp = r"\{\{\s*" + str(key) + r"\s*\}\}"
             config_file = re.sub(regexp, value, config_file)
-            
+
         with open(temp_config_name, "w") as tmp_config_file:
             tmp_config_file.write(config_file)
 
@@ -124,8 +125,8 @@ class Config(object):
             raise IOError("Only py/yml/yaml/json type are supported now!")
 
         with tempfile.TemporaryDirectory() as temp_config_dir:
-            temp_config_file = tempfile.NamedTemporaryFile(
-                dir=temp_config_dir, suffix=file_extname)
+            temp_config_file = tempfile.NamedTemporaryFile(dir=temp_config_dir,
+                                                           suffix=file_extname)
 
             temp_config_name = osp.basename(temp_config_file.name)
             # Substitute predefined variables
@@ -148,7 +149,7 @@ class Config(object):
                 }
                 # delete imported module
                 del sys.modules[temp_module_name]
-                
+
             elif filename.endswith((".yml", ".yaml", ".json")):
                 from gorilla.fileio import load
                 cfg_dict = load(temp_config_file.name)
@@ -204,7 +205,8 @@ class Config(object):
                         "{}={} in child config cannot inherit from base because {} "
                         "is a dict in the child config but is of, "
                         "type {} in base config. You may set `{}=True` "
-                        "to ignore the base config".format(k, v, k, type(b[k]), DELETE_KEY))
+                        "to ignore the base config".format(
+                            k, v, k, type(b[k]), DELETE_KEY))
                 b[k] = Config._merge_a_into_b(v, b[k])
             else:
                 b[k] = v
@@ -221,7 +223,7 @@ class Config(object):
 
     @staticmethod
     def auto_argparser(description=None):
-        """Generate argparser from config file automatically (experimental)"""
+        r"""Generate argparser from config file automatically (experimental)"""
         partial_parser = ArgumentParser(description=description)
         partial_parser.add_argument("config", help="config file path")
         cfg_file = partial_parser.parse_known_args()[0].config
@@ -327,7 +329,8 @@ class Config(object):
                 if isinstance(v, dict):
                     v_str = "\n" + _format_dict(v)
                     if use_mapping:
-                        k_str = "'{}'".format(k) if isinstance(k, str) else str(k)
+                        k_str = "'{}'".format(k) if isinstance(k,
+                                                               str) else str(k)
                         attr_str = "{}: dict({}".format(k_str, v_str)
                     else:
                         attr_str = "{}=dict({}".format(k, v_str)
@@ -346,10 +349,9 @@ class Config(object):
         cfg_dict = self._cfg_dict.to_dict()
         text = _format_dict(cfg_dict, outest_level=True)
         # copied from setup.cfg
-        yapf_style = dict(
-            based_on_style="pep8",
-            blank_line_before_nested_class_or_def=True,
-            split_before_expression_after_opening_paren=True)
+        yapf_style = dict(based_on_style="pep8",
+                          blank_line_before_nested_class_or_def=True,
+                          split_before_expression_after_opening_paren=True)
 
         # NOTE: avoid show
         # print("text:\n", text)
@@ -358,7 +360,8 @@ class Config(object):
         return text
 
     def __str__(self):
-        return "Config (path: {}): {}".format(self.filename, self._cfg_dict.__str__())
+        return "Config (path: {}): {}".format(self.filename,
+                                              self._cfg_dict.__str__())
 
     def __len__(self):
         return len(self._cfg_dict)
@@ -399,7 +402,7 @@ class Config(object):
                 dump(cfg_dict, file)
 
     def merge_from_dict(self, options):
-        """Merge list into cfg_dict.
+        r"""Merge list into cfg_dict.
         Merge the dict parsed by MultipleKVAction into this cfg.
         Examples:
             >>> options = {"model.backbone.depth": 50,
@@ -433,7 +436,6 @@ class DictAction(Action):
     on the first = and append to a dictionary. List options should
     be passed as comma separated values, i.e KEY=V1,V2,V3
     """
-
     @staticmethod
     def _parse_int_float_bool(val):
         try:
@@ -457,4 +459,31 @@ class DictAction(Action):
                 val = val[0]
             options[key] = val
         setattr(namespace, self.dest, options)
+
+
+def merge_args_and_cfg(cfg: Optional[Config]=None, args: ArgumentParser=None) -> Config:
+    r"""merge args and cfg into a Config by calling 'merge_from_dict' func
+
+    Args:
+        cfg (Optional[Config], optional): Config from cfg file.
+        args (ArgumentParser, optional): Argument parameters input.
+
+    Returns:
+        Config: Merged Config
+    """
+    assert cfg is not None or args is not None, "'cfg' or 'args' can not be None simultaneously"
+
+    if cfg is None:
+        cfg = Config()
+    else:
+        assert isinstance(cfg, Config), "'cfg' must be None or gorilla.Config"
+    if args is None:
+        args = ArgumentParser()
+    else:
+        assert isinstance(args, ArgumentParser), "'args' must be None or argsparse.ArgumentParser"
+
+    # convert namespace into dict
+    args_dict = vars(args)
+    merge_cfg = cfg.merge_from_dict(args_dict)
+    return merge_cfg
 

@@ -19,7 +19,7 @@ def init_dist(launcher, backend="nccl", **kwargs):
     elif launcher == "slurm":
         _init_dist_slurm(backend, **kwargs)
     else:
-        raise ValueError(f"Invalid launcher type: {launcher}")
+        raise ValueError("Invalid launcher type: {}".format(launcher))
 
 
 def _init_dist_pytorch(backend, **kwargs):

@@ -9,7 +9,6 @@ from .timer import Timer
 
 class ProgressBar:
     r"""A progress bar which can print the progress."""
-
     def __init__(self, task_num=0, bar_width=50, start=True, file=sys.stdout):
         self.task_num = task_num
         self.bar_width = bar_width
@@ -44,9 +43,8 @@ class ProgressBar:
             percentage = self.completed / float(self.task_num)
             eta = int(elapsed * (1 - percentage) / percentage + 0.5)
             # TODO: fix msg
-            msg = f"\r[{{}}] {self.completed}/{self.task_num}, " \
-                  f"{fps:.1f} task/s, elapsed: {int(elapsed + 0.5)}s, " \
-                  f"ETA: {eta:5}s"
+            msg = "\r[{{}}] {}/{}, {:.1f} task/s, elapsed: {}s, " \
+                  "ETA: {:5}s".format(self.completed, self.task_num, fps, int(elapsed + 0.5), eta)
 
             bar_width = min(self.bar_width,
                             int(self.terminal_width - len(msg)) + 2,
@@ -56,8 +54,9 @@ class ProgressBar:
             bar_chars = ">" * mark_width + " " * (bar_width - mark_width)
             self.file.write(msg.format(bar_chars))
         else:
-            self.file.write("completed: {}, elapsed: {}s, {:.1f} tasks/s".format(
-                            self.completed, int(elapsed + 0.5), fps))
+            self.file.write(
+                "completed: {}, elapsed: {}s, {:.1f} tasks/s".format(
+                    self.completed, int(elapsed + 0.5), fps))
         self.file.flush()
 
 
@@ -200,5 +199,3 @@ def track_iter_progress(tasks, bar_width=50, file=sys.stdout):
         yield task
         prog_bar.update()
     prog_bar.file.write("\n")
-
-    
