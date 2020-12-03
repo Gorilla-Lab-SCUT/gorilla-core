@@ -1,40 +1,123 @@
 # Copyright (c) Open-MMLab. All rights reserved.
-from collections import OrderedDict
+from typing import List, Optional, Tuple, Sequence
+from collections import OrderedDict, defaultdict
 
 import numpy as np
 
+
 class LogBuffer:
     def __init__(self):
-        self.val_history = OrderedDict()
-        self.n_history = OrderedDict()
-        self.output = OrderedDict()
-        self.ready = False
+        self._val_history = defaultdict(HistoryBuffer)
+        self._output = OrderedDict()
+
+    @property
+    def values(self):
+        return self._val_history
+
+    @property
+    def output(self):
+        return self._output
 
     def clear(self):
-        self.val_history.clear()
-        self.n_history.clear()
+        self._val_history.clear()
         self.clear_output()
 
     def clear_output(self):
-        self.output.clear()
-        self.ready = False
+        self._output.clear()
 
-    def update(self, vars, count=1):
+    def update(self, vars):
         assert isinstance(vars, dict)
         for key, var in vars.items():
-            if key not in self.val_history:
-                self.val_history[key] = []
-                self.n_history[key] = []
-            self.val_history[key].append(var)
-            self.n_history[key].append(count)
+            if isinstance(var, Sequence) and len(var) == 2:
+                var[0] = float(var[0])
+                self._val_history[key].update(*var)
+            elif isinstance(var, (int, float)):
+                var = float(var)
+                self._val_history[key].update(var)
+            else:
+                raise TypeError("var must be a Sequence with length of 2"
+                                " or float, but got {}".format(type(var)))
 
     def average(self, n=0):
-        """Average latest n values or all values."""
+        r"""Average latest n values or all values."""
         assert n >= 0
-        for key in self.val_history:
-            values = np.array(self.val_history[key][-n:])
-            nums = np.array(self.n_history[key][-n:])
-            avg = np.sum(values * nums) / np.sum(nums)
-            self.output[key] = avg
-        self.ready = True
+        for key in self._val_history:
+            avg = self._val_history[key].avg(n)
+
+    def get(self, name):
+        r"""Get the values of name"""
+        return self._val_history.get(name, None)
+
+
+class HistoryBuffer:
+    r"""
+    Track a series of scalar values and provide access to smoothed values over a
+    window or the global average of the series.
+    """
+
+    def __init__(self) -> None:
+        self._values: List[float] = []
+        self._nums: List[float] = []
+        self._count: int = 0
+        self._global_avg: float = 0
+
+    def update(self, value: float, num: Optional[float] = None) -> None:
+        r"""
+        Add a new scalar value and the number of counter. If the length
+        of the buffer exceeds self._max_length, the oldest element will be
+        removed from the buffer.
+        """
+        self._values.append(value)
+        if num is None:
+            num = 1
+        self._nums.append(num)
+
+        self._count += 1
+        self._sum = sum(map(lambda x: x[0] * x[1], zip(self._values, self._nums)))
+        self._global_avg = self._sum / sum(self._nums)
+
+    def median(self, window_size: int) -> float:
+        r"""
+        Return the median of the latest `window_size` values in the buffer.
+        """
+        return np.median(self._values[-window_size:])
+
+    def avg(self, window_size: int) -> float:
+        r"""
+        Return the mean of the latest `window_size` values in the buffer.
+        """
+        _sum = sum(map(lambda x: x[0] * x[1], zip(self._values[-window_size:],
+                                                  self._nums[-window_size:])))
+        return _sum / sum(self._nums[-window_size:])
+
+    @property
+    def latest(self) -> float:
+        r"""
+        Return the latest scalar value added to the buffer.
+        """
+        return self._values[-1]
+
+    @property
+    def avg(self) -> float:
+        r"""
+        Return the mean of all the elements in the buffer. Note that this
+        includes those getting removed due to limited buffer storage.
+        """
+        return self._global_avg
+
+    @property
+    def values(self) -> List[float]:
+        r"""
+        Returns:
+            number: content of the current buffer.
+        """
+        return self._values
+
+    @property
+    def nums(self) -> List[float]:
+        r"""
+        Returns:
+            number: content of the current buffer.
+        """
+        return self._nums
 

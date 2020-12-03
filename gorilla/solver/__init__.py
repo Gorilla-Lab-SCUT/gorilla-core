@@ -2,7 +2,7 @@
 
 from .base_solver import BaseSolver
 from .build import build_lr_scheduler, build_optimizer, bulid_solver
-from .log_buffer import LogBuffer
+from .log_buffer import LogBuffer, HistoryBuffer
 from .lr_scheduler import (WarmupCosineLR, WarmupMultiStepLR, WarmupPolyLR,
                            CosineAnnealingLR, CyclicLR, ExponentialLR, PolyLR,
                            MultiStepLR, OneCycleLR, StepLR, LambdaLR)

@@ -62,16 +62,19 @@ class BaseSolver(metaclass=ABCMeta):
     def solve(self):
         r"""solve(self) aims to define each epoch training operation"""
         pass
+        # the whole training processing
 
     @abstractmethod
     def train(self):
         r"""train(self) aims to define each step training operation"""
-        pass
+        self.log_buffer.clear()
+        # epoch training
 
     @abstractmethod
     def test(self):
         r"""test aims to define each evaluation operation"""
         pass
+        # testing
 
     def quit(self):
         self.writer.close()
