@@ -151,7 +151,7 @@ def _check_py_package(package) -> bool:
     r"""Check whether package can be import
 
     Args:
-        package (str): Package's name
+        package (str): Package"s name
 
     Returns:
         bool: The `package` can be import or not
@@ -207,7 +207,7 @@ def deprecated_api_warning(name_dict, cls_name=None):
             # get name of the function
             func_name = old_func.__name__
             if cls_name is not None:
-                func_name = f'{cls_name}.{func_name}'
+                func_name = "{}.{}".format(cls_name, func_name)
             if args:
                 arg_names = args_info.args[:len(args)]
                 for src_arg_name, dst_arg_name in name_dict.items():
