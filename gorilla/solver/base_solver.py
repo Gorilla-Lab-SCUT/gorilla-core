@@ -11,7 +11,7 @@ if torch.__version__ < "1.1":
         from tensorboardX import SummaryWriter
     except ImportError:
         raise ImportError("Please install tensorboardX "
-                            "to use Tensorboard.")
+                          "to use Tensorboard.")
 else:
     try:
         from torch.utils.tensorboard import SummaryWriter
@@ -22,14 +22,20 @@ else:
 
 from .log_buffer import LogBuffer
 
+
 class BaseSolver(metaclass=ABCMeta):
     r"""Base class of model solver."""
-    def __init__(self, model, optimizer, train_dataloader, val_dataloader, lr_scheduler, cfg, logger=None):
+    def __init__(self,
+                 model,
+                 optimizer,
+                 dataloaders,
+                 lr_scheduler,
+                 cfg,
+                 logger=None):
         # initial essential parameters
         self.model = model
         self.optimizer = optimizer
-        self.train_data_loader = train_dataloader
-        self.val_data_loader = val_dataloader
+        self.dataloaders = dataloaders
         self.lr_scheduler = lr_scheduler
         self.cfg = cfg
         self.epoch = cfg.start_epoch
@@ -37,12 +43,11 @@ class BaseSolver(metaclass=ABCMeta):
         self.writer = SummaryWriter(log_dir=cfg.log)
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
         self.log_buffer = LogBuffer()
-        
+
         # the hooks container (optional)
         self._hooks = []
 
         self.do_before_training()
-
 
     def do_before_training(self):
         # set random seed to keep the result reproducible
@@ -50,9 +55,9 @@ class BaseSolver(metaclass=ABCMeta):
             from ..core import set_random_seed
             print("set random seed:", self.cfg.seed)
             set_random_seed(self.cfg.seed)
-        else: # do not set random seed
+        else:  # do not set random seed
             pass
-    
+
     @property
     def complete_training_flag(self):
         return self.iter > self.cfg.max_iters or \
