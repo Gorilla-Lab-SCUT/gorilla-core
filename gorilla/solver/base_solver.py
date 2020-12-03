@@ -73,8 +73,13 @@ class BaseSolver(metaclass=ABCMeta):
     @abstractmethod
     def test(self):
         r"""test aims to define each evaluation operation"""
-        pass
+        self.log_buffer.clear()
         # testing
+
+    def write(self):
+        self.log_buffer.average()
+        for key, avg in self.log_buffer.output.items():
+            self.writer.add_scalar(key, avg, self.epoch)
 
     def quit(self):
         self.writer.close()
