@@ -10,6 +10,7 @@ import torch.multiprocessing as mp
 # # NOTE: avoid RuntimeError: received 0 items of ancdata
 # mp.set_sharing_strategy("file_system")
 
+
 def init_dist(launcher, backend="nccl", **kwargs):
     if mp.get_start_method(allow_none=True) is None:
         mp.set_start_method("spawn")
@@ -26,9 +27,7 @@ def _init_dist_pytorch(backend, **kwargs):
     world_size = int(os.environ["WORLD_SIZE"])
     num_gpus = torch.cuda.device_count()
     torch.cuda.set_device(rank % num_gpus)
-    kwargs.update(backend=backend,
-                  rank=rank,
-                  world_size=world_size)
+    kwargs.update(backend=backend, rank=rank, world_size=world_size)
     print("dist_parameters: ", kwargs)
     dist.init_process_group(**kwargs)
 
@@ -50,7 +49,7 @@ def _init_dist_slurm(backend, port=None):
     num_gpus = torch.cuda.device_count()
     torch.cuda.set_device(proc_id % num_gpus)
     addr = subprocess.getoutput(
-        f"scontrol show hostname {node_list} | head -n1")
+        "scontrol show hostname {} | head -n1".format(node_list))
     # specify master port
     if port is not None:
         os.environ["MASTER_PORT"] = str(port)
@@ -80,7 +79,6 @@ def get_dist_info():
 
 
 def master_only(func):
-
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         rank, _ = get_dist_info()
@@ -88,5 +86,3 @@ def master_only(func):
             return func(*args, **kwargs)
 
     return wrapper
-
-    

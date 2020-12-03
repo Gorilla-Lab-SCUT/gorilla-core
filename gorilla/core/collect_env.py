@@ -36,9 +36,9 @@ def detect_compute_compatibility(CUDA_HOME, so_file):
     try:
         cuobjdump = osp.join(CUDA_HOME, "bin", "cuobjdump")
         if osp.isfile(cuobjdump):
-            output = subprocess.check_output(
-                "'{}' --list-elf '{}'".format(cuobjdump, so_file), shell=True
-            )
+            output = subprocess.check_output("'{}' --list-elf '{}'".format(
+                cuobjdump, so_file),
+                                             shell=True)
             output = output.decode("utf-8").strip().split("\n")
             arch = []
             for line in output:
@@ -65,7 +65,8 @@ def collect_env_info():
     if tuple(map(int, torch_version.split(".")[:2])) >= (1, 5):
         from torch.utils.cpp_extension import ROCM_HOME
 
-        if (getattr(torch.version, "hip", None) is not None) and (ROCM_HOME is not None):
+        if (getattr(torch.version, "hip", None) is not None) and (ROCM_HOME
+                                                                  is not None):
             has_rocm = True
     has_cuda = has_gpu and (not has_rocm)
 
@@ -78,20 +79,22 @@ def collect_env_info():
         import gorilla  # noqa
 
         data.append(
-            ("gorilla", gorilla.__version__ + " @" + osp.dirname(gorilla.__file__))
-        )
+            ("gorilla",
+             gorilla.__version__ + " @" + osp.dirname(gorilla.__file__)))
     except ImportError:
         data.append(("gorilla", "failed to import"))
-        
+
     data.append(get_env_module())
-    data.append(("PyTorch", torch_version + " @" + osp.dirname(torch.__file__)))
+    data.append(
+        ("PyTorch", torch_version + " @" + osp.dirname(torch.__file__)))
     data.append(("PyTorch debug build", torch.version.debug))
 
     data.append(("GPU available", has_gpu))
     if has_gpu:
         devices = defaultdict(list)
         for k in range(torch.cuda.device_count()):
-            cap = ".".join((str(x) for x in torch.cuda.get_device_capability(k)))
+            cap = ".".join(
+                (str(x) for x in torch.cuda.get_device_capability(k)))
             name = torch.cuda.get_device_name(k) + f" (arch={cap})"
             devices[name].append(str(k))
         for name, devids in devices.items():
@@ -110,28 +113,21 @@ def collect_env_info():
     data.append(("Pillow", PIL.__version__))
 
     try:
-        data.append(
-            (
-                "torchvision",
-                str(torchvision.__version__) + " @" + osp.dirname(torchvision.__file__),
-            )
-        )
+        data.append((
+            "torchvision",
+            str(torchvision.__version__) + " @" +
+            osp.dirname(torchvision.__file__),
+        ))
         if has_cuda:
             try:
-                torchvision_C = importlib.util.find_spec("torchvision._C").origin
+                torchvision_C = importlib.util.find_spec(
+                    "torchvision._C").origin
                 msg = detect_compute_compatibility(CUDA_HOME, torchvision_C)
                 data.append(("torchvision arch flags", msg))
             except ImportError:
                 data.append(("torchvision._C", "Not found"))
     except AttributeError:
         data.append(("torchvision", "unknown"))
-
-    try:
-        import fvcore
-
-        data.append(("fvcore", fvcore.__version__))
-    except ImportError:
-        pass
 
     try:
         import cv2
@@ -142,5 +138,3 @@ def collect_env_info():
     env_str = tabulate(data) + "\n"
     env_str += collect_torch_env()
     return env_str
-
-

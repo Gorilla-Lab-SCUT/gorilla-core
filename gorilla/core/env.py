@@ -7,6 +7,7 @@ import numpy as np
 
 from .dist import get_dist_info
 
+
 def set_random_seed(seed, deterministic=False, use_rank_shift=False):
     r"""Set random seed.
     Args:
@@ -31,4 +32,3 @@ def set_random_seed(seed, deterministic=False, use_rank_shift=False):
     if deterministic:
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
-

@@ -6,13 +6,17 @@ import warnings
 from collections import abc
 from importlib import import_module
 from inspect import getfullargspec
+from six.moves import map, zip
+
 
 def convert_list(input_list, type):
     return list(map(type, input_list))
 
+
 convert_list_str = functools.partial(convert_list, type=str)
 convert_list_int = functools.partial(convert_list, type=int)
 convert_list_float = functools.partial(convert_list, type=float)
+
 
 def iter_cast(inputs, dst_type, return_type=None):
     r"""Cast elements of an iterable object into some type.
@@ -36,6 +40,7 @@ def iter_cast(inputs, dst_type, return_type=None):
         return out_iterable
     else:
         return return_type(out_iterable)
+
 
 list_cast = functools.partial(iter_cast, return_type=list)
 tuple_cast = functools.partial(iter_cast, return_type=tuple)
@@ -62,6 +67,7 @@ def is_seq_of(seq, expected_type, seq_type=None) -> bool:
             return False
     return True
 
+
 is_list_of = functools.partial(is_seq_of, seq_type=list)
 is_tuple_of = functools.partial(is_seq_of, seq_type=tuple)
 
@@ -75,18 +81,22 @@ def slice_list(in_list, lens) -> list:
     Returns:
         list: A list of sliced list.
     """
-    assert isinstance(lens, (int, list)), "`indices` must be an integer or a list of integers"
+    assert isinstance(
+        lens,
+        (int, list)), "`indices` must be an integer or a list of integers"
     if isinstance(lens, int):
-        assert len(in_list) % lens == 0, "the len of `in_list` must be divisible by `lens`"
+        assert len(
+            in_list
+        ) % lens == 0, "the len of `in_list` must be divisible by `lens`"
         lens = [lens] * int(len(in_list) / lens)
     elif sum(lens) != len(in_list):
         raise ValueError("sum of lens and list length does not "
                          "match: {} != {}".format(sum(lens), len(in_list)))
-                         
+
     out_list = []
     idx = 0
     for l in lens:
-        out_list.append(in_list[idx : idx+l])
+        out_list.append(in_list[idx:idx + l])
         idx += l
     return out_list
 
@@ -102,9 +112,7 @@ def concat_list(in_list) -> list:
     return list(itertools.chain(*in_list))
 
 
-def check_prerequisites(prerequisites,
-                        checker,
-                        msg_tmpl=None):
+def check_prerequisites(prerequisites, checker, msg_tmpl=None):
     r"""A decorator factory to check if prerequisites are satisfied.
     Args:
         prerequisites (str of list[str]): Prerequisites to be checked.
@@ -118,8 +126,8 @@ def check_prerequisites(prerequisites,
         msg_tmpl = ("Prerequisites '{}' are required"
                     "in method '{}' but not found, "
                     "please install them first.")
-    def wrap(func):
 
+    def wrap(func):
         @functools.wraps(func)
         def wrapped_func(*args, **kwargs):
             requirements = [prerequisites] if isinstance(prerequisites, str) \
@@ -148,7 +156,8 @@ def _check_py_package(package) -> bool:
     Returns:
         bool: The `package` can be import or not
     """
-    assert isinstance(package, str), "`package` must be the string of package's name"
+    assert isinstance(package,
+                      str), "`package` must be the string of package's name"
     try:
         import_module(package)
     except ImportError:
@@ -172,8 +181,10 @@ def _check_executable(cmd) -> bool:
         return True
 
 
-requires_package = functools.partial(check_prerequisites, checker=_check_py_package)
-requires_executable = functools.partial(check_prerequisites, checker=_check_executable)
+requires_package = functools.partial(check_prerequisites,
+                                     checker=_check_py_package)
+requires_executable = functools.partial(check_prerequisites,
+                                        checker=_check_executable)
 
 
 # NOTE: use to maintain
@@ -188,9 +199,7 @@ def deprecated_api_warning(name_dict, cls_name=None):
     Returns:
         func: New function.
     """
-
     def api_warning_wrapper(old_func):
-
         @functools.wraps(old_func)
         def new_func(*args, **kwargs):
             # get the arg spec of the decorated method
@@ -205,14 +214,16 @@ def deprecated_api_warning(name_dict, cls_name=None):
                     if src_arg_name in arg_names:
                         warnings.warn("'{}' is deprecated in "
                                       "`{}`, please use `{}` "
-                                      "instead".format(src_arg_name, func_name, dst_arg_name))
+                                      "instead".format(src_arg_name, func_name,
+                                                       dst_arg_name))
                         arg_names[arg_names.index(src_arg_name)] = dst_arg_name
             if kwargs:
                 for src_arg_name, dst_arg_name in name_dict.items():
                     if src_arg_name in kwargs:
                         warnings.warn("`{}` is deprecated in "
                                       "`{}`, please use `{}` "
-                                      "instead".format(src_arg_name, func_name, dst_arg_name))
+                                      "instead".format(src_arg_name, func_name,
+                                                       dst_arg_name))
                         kwargs[dst_arg_name] = kwargs.pop(src_arg_name)
 
             # apply converted arguments to the decorated method
@@ -223,4 +234,22 @@ def deprecated_api_warning(name_dict, cls_name=None):
 
     return api_warning_wrapper
 
-    
+
+def multi_apply(func, *args, **kwargs):
+    r"""Apply function to a list of arguments.
+    Note:
+        This function applies the ``func`` to multiple inputs and
+        map the multiple outputs of the ``func`` into different
+        list. Each list contains the same type of outputs corresponding
+        to different inputs.
+    Args:
+        func (Function): A function that will be applied to a list of
+            arguments
+    Returns:
+        tuple(list): A tuple containing multiple list, each list contains \
+            a kind of returned results by the function
+    """
+    pfunc = functools.partial(func, **kwargs) if kwargs else func
+    map_results = map(pfunc, *args)
+    return tuple(map(list, zip(*map_results)))
+
