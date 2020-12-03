@@ -7,16 +7,19 @@ import datetime
 import argparse
 import subprocess
 
-import pynvml
+# import pynvml
 import torch
 import numpy as np
 from gpustat import GPUStatCollection
 
 from ..core import convert_list_str
 
-# init
-pynvml.nvmlInit()
-NUM_GPUS = pynvml.nvmlDeviceGetCount()
+# NOTE: pynvml is not suitable for python3.5 or lower
+# # init
+# pynvml.nvmlInit()
+# NUM_GPUS = pynvml.nvmlDeviceGetCount()
+
+NUM_GPUS = torch.cuda.device_count()
 
 
 def get_free_gpu(mode="memory", memory_need=11000) -> list:
