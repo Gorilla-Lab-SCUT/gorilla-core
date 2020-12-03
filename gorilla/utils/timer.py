@@ -30,7 +30,7 @@ class Timer:
     >>> print(timer.since_start())
     0.500
     >>> time.sleep(0.5)
-    >>> print(timer.since_last_check())
+    >>> print(timer.since_last())
     0.500
     >>> print(timer.since_start())
     1.000
@@ -55,7 +55,7 @@ class Timer:
         return self
 
     def __exit__(self, type, value, traceback):
-        print(self.print_tmpl.format(self.since_last_check()))
+        print(self.print_tmpl.format(self.since_last()))
         self._is_running = False
 
     def start(self):
@@ -119,6 +119,6 @@ def check_time(timer_id):
         _g_timers[timer_id] = Timer()
         return 0
     else:
-        return _g_timers[timer_id].since_last_check()
+        return _g_timers[timer_id].since_last()
 
         
