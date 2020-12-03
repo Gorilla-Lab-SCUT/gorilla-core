@@ -3,6 +3,7 @@
 from .base_solver import BaseSolver
 from .build import build_lr_scheduler, build_optimizer, bulid_solver
 from .log_buffer import LogBuffer, HistoryBuffer
+from .grad_clipper import GradClipper
 from .lr_scheduler import (WarmupCosineLR, WarmupMultiStepLR, WarmupPolyLR,
                            CosineAnnealingLR, CyclicLR, ExponentialLR, PolyLR,
                            MultiStepLR, OneCycleLR, StepLR, LambdaLR)

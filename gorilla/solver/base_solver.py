@@ -71,10 +71,10 @@ class BaseSolver(metaclass=ABCMeta):
         # epoch training
 
     @abstractmethod
-    def test(self):
-        r"""test aims to define each evaluation operation"""
+    def evaluation(self):
+        r"""evaluation aims to define each evaluation operation"""
         self.log_buffer.clear()
-        # testing
+        # evaluation
 
     def write(self):
         self.log_buffer.average()
