@@ -7,6 +7,7 @@ import warnings
 from collections import OrderedDict
 from importlib import import_module
 
+import numpy as np
 import torch
 import torchvision
 from torch.optim import Optimizer
@@ -359,6 +360,7 @@ def get_state_dict(module, destination=None, prefix="", keep_vars=False):
             destination = hook_result
     return destination
 
+
 def resume_checkpoint(model, cfg):
     if not osp.isfile(cfg.resume):
         raise ValueError('The file to be resumed is not existed', cfg.resume)
@@ -374,3 +376,55 @@ def resume_checkpoint(model, cfg):
         raise NotImplementedError("method: {}".format(cfg.method))
 
     return model
+
+
+def save_summary(filepath, state, dir_save_file, best, desc="loss", smaller=True, overwrite=False):
+    r"""
+    Save a summary npy file, which contain path of the best model and its performance.
+    Parameters
+    ----------
+    filepath: string
+        Path of .npy file
+    state: dict
+        Including many infos, such as epoch, arch, model parameters, best_prec1, and optimizers
+    dir_save_file: string
+        Path to save variable 'state'
+    best: float
+        Best performance of the model, can be loss, accuracy or others.
+    desc: string
+        Description of the result, such as 'acc', 'loss' and so on
+    smaller: bool (default: True)
+        The indicator of whether the performance is the smaller the better (default) or the bigger the better
+    Example
+    ----------
+    An example of the result .npy file:
+    {'test/test.pth.tar': ['acc', 0.01],
+     'test/test1.pth.tar': ['loss', 0.1],
+     'test/test2.pth.tar': ['acc', 0.01]}
+    """
+    try:
+        summary = np.load(filepath, allow_pickle=True).item()
+    except: # the summary file has not been created
+        summary = {}
+    if overwrite:
+        torch.save(state, dir_save_file)
+        summary[dir_save_file] = [desc, best]
+    else:
+        if dir_save_file in summary.keys():
+            if smaller:
+                if best < summary[dir_save_file][1]: # refresh the old state info to a better one
+                    torch.save(state, dir_save_file)
+                    summary[dir_save_file] = [desc, best]
+            else:
+                if best > summary[dir_save_file][1]: # refresh the old state info to a better one
+                    torch.save(state, dir_save_file)
+                    summary[dir_save_file] = [desc, best]
+
+        else: # new state
+            torch.save(state, dir_save_file)
+            summary[dir_save_file] = [desc, best]
+
+    # from pprint import pprint
+    # print(filepath)
+    # pprint(summary)
+    np.save(filepath, summary)

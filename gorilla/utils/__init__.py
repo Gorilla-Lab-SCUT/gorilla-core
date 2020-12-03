@@ -18,8 +18,9 @@ from .model import (check_model, check_grad, check_params, check_optimizer, regi
 
 from .debug import (check, display, check_rand_state, myTimer)
 
-from .checkpoint import (_load_checkpoint, load_checkpoint, load_state_dict, load_url_dist,
-                         resume, save_checkpoint, weights_to_cpu, get_state_dict, is_module_wrapper)
+from .checkpoint import (_load_checkpoint, load_checkpoint, load_state_dict,
+                         load_url_dist, resume, save_checkpoint, save_summary,
+                         weights_to_cpu, get_state_dict, is_module_wrapper)
 
 from .memory import retry_if_cuda_oom
 

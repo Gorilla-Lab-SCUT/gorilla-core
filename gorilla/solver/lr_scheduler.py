@@ -203,4 +203,52 @@ def _get_warmup_factor_at_iter(
     else:
         raise ValueError("Unknown warmup method: {}".format(method))
 
-    
+
+def adjust_learning_rate(optimizer, epoch, args, mode="auto", value=0.1, namelist=[]):
+    """
+    Adjust the learning rate according to the epoch
+    Parameters
+    ----------
+    optimzer: An optimizer in a certain update principle in torch.optim
+        The optimizer of the model
+    epoch: int
+        The current epoch
+    args: Namespace
+        Arguments that main.py receive
+    total_epochs: int
+        The total epoch number
+    mode: str
+        Mode of setting lr, 'auto' (computed automatically by formula), 'rel' (relative) or 'abs' (absolute)
+    value: float
+        In 'auto' mode, lr of pretrained modules additionally multiply this variable;
+        In 'rel' mode, parameters multiply this variable;
+        In 'abs' mode, parameters is set to this variable
+    namelist: list
+        If namelist is not empty, then only adjust the lr of param_groups whose name is in namelist;
+        If namelist is empty (default), then adjust the lr of all param_group
+    Return
+    ------
+    The function has no return
+    """    
+    select_groups = []
+    if len(namelist) == 0:
+        select_groups = optimizer.param_groups
+    else:
+        for param_group in optimizer.param_groups:
+            if param_group["name"] in namelist:
+                select_groups.append(param_group)
+
+    for param_group in select_groups:
+        if mode == "auto":
+            p = float(epoch) / args.epochs
+            lr = args.base_lr / ((1 + 10 * p) ** 0.75)
+            lr_pretrain = lr * value
+            for param_group in optimizer.param_groups:
+                if param_group["name"] == "pre-trained":
+                    param_group["lr"] = lr_pretrain
+                else:
+                    param_group["lr"] = lr
+        elif mode == "rel":
+            param_group["lr"] = param_group["lr"] * value
+        elif mode == "abs":
+            param_group["lr"] = value
