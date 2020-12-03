@@ -205,7 +205,7 @@ def _get_warmup_factor_at_iter(
 
 
 def adjust_learning_rate(optimizer, epoch, args, mode="auto", value=0.1, namelist=[]):
-    """
+    r"""
     Adjust the learning rate according to the epoch
     Parameters
     ----------
