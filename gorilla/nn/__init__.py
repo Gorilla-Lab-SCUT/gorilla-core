@@ -10,6 +10,9 @@ from .alexnet import AlexNet
 from .resnet import (BasicBlock, Bottleneck, ResNet, conv3x3, resnet18,
                      resnet34, resnet50, resnet101, resnet152, resnet)
 from .gcn import GraphConvolution, GCN
+from .transformer import (Transformer, TransformerEncoder, TransformerDecoder,
+                          TransformerEncoderLayer, TransformerDecoderLayer,
+                          build_transformer)
 
 from .layer_builder import build_from_package, get_torch_layer_caller
 
