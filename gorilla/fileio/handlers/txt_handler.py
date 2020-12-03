@@ -1,7 +1,7 @@
 from .base import BaseFileHandler
 
-class TxtHandler(BaseFileHandler):
 
+class TxtHandler(BaseFileHandler):
     def load_from_fileobj(self, file, **kwargs):
         content = file.readlines()
         return content

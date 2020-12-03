@@ -9,6 +9,7 @@ import torch.nn as nn
 from .weight_init import constant_init, kaiming_init
 from .layer_builder import get_torch_layer_caller
 
+
 class GorillaFC(nn.Sequential):
     # TODO: modify comment and test
     r"""A FC block that bundles FC/norm/activation layers.
@@ -56,7 +57,8 @@ class GorillaFC(nn.Sequential):
         assert norm_cfg is None or isinstance(norm_cfg, dict)
         assert act_cfg is None or isinstance(act_cfg, dict)
 
-        assert set(order).difference(set(["FC", "norm", "act", "dropout"])) == set()
+        assert set(order).difference(set(["FC", "norm", "act",
+                                          "dropout"])) == set()
 
         self.order = deepcopy(order)
         self.norm_cfg = deepcopy(norm_cfg)
@@ -66,11 +68,9 @@ class GorillaFC(nn.Sequential):
         with_norm = (self.norm_cfg is not None)
         # if with_norm:
         #     bias = False
-        
+
         # build FC layer
-        FC = nn.Linear(in_features,
-                       out_features,
-                       bias)
+        FC = nn.Linear(in_features, out_features, bias)
 
         # build normalization layers
         norm = None
@@ -108,7 +108,7 @@ class GorillaFC(nn.Sequential):
                 self.order.remove("dropout")
 
         for layer in self.order:
-            self.add_module(name+layer, eval(layer))
+            self.add_module(name + layer, eval(layer))
 
     def init_weights(self, FC, norm):
         # TODO: modify this
@@ -126,10 +126,10 @@ class GorillaFC(nn.Sequential):
                 a = self.act_cfg.get("negative_slope", 0.01)
                 nonlinearity = "leaky_relu"
             kaiming_init(FC,
-                a=a,
-                mode="fan_in",
-                nonlinearity="leaky_relu",
-                distribution="uniform")
+                         a=a,
+                         mode="fan_in",
+                         nonlinearity="leaky_relu",
+                         distribution="uniform")
         if norm is not None:
             constant_init(norm, 1, bias=0)
 

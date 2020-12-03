@@ -95,13 +95,12 @@ class VGG(nn.Module):
             end_idx = start_idx + num_modules
             dilation = dilations[i]
             planes = 64 * 2**i if i < 4 else 512
-            vgg_layer = make_vgg_layer(
-                self.inplanes,
-                planes,
-                num_blocks,
-                dilation=dilation,
-                with_bn=with_bn,
-                ceil_mode=ceil_mode)
+            vgg_layer = make_vgg_layer(self.inplanes,
+                                       planes,
+                                       num_blocks,
+                                       dilation=dilation,
+                                       with_bn=with_bn,
+                                       ceil_mode=ceil_mode)
             vgg_layers.extend(vgg_layer)
             self.inplanes = planes
             self.range_sub_modules.append([start_idx, end_idx])

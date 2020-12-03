@@ -32,7 +32,7 @@ import gorilla.utils.comm as comm
 from gorilla.config import get_cfg
 from gorilla.data import build_dataloaders
 from gorilla.solver import bulid_solver, launch
-from detectron2.engine import default_setup # NOTE: 没搬过来，套中套
+from detectron2.engine import default_setup  # NOTE: 没搬过来，套中套
 from gorilla.evaluation import build_evaluator
 from gorilla.nn.models import build_model
 from gorilla.solver import build_lr_scheduler, build_optimizer
@@ -80,10 +80,10 @@ def main(args):
         return
 
     distributed = comm.get_world_size() > 1
-    if distributed: # NOTE: not updated
-        model = DistributedDataParallel(
-            model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
-        )
+    if distributed:  # NOTE: not updated
+        model = DistributedDataParallel(model,
+                                        device_ids=[comm.get_local_rank()],
+                                        broadcast_buffers=False)
 
     trainer.train()
     return
@@ -100,8 +100,7 @@ def default_argument_parser(epilog=None):
         argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(
-        epilog=epilog
-        or f"""
+        epilog=epilog or f"""
 Examples:
 
 Run on single machine:
@@ -116,24 +115,37 @@ Run on multiple machines:
 """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")
+    parser.add_argument("--config-file",
+                        default="",
+                        metavar="FILE",
+                        help="path to config file")
     parser.add_argument(
         "--resume",
         action="store_true",
         help="Whether to attempt to resume from the checkpoint directory. "
         "See documentation of `DefaultTrainer.resume_or_load()` for what it means.",
     )
-    parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
-    parser.add_argument("--num-gpus", type=int, default=1, help="number of gpus *per machine*")
-    parser.add_argument("--num-machines", type=int, default=1, help="total number of machines")
-    parser.add_argument(
-        "--machine-rank", type=int, default=0, help="the rank of this machine (unique per machine)"
-    )
+    parser.add_argument("--eval-only",
+                        action="store_true",
+                        help="perform evaluation only")
+    parser.add_argument("--num-gpus",
+                        type=int,
+                        default=1,
+                        help="number of gpus *per machine*")
+    parser.add_argument("--num-machines",
+                        type=int,
+                        default=1,
+                        help="total number of machines")
+    parser.add_argument("--machine-rank",
+                        type=int,
+                        default=0,
+                        help="the rank of this machine (unique per machine)")
 
     # PyTorch still may leave orphan processes in multi-gpu training.
     # Therefore we use a deterministic way to obtain port,
     # so that users are aware of orphan processes by seeing the port occupied.
-    port = 2 ** 15 + 2 ** 14 + hash(os.getuid() if sys.platform != "win32" else 1) % 2 ** 14
+    port = 2**15 + 2**14 + hash(
+        os.getuid() if sys.platform != "win32" else 1) % 2**14
     parser.add_argument(
         "--dist-url",
         default="tcp://127.0.0.1:{}".format(port),
@@ -142,7 +154,8 @@ Run on multiple machines:
     )
     parser.add_argument(
         "opts",
-        help="Modify config options by adding 'KEY VALUE' pairs at the end of the command. "
+        help=
+        "Modify config options by adding 'KEY VALUE' pairs at the end of the command. "
         "See config references at "
         "https://detectron2.readthedocs.io/modules/config.html#config-references",
         default=None,
@@ -165,5 +178,5 @@ if __name__ == "__main__":
         num_machines=args.num_machines,
         machine_rank=args.machine_rank,
         dist_url=args.dist_url,
-        args=(args,),
+        args=(args, ),
     )

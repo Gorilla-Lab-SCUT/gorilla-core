@@ -3,9 +3,10 @@
 import torch
 
 
-def smooth_l1_loss(
-    input: torch.Tensor, target: torch.Tensor, beta: float, reduction: str = "none"
-) -> torch.Tensor:
+def smooth_l1_loss(input: torch.Tensor,
+                   target: torch.Tensor,
+                   beta: float,
+                   reduction: str = "none") -> torch.Tensor:
     r"""
     Smooth L1 loss defined in the Fast R-CNN paper as:
                   | 0.5 * x ** 2 / beta   if abs(x) < beta
@@ -54,11 +55,10 @@ def smooth_l1_loss(
     else:
         n = torch.abs(input - target)
         cond = n < beta
-        loss = torch.where(cond, 0.5 * n ** 2 / beta, n - 0.5 * beta)
+        loss = torch.where(cond, 0.5 * n**2 / beta, n - 0.5 * beta)
 
     if reduction == "mean":
         loss = loss.mean()
     elif reduction == "sum":
         loss = loss.sum()
     return loss
-

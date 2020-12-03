@@ -8,25 +8,28 @@ from collections.abc import Mapping
 
 
 def print_csv_format(results):
-    """
+    r"""
     Print main metrics in a format similar to Detectron,
     so that they are easy to copypaste into a spreadsheet.
 
     Args:
         results (OrderedDict[dict]): task_name -> {metric -> score}
     """
-    assert isinstance(results, OrderedDict), results  # unordered results cannot be properly printed
+    assert isinstance(
+        results,
+        OrderedDict), results  # unordered results cannot be properly printed
     logger = logging.getLogger(__name__)
     for task, res in results.items():
         # Don't print "AP-category" metrics since they are usually not tracked.
         important_res = [(k, v) for k, v in res.items() if "-" not in k]
         logger.info("copypaste: Task: {}".format(task))
         logger.info("copypaste: " + ",".join([k[0] for k in important_res]))
-        logger.info("copypaste: " + ",".join(["{0:.4f}".format(k[1]) for k in important_res]))
+        logger.info("copypaste: " +
+                    ",".join(["{0:.4f}".format(k[1]) for k in important_res]))
 
 
 def verify_results(cfg, results):
-    """
+    r"""
     Args:
         results (OrderedDict[dict]): task_name -> {metric -> score}
 
@@ -63,7 +66,7 @@ def verify_results(cfg, results):
 
 
 def flatten_results_dict(results):
-    """
+    r"""
     Expand a hierarchical dict of scalars into a flat dict of scalars.
     If results[k1][k2][k3] = v, the returned dict will have the entry
     {"k1/k2/k3": v}.

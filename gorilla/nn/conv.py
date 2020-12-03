@@ -77,7 +77,7 @@ class GorillaConv(nn.Sequential):
         assert padding_mode in ["zeros", "reflect", "replicate", "circular"]
 
         assert set(order).difference(set(["conv", "norm", "act"])) == set()
-        # modify a func's default params will affect next call, so it is 
+        # modify a func's default params will affect next call, so it is
         # necessary to use deepcopy if you want to modify a dafault params
         # in the func
         self.order = deepcopy(order)
@@ -93,17 +93,16 @@ class GorillaConv(nn.Sequential):
         conv_padding = padding
         # build convolutional layer
         conv_caller = get_torch_layer_caller("Conv{}d".format(D))
-        conv = conv_caller(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=conv_padding,
-            dilation=dilation,
-            groups=groups,
-            bias=bias,
-            padding_mode=padding_mode)
-        
+        conv = conv_caller(in_channels=in_channels,
+                           out_channels=out_channels,
+                           kernel_size=kernel_size,
+                           stride=stride,
+                           padding=conv_padding,
+                           dilation=dilation,
+                           groups=groups,
+                           bias=bias,
+                           padding_mode=padding_mode)
+
         if with_spectral_norm:
             conv = nn.utils.spectral_norm(conv)
 
@@ -136,7 +135,7 @@ class GorillaConv(nn.Sequential):
 
         # build layer according to the order
         for layer in self.order:
-            self.add_module(name+layer, eval(layer))
+            self.add_module(name + layer, eval(layer))
 
     def init_weights(self, conv, norm):
         # TODO: modify this
@@ -156,5 +155,3 @@ class GorillaConv(nn.Sequential):
             kaiming_init(conv, a=a, nonlinearity=nonlinearity)
         if norm is not None:
             constant_init(norm, 1, bias=0)
-
-

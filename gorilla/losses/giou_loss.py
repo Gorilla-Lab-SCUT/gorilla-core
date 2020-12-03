@@ -59,4 +59,3 @@ def giou_loss(
         loss = loss.sum()
 
     return loss
-

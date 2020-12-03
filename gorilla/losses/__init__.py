@@ -8,6 +8,4 @@ from .focal_loss import (
 from .giou_loss import giou_loss
 from .smooth_l1_loss import smooth_l1_loss
 
-
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
-

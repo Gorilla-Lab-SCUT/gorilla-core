@@ -10,7 +10,6 @@ class AlexNet(nn.Module):
     Args:
         num_classes (int): number of classes for classification.
     """
-
     def __init__(self, num_classes=-1):
         super(AlexNet, self).__init__()
         self.num_classes = num_classes

@@ -8,8 +8,9 @@ import torch
 
 from ..core import get_world_size, is_main_process
 
+
 class DatasetEvaluator:
-    """
+    r"""
     Base class for a dataset evaluator.
 
     The function :func:`inference_on_dataset` runs the model over
@@ -18,16 +19,15 @@ class DatasetEvaluator:
     This class will accumulate information of the inputs/outputs (by :meth:`process`),
     and produce evaluation results in the end (by :meth:`evaluate`).
     """
-
     def reset(self):
-        """
+        r"""
         Preparation for a new round of evaluation.
         Should be called before starting a round of evaluation.
         """
         pass
 
     def process(self, inputs, outputs):
-        """
+        r"""
         Process the pair of inputs and outputs.
         If they contain batches, the pairs can be consumed one-by-one using `zip`:
 
@@ -44,7 +44,7 @@ class DatasetEvaluator:
         pass
 
     def evaluate(self):
-        """
+        r"""
         Evaluate/summarize the performance, after processing all input/output pairs.
 
         Returns:
@@ -60,15 +60,14 @@ class DatasetEvaluator:
 
 
 class DatasetEvaluators(DatasetEvaluator):
-    """
+    r"""
     Wrapper class to combine multiple :class:`DatasetEvaluator` instances.
 
     This class dispatches every evaluation call to
     all of its :class:`DatasetEvaluator`.
     """
-
     def __init__(self, evaluators):
-        """
+        r"""
         Args:
             evaluators (list): the evaluators to combine.
         """
@@ -87,4 +86,3 @@ class DatasetEvaluators(DatasetEvaluator):
         results = OrderedDict()
         for evaluator in self._evaluators:
             result = evaluator.evaluate()
-

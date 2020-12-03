@@ -31,9 +31,11 @@ def sigmoid_focal_loss(
         Loss tensor with the reduction option applied.
     """
     p = torch.sigmoid(inputs)
-    ce_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction="none")
+    ce_loss = F.binary_cross_entropy_with_logits(inputs,
+                                                 targets,
+                                                 reduction="none")
     p_t = p * targets + (1 - p) * (1 - targets)
-    loss = ce_loss * ((1 - p_t) ** gamma)
+    loss = ce_loss * ((1 - p_t)**gamma)
 
     if alpha >= 0:
         alpha_t = alpha * targets + (1 - alpha) * (1 - targets)
@@ -48,8 +50,7 @@ def sigmoid_focal_loss(
 
 
 sigmoid_focal_loss_jit = torch.jit.script(
-    sigmoid_focal_loss
-)  # type: torch.jit.ScriptModule
+    sigmoid_focal_loss)  # type: torch.jit.ScriptModule
 
 
 def sigmoid_focal_loss_star(
@@ -93,6 +94,4 @@ def sigmoid_focal_loss_star(
 
 
 sigmoid_focal_loss_star_jit = torch.jit.script(
-    sigmoid_focal_loss_star
-)  # type: torch.jit.ScriptModule
-
+    sigmoid_focal_loss_star)  # type: torch.jit.ScriptModule
