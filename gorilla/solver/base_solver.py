@@ -1,24 +1,11 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
-from abc import ABCMeta, abstractmethod
 import os
 import torch
 import random
-import numpy as np
+from abc import ABCMeta, abstractmethod
 
-# import SummaryWriter
-if torch.__version__ < "1.1":
-    try:
-        from tensorboardX import SummaryWriter
-    except ImportError:
-        raise ImportError("Please install tensorboardX "
-                          "to use Tensorboard.")
-else:
-    try:
-        from torch.utils.tensorboard import SummaryWriter
-    except ImportError:
-        raise ImportError("Please run 'pip install future tensorboard' to install "
-                          "the dependencies to use torch.utils.tensorboard "
-                          "(applicable to PyTorch 1.1 or higher)")
+import numpy as np
+from tensorboardX import SummaryWriter
 
 from .log_buffer import LogBuffer
 
