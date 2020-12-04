@@ -10,7 +10,7 @@ from .path import (is_filepath, check_file_exist, fopen, symlink,
 from .logging import (get_logger, get_root_logger, print_log)
 
 from .processbar import (ProgressBar, track_progress, init_pool,
-                         track_parallel_progress, track_iter_progress)
+                         track_parallel_progress, track)
 
 from .timer import (Timer, check_time)
 
