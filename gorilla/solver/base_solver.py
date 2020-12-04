@@ -63,8 +63,8 @@ class BaseSolver(metaclass=ABCMeta):
         # epoch training
 
     @abstractmethod
-    def evaluation(self):
-        r"""evaluation aims to define each evaluation operation"""
+    def evaluate(self):
+        r"""evaluate(self) aims to define each evaluation operation"""
         self.log_buffer.clear()
         # evaluation
 

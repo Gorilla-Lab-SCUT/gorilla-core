@@ -7,7 +7,7 @@ import shutil
 import sys
 import tempfile
 from typing import Optional
-from argparse import Action, ArgumentParser
+from argparse import Action, ArgumentParser, Namespace
 from collections import abc
 from importlib import import_module
 from addict import Dict
@@ -476,11 +476,11 @@ def merge_args_and_cfg(cfg: Optional[Config]=None, args: ArgumentParser=None) ->
     if cfg is None:
         cfg = Config()
     else:
-        assert isinstance(cfg, Config), "'cfg' must be None or gorilla.Config"
+        assert isinstance(cfg, Config), "'cfg' must be None or gorilla.Config, but got {}".format(type(cfg))
     if args is None:
-        args = ArgumentParser()
+        args = Namespace()
     else:
-        assert isinstance(args, ArgumentParser), "'args' must be None or argsparse.ArgumentParser"
+        assert isinstance(args, Namespace), "'args' must be None or argsparse.Namespace, but got {}".format(type(args))
 
     # convert namespace into dict
     args_dict = vars(args)

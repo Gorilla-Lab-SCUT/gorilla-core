@@ -14,4 +14,6 @@ from .env import set_random_seed
 
 from .collect_env import collect_env_info
 
+from .launch import launch
+
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
