@@ -484,6 +484,5 @@ def merge_args_and_cfg(cfg: Optional[Config]=None, args: ArgumentParser=None) ->
 
     # convert namespace into dict
     args_dict = vars(args)
-    merge_cfg = cfg.merge_from_dict(args_dict)
-    return merge_cfg
-
+    cfg.merge_from_dict(args_dict)
+    return cfg
