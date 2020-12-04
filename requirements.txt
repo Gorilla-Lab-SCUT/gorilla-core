@@ -1,21 +1,19 @@
 numpy
-scipy
 tqdm
-# open3d==0.8.0.0
 torch>=1.1.0
 torchvision
 tensorboardX
-terminaltables
 gpustat
-# pynvml
 pyyaml
 addict
 yapf
 termcolor
 tabulate
-
-opencv-python
-scikit-image
-
-ipdb
-ipython
+# scipy
+# open3d==0.8.0.0
+# pynvml
+# terminaltables
+# opencv-python
+# scikit-image
+# ipdb
+# ipython

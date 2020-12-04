@@ -422,8 +422,6 @@ def check_optimizer(optimizer):
         name = group.get("name", "Unnamed {}".format(i))
         print("{}: {} layers of params".format(name, len(group["params"])))
         state = optimizer.state_dict()["state"]
-        # from ipdb import set_trace
-        # set_trace()
         for num in param_group["params"]:
             for key in keys:
                 display("{} of layer {}".format(key, num), state[num][key])
