@@ -7,7 +7,6 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
-import PIL
 import torch
 import torchvision
 from tabulate import tabulate
@@ -110,7 +109,6 @@ def collect_env_info():
             cuda_arch_list = os.environ.get("TORCH_CUDA_ARCH_LIST", None)
             if cuda_arch_list:
                 data.append(("TORCH_CUDA_ARCH_LIST", cuda_arch_list))
-    data.append(("Pillow", PIL.__version__))
 
     try:
         data.append((
