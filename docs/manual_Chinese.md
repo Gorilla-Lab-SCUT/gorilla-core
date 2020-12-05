@@ -1,7 +1,25 @@
 # gorilla-core 常用功能函数及介绍
 
-gorilla 是一个结合了 mmcv 和 detectron2 的基础库，目前主要是和 deep learning framework 无关的一些工具函数，以及一些辅助训练工具。
-- 下面介绍一下常用的函数。
+gorilla 是一个结合了 mmcv 和 detectron2 的基础库，目前主要是和 deep learning framework 无关的一些工具函数，以及一些辅助训练工具。该基础库的文件目录如下：
+
+```sh
+gorilla
+    ├── core
+    ├── utils
+    ├── fileio
+    ├── config
+    ├── evaluation
+    ├── examples
+    ├── losses
+    ├── nn
+    ├── solver
+    ├── __init__.py
+    └── version.py
+```
+
+
+ 下面介绍一下常用的函数。
+---
 ## fileio
 `fileio` 模块支持直接对 `.json`, `.yaml`, `.pkl` 的加载和读取
 ```python
@@ -108,6 +126,7 @@ it takes 1.0 seconds
 以上生成的时间戳识别器会可以通过 `gorilla.utils.timer._g_timers["task1"]` 获取。
 
 - **过程统计**
+
 （对 `tqdm` 模块更熟悉的同学可以使用 `tqdm` 模块）
 该模块提供 `ProgressBar` 来对过程进度进行跟踪：
 ```python
@@ -118,6 +137,7 @@ it takes 1.0 seconds
 >>>     time.sleep(0.5)
 >>>     return n + 1
 >>>
+>>> prog_bar = gorilla.ProgressBar()
 >>> for i in range(10):
 >>>     plus_one(i)
 >>>     prog_bar.update() # 手动更新
@@ -151,5 +171,24 @@ it takes 1.0 seconds
 100%|██████████████████████████████| 10/10 [00:00<00:00, 74499.18it/s]
 ```
 
-- **配置管理**
+- **GPU管理**
+  
+该模块提供了**gpu监视和自动功能索引函数**。
+`get_free_gpu` 函数可以获取当前满足条件的 **gpu的id索引列表**，默认为检索空余显存超过11G的gpu，如果需要检索空闲（无占用程序）的gpu，则设置 `mode="process"` 即可。
+```python
+def get_free_gpu(mode="memory", memory_need=11000) -> list
+```
 
+在此基础上，如果要监视多gpu，我们则提供了 `supervise_gpu` 函数，`num_gpu` 为需要获取的gpu的数量，`mode` 与 `memory_need` 同上，当该程序发现有该数量符合条件的gpu时，则返回这些gpu的id索引列表，否则一直等待，直到有空闲gpu满足 `num_gpu` 的数量。
+```python
+def supervise_gpu(num_gpu=1, mode="memory", memory_need=11000) -> list
+```
+
+最后还有自动设置 `CUDA_VISIBLE_DEVICES` 的函数，通过设置 `os.environ["CUDA_VISIBLE_DEVICES"]` 实现：
+```python
+def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need=11000)
+```
+当 `gpu_ids` 给定，则设置为给定的 `gpu_ids` 为 `os.environ["CUDA_VISIBLE_DEVICES"]`，否则调用 `supervise_gpu` 函数获取符合空闲条件的gpu，直接设置。可以免除 `CUDA_VISIBLE_DEVICES=x python script.py` 的前缀工作。
+
+- **路径管理**
+`gorilla.utils.path` 中定义了些许函数，本质上是对 `os`

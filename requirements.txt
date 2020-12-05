@@ -9,9 +9,10 @@ addict
 yapf
 termcolor
 tabulate
+pynvml
+
 # scipy
 # open3d==0.8.0.0
-# pynvml
 # terminaltables
 # opencv-python
 # scikit-image

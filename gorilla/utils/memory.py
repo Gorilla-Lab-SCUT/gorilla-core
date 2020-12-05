@@ -10,7 +10,7 @@ __all__ = ["retry_if_cuda_oom"]
 
 @contextmanager
 def _ignore_torch_cuda_oom():
-    """
+    r"""
     A context which ignores CUDA OOM exception from pytorch.
     """
     try:
@@ -24,7 +24,7 @@ def _ignore_torch_cuda_oom():
 
 
 def retry_if_cuda_oom(func):
-    """
+    r"""
     Makes a function retry itself after encountering
     pytorch's CUDA OOM error.
     It will first retry after calling `torch.cuda.empty_cache()`.

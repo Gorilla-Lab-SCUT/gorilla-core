@@ -85,14 +85,14 @@ def scandir(dir_path, prefix=None, suffix=None, recursive=False):
         A generator for all the interested files with relative pathes.
     """
     if not is_filepath(dir_path):
-        raise TypeError("`dir_path` must be a string or Path object")
+        raise TypeError("`dir_path` must be a string or Path object, but got {}".format(type(dir_path)))
     dir_path = str(dir_path)
 
     if (suffix is not None) and not isinstance(suffix, (str, tuple)):
-        raise TypeError("`suffix` must be a string or tuple of strings")
+        raise TypeError("`suffix` must be a string or tuple of strings, but got {}".format(type(suffix)))
 
     if (prefix is not None) and not isinstance(prefix, (str, tuple)):
-        raise TypeError("`prefix` must be a string or tuple of strings")
+        raise TypeError("`prefix` must be a string or tuple of strings, but got {}".format(type(prefix)))
 
     root = dir_path
 
