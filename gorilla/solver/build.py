@@ -24,11 +24,11 @@ def build_optimizer(model: torch.nn.Module,
     r"""
     Build an optimizer from config.
     """
-    optimizer_type = cfg.pop("optimizer_type")
+    name = cfg.pop("name")
 
     cfg["params"] = filter(lambda p: p.requires_grad, model.parameters())
 
-    optimizer_caller = getattr(torch.optim, optimizer_type)
+    optimizer_caller = getattr(torch.optim, name)
     return optimizer_caller(**cfg)
 
 
