@@ -331,4 +331,163 @@ def merge_args_and_cfg(cfg: Optional[Config]=None, args: Optional[ArgumentParser
 ```
 输入分别为 `cfg` 和 `args` 融合得到新的 `cfg`，由于 `args` 中的参数优先度往往比 `cfg` 中的参数高，所以我们利用了上面所说的 `merge_from_dict` 函数实现了两者的融合，对于相同的参数，则利用 `args` 中的参数进行覆盖。
 
+# Core
+Core 作为代码库的核心，里面包含了许多必要的函数，其中也包括很多杂项函数，这一部分我们还在整理中，目前对外有两个设置的函数。
+一个是设置随机数种子的 `set_random_seed`
+```python
+set_random_seed(seed, deterministic=False, use_rank_shift=False)
+```
+通常来说只用给定 `seed` 即可，里面本质操作就是分别设置 `np/torch/random` 的 `seed`，在这里只用通过一行代码即可解决。
+
+另一个函数则是用于收集环境信息的函数 `collect_env_info`，该函数不用任何输入，运行后直接返回当前环境信息的字符串：
+```python
+>>> import gorilla
+>>> print(gorilla.collect_env_info())
+-------------------  ------------------------------------------------------------------------------------------
+sys.platform         linux
+Python               3.7.0 (default, Oct  9 2018, 10:31:47) [GCC 7.3.0]
+numpy                1.19.2
+gorilla              0.2.3.6 @/data/lab-liang.zhihao/code/gorilla-core/gorilla
+GORILLA_ENV_MODULE   <not set>
+PyTorch              1.3.0 @/home/lab-liang.zhihao/miniconda3/envs/pointgroup/lib/python3.7/site-packages/torch
+PyTorch debug build  False
+GPU available        True
+GPU 0,1,2,3,4,5,6,7  GeForce RTX 2080 Ti (arch=7.5)
+CUDA_HOME            /usr/local/cuda-10.0
+torchvision          unknown
+cv2                  4.4.0
+-------------------  ------------------------------------------------------------------------------------------
+PyTorch built with:
+  - GCC 7.3
+  - Intel(R) Math Kernel Library Version 2020.0.2 Product Build 20200624 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v0.20.5 (Git Hash 0125f28c61c1f822fd48570b4c1066f96fcb9b2e)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - NNPACK is enabled
+  - CUDA Runtime 10.1
+  - NVCC architecture flags: -gencode;arch=compute_35,code=sm_35;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_50,code=compute_50
+  - CuDNN 7.6.3
+  - Magma 2.5.1
+  - Build settings: BLAS=MKL, BUILD_NAMEDTENSOR=OFF, BUILD_TYPE=Release, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -fopenmp -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -O2 -fPIC -Wno-narrowing -Wall -Wextra -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Wno-stringop-overflow, DISABLE_NUMA=1, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, USE_CUDA=True, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, USE_STATIC_DISPATCH=OFF,
+```
+剩下的函数我们也在进行整理。
+
+# solver
+该模块主要是设计网络训练的辅助函数。
+- **学习率策略**
+
+在训练的时候我们希望大家的学习率调整策略尽量使用 `torch.optim.lr_scheduler` 中提供的 `scheduler` 实现，如果是自己写的学习率变化函数也尽量使用 `torch.optim.lr_scheduler.LambdaLR` 进行包装。我们在已有的学习率策略的基础上还提供了四种学习率策略分别是：
+```python
+WarmupMultiStepLR, WarmupCosineLR, WarmupPolyLR, PolyLR, InvLR
+```
+它们都是继承自 `torch.optim.lr_scheduler._LRScheduler`，如果有同学有新的学习率策略是原本没有的，希望可以遵循相应的格式贡献到代码库中。
+
+- **优化器和学习率策略构建函数**
+
+另外，我们也提供了非常轻量级的构建函数，分别是：
+```python
+def build_single_optimizer(
+        model: torch.nn.Module,
+        optimizer_cfg: [Config, Dict]) -> torch.optim.Optimizer
+
+def build_lr_scheduler(
+        optimizer: torch.optim.Optimizer,
+        lr_scheduler_cfg: [Config, Dict],
+        lambda_func=None) -> torch.optim.lr_scheduler._LRScheduler
+```
+其中的 `optimizer_cfg` 和 `lr_scheduler_cfg` 分别是传给 `Optimizer` 和 `xxxLR` 的键值对，至于要调用哪个 `Optimizer` 和 `xxxLR`，则在 `cfg` 里面定义好 `name` 即可
+
+```python
+>>> import gorilla
+>>> model = gorilla.VGG(16)
+>>> # 构建optimizer
+>>> optimizer_cfg = {"name": "Adam", "lr": 0.002}
+>>> optimizer = gorilla.build_optimizer(model, optimizer_cfg)
+>>> optimizer
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 0.002
+    weight_decay: 0
+)
+>>> # 构建lr_scheduler
+>>> scheduler_cfg = {"name": "MultiStepLR", "milestones": [30, 80], "gamma": 0.1}
+>>> scheduler = gorilla.build_lr_scheduler(optimizer, scheduler_cfg)
+>>> scheduler
+<torch.optim.lr_scheduler.MultiStepLR at 0x7f7da41f99e8>
+```
+当这些写入配置文件中就可以非常方便的进行构建了。
+> NOTE: `build_optimizer` 可以用 `build_optimizer_v2` 代替，原本功能保持不变的同时支持多 `Optimizer` 的构建。
+
+- **梯度裁剪器**
+
+另外针对梯度裁剪的需求，我们也提供了 `GradClipper` 类似上面构建梯度裁剪器，以及 `build_grad_clipper` 的构建接口。
+```python
+>>> import gorilla
+>>> grad_clip_cfg = {"name": "norm", "max_norm": 20}
+>>> clipper = gorilla.GradClipper(**grad_clip_cfg)
+>>> clipper = gorilla.build_grad_clipper(**grad_clip_cfg)
+>>> ...
+>>> loss.backward()
+>>> grad_norm = clipper.clip(model.parameters())
+>>> optimizer.step()
+```
+`clip` 成员函数本质上是调用 `torch.nn.utils.clip_grad.clip_grad_{norm/value}_` 函数，熟悉的同学也可以直接调用这个函数。
+
+- **pipeline 管理**
+
+另外针对训练的 `pipelipe`，我们也提供了一个非常基础的基类 `BaseSolver`，里面提供了一些非常简单的接口，希望同学们的 pipeline 可以继承该 `Solver` 进行复写，由于每个人任务不同，需要的功能很可能区别很大，因此我们不强行规定 `pipeline`，希望以后同学们能够形成统一的规范，我们也能对这部分代码进行更好地整合。
+
+- **日志变量存储器**
+
+如何保存日志有时候需要写些循环和赋值运算操作，在这里我们提供了两个类方便变量的存储。
+一个是针对单个变量的 `HistoryBuffer`，无需参数直接初始化即可。当需要更新的时候调用 `update` 函数：
+```python
+def update(self, value: float, num: Optional[float] = None) -> None
+```
+输入值以及该值的数量（相当于比重，默认为`1`），然后输入的值和数量分别存在 `list` 中，后续在算 `avg` 时会根据数量进行加权得到。
+```python
+>>> import gorilla
+>>> buffer = gorilla.HistoryBuffer()
+>>> buffer.update(10)
+>>> buffer.update(12)
+>>> buffer.update(14, 2)
+>>> buffer.update(15)
+>>> buffer.avg
+13.0 # (10 + 12 + 14 + 15) / (1 + 1 + 2 + 1)
+>>> buffer.values
+[10, 12, 14, 15]
+>>> buffer.nums
+[1, 1, 2, 1]
+>>> buffer.latest
+15
+>>> buffer.average(3)
+13.75 # (12 + 14 + 15) / (1 + 2 + 1) # 求values后三个的均值
+>>> buffer.average(3) # 求values后三个的中位数
+14.0
+```
+在此基础上我们提供了 `LogBuffer` 类结合 `HistoryBuffer` 实现多个变量的列表管理。`LogBuffer` 可以看作是值成员为 `HistoryBuffer` 的字典，`LogBuffer` 的 `update` 为字典。
+```python
+>>> import gorilla
+>>> buffer = gorilla.LogBuffer()
+>>> buffer.update({"a": 10, "b": [10, 2]})
+>>> buffer.update({"a": 12, "b": [12, 3]})
+>>> buffer.average() # 调用HistoryBuffer的avgerate计算均值
+>>> buffer.output
+OrderedDict([('a', 11.0), ('b', 11.2)])
+>>> buffer.get("b")
+<gorilla.solver.log_buffer.HistoryBuffer at 0x7f8cbf4f59b0>
+>>> buffer.get("b").values
+[10.0, 12.0]
+>>> buffer.get("b").nums
+[2, 3]
+>>> buffer.clear()
+>>> buffer.get("b")
+None
+```
+
+
+
+
 
