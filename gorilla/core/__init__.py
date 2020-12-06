@@ -10,9 +10,7 @@ from .comm import (get_world_size, get_rank, get_local_rank, get_local_size,
                    is_main_process, synchronize, gather, all_gather,
                    shared_random_seed, reduce_dict)
 
-from .env import set_random_seed
-
-from .collect_env import collect_env_info
+from .env import set_random_seed, collect_env_info
 
 from .launch import launch
 
