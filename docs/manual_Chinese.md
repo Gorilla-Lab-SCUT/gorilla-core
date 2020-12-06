@@ -425,9 +425,9 @@ Parameter Group 0
 另外针对梯度裁剪的需求，我们也提供了 `GradClipper` 类似上面构建梯度裁剪器，以及 `build_grad_clipper` 的构建接口。
 ```python
 >>> import gorilla
->>> grad_clip_cfg = {"name": "norm", "max_norm": 20}
->>> clipper = gorilla.GradClipper(**grad_clip_cfg)
->>> clipper = gorilla.build_grad_clipper(**grad_clip_cfg)
+>>> # 两者得到的 clipper 是一样的
+>>> clipper = gorilla.GradClipper({"name": "norm", "max_norm": 20})
+>>> clipper = gorilla.build_grad_clipper({"name": "norm", "max_norm": 20})
 >>> ...
 >>> loss.backward()
 >>> grad_norm = clipper.clip(model.parameters())

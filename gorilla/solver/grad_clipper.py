@@ -6,7 +6,7 @@ from torch.nn.utils import clip_grad
 from ..config import Config
 
 class GradClipper:
-    def __init__(self, grad_clip_cfg: [Dict, grad_clip_cfg]):
+    def __init__(self, grad_clip_cfg: [Dict, Config]):
         name = grad_clip_cfg.pop("name")
         assert name in ["norm", "value"]
         self.grad_clip_cfg = grad_clip_cfg
@@ -21,6 +21,6 @@ class GradClipper:
 
 def build_grad_clipper(grad_clip_cfg):
     assert "name" in grad_clip_cfg
-    return GradClipper(**grad_clip_cfg)
+    return GradClipper(grad_clip_cfg)
 
 
