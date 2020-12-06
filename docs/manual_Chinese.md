@@ -34,7 +34,7 @@ data = gorilla.load("test.yaml")
 data = gorilla.load("test.pkl")
     
 # 将数据转储为文件
-gorilla.dump(data, "out.pkl")
+gorilla.    (data, "out.pkl")
 
 # 从一个文件类别加载
 with open("test.json", "r") as f:
@@ -88,7 +88,7 @@ e
 
 ## utils
 `utils` 模块提供了许多辅助性的工具函数。
-- **时间统计**
+### **时间统计**
 
 使用 `Timer` 可以非常方便地对运行时间进行截取：
 ```python
@@ -125,7 +125,7 @@ it takes 1.0 seconds
 ```
 以上生成的时间戳识别器会可以通过 `gorilla.utils.timer._g_timers["task1"]` 获取。
 
-- **过程统计**
+### **过程统计**
 
 （对 `tqdm` 模块更熟悉的同学可以使用 `tqdm` 模块）
 该模块提供 `ProgressBar` 来对过程进度进行跟踪：
@@ -171,7 +171,7 @@ it takes 1.0 seconds
 100%|██████████████████████████████| 10/10 [00:00<00:00, 74499.18it/s]
 ```
 
-- **GPU管理**
+### **GPU管理**
   
 该模块提供了**gpu监视和自动功能索引函数**。
 `get_free_gpu` 函数可以获取当前满足条件的 **gpu的id索引列表**，默认为检索空余显存超过11G的gpu，如果需要检索空闲（无占用程序）的gpu，则设置 `mode="process"` 即可。
@@ -190,5 +190,79 @@ def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need
 ```
 当 `gpu_ids` 给定，则设置为给定的 `gpu_ids` 为 `os.environ["CUDA_VISIBLE_DEVICES"]`，否则调用 `supervise_gpu` 函数获取符合空闲条件的gpu，直接设置。可以免除 `CUDA_VISIBLE_DEVICES=x python script.py` 的前缀工作。
 
-- **路径管理**
-`gorilla.utils.path` 中定义了些许函数，本质上是对 `os`
+### **路径管理**
+
+`gorilla.utils.path` 中定义了些许函数，本质上是对 `os` 中一些函数的包装，其中有可以递归遍历文件夹获取相应后缀的文件列表的 `scandir` 函数：
+```python
+def scandir(dir_path, suffix=None, recursive=False)
+```
+指定遍历根目录 `dir_path`，就可以搜索符合后缀为 `suffix`（可以为包含多个后缀的 `tuple`） 的文件，`recursive=True` 则递归搜索完所有的子文件夹，最终返回为 `generator`，可以通过 `list(.)` 转为列表。
+
+### **日志管理**
+
+python的logging库已经非常完善和易用了，这里仅介绍函数 `get_root_logger`，实现功能也非常简单，本质上调用了`logging.getLogger` 然后对里面一些参数和格式进行了设置。
+```python
+def get_root_logger(log_file=None, log_level=logging.INFO, timestamp=None)
+```
+
+### **模型读写管理**
+
+该模块还提供了模型读写管理的功能函数。
+对于使用 `DataParallel/DistributedDataParallel` 包装并行的网络的名称前缀都会有 `.module` ，对于这种情况，无论时保存和读写都需要在加载或者保存时进行前缀的处理，我们提供的函数则帮你处理了这些繁琐的工作。
+
+有 `is_module_wrapper` 来判断是否对其进行了并行的包装，进而在保存时，
+仅保存其 `.module` 部分，也就是把 `.module` 去掉了；在加载时，则仅将网络加载进 `.module` 部分。
+
+- 保存
+
+保存网络的函数为 `save_checkpoint`，将模型参数保存为 `filename`：
+```python
+def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None)
+```
+该函数还支持保存对 `optimizer` 以及 `lr_scheduler` 进行保存，以便在下次导入训练时还原训练的关键参数，在这里保存的 `dict` 键值索引名称如下：
+```python
+checkpoint = {
+    "state_dict": 网络参数,
+    "optimizer": optimizer参数,
+    "scheduler": lr_scheduler参数,
+    "meta": 存放任意参数的字典，例如时间/epoch数等,
+}
+```
+当保存对象输入为 `None` 默认保存为 **空字典**。
+
+- 读取
+
+读取网络的部分这里介绍两个函数： `load_checkpoint` 和 `resume`。
+`load_checkpoint` 是仅针对网络参数加载的函数。
+```python
+def load_checkpoint(model,
+                    filename,
+                    map_location=None,
+                    strict=False,
+                    logger=None)
+```
+支持从 `url` 下载所需的权重。在支持直接导入模型参数的基础上（既`checkpoint`本身就是`state_dict`），也为了支持上述的 `checkpoint` 键值索引也进行了相应的判断和处理。
+
+另外一个函数就是对 `load_checkpoitn` 函数的扩展和包装 `resume`。当我们训练网络中断，继续训练的时候，我们在已经保存 `optimizer` 和 `lr_scheduler` 的基础上，需要把它们也加载进来。`resume` 函数就可以看作在 `load_checkpoint` 的基础上实现 `load_optimizer` 和 `load_lr_scheduler` 的功能：
+```python
+def resume(model,
+           filename,
+           optimizer=None,
+           scheduler=None,
+           resume_optimizer=True,
+           resume_scheduler=True,
+           map_location="default")
+```
+
+## **显存试错**
+这里仅涉及到一个函数，来自 `detectron2` 库，`retry_if_cuda_oom`，这个函数可以可以看作对函数的包装函数，其功能在于在一定程度上避免OOM的情况
+```python
+def retry_if_cuda_oom(func)
+```
+这里仅放一个 `detectron2` 中的使用案例，这个是2d检测任务，对生成的 `anchor` 与 `gt_bboxes` 进行匹配，由于 `anchor` 的数量很多所以可能会出现OOM的情况，当捕获到OOM异常时，会先执行`torch.cuda.empty_cache()`操作再进行尝试，如果依旧OOM，则将其放到cpu上运行。
+不过如果是网络过大输出过大特征图导致的OOM则无效，仅对索引函数有效。
+```python
+match_quality_matrix=retry_if_cuda_oom(pairwise_iou)(gt_boxes_i,anchors_i)
+```
+
+

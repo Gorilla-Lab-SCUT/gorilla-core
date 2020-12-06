@@ -103,9 +103,7 @@ def load_checkpoint(model,
     r"""Load checkpoint from a file or URI.
     Args:
         model (Module): Module to load checkpoint.
-        filename (str): Accept local filepath, URL, ``torchvision://xxx``,
-            ``open-mmlab://xxx``. Please refer to ``docs/model_zoo.md`` for
-            details.
+        filename (str): Accept local filepath, URL.
         map_location (str): Same as :func:`torch.load`.
         strict (bool): Whether to allow different params for the model and
             checkpoint.
@@ -262,9 +260,7 @@ def get_torchvision_models():
 def _load_checkpoint(filename, map_location=None):
     r"""Load checkpoint from somewhere (modelzoo, file, url).
     Args:
-        filename (str): Accept local filepath, URL, ``torchvision://xxx``,
-            ``open-mmlab://xxx``. Please refer to ``docs/model_zoo.md`` for
-            details.
+        filename (str): Accept local filepath, URL, ``torchvision://xxx``.
         map_location (str | None): Same as :func:`torch.load`. Default: None.
     Returns:
         dict | OrderedDict: The loaded checkpoint. It can be either an
