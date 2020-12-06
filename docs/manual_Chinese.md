@@ -265,4 +265,70 @@ def retry_if_cuda_oom(func)
 match_quality_matrix=retry_if_cuda_oom(pairwise_iou)(gt_boxes_i,anchors_i)
 ```
 
+# Config
+该模块提供了非常实用的配置类`Config`。
+它支持从多种文件格式（包括 `.py`，`.json`  `.yml` 和 `.yaml`）加载配置。加载进来的配置类`Config`与`dict`有相似的性质，更方便的是它不仅可以用`config["key"]` 的方式索引，更可以通过 `config.key` 的方式索引，也支持 `**config` 实现函数参数的键值传递。
+```python
+a.yaml
+#########################
+a: 1
+b: {"b1": [0, 1, 2], "b2": None}
+c: (1, 2)
+d: "string"
+##########################
+
+#测试案例
+cfg = Config.fromfile("a.yaml")
+assert cfg.a == 1
+assert cfg.b.b1 == [0, 1, 2]
+cfg.c = None
+assert cfg.c == None
+```
+
+另外就是该类支持非常好的融合性质，我们的网络实际上由非常多的部分组成，实际上我们的配置文件往往包含了网络的所有参数，有时候不太方便。
+`Config` 支持在配置文件中定义 `_base_` 对象，`_base_` 对象中存放的是需要融合并覆盖的子配置文件。
+```python
+b.json(".json"文件，但对".py", ".json", ".yaml"都支持)
+#########################
+{
+    "_base_": "./a.yaml", # 融合对象是 ".yaml" 文件，定义在上
+    "c": [3, 4],
+    "d": "Str"
+}
+##########################
+
+#测试案例
+>>> cfg = Config.fromfile("b.json")
+>>> print(cfg)
+Config (path: b.json): {
+    "a": 1,
+    "b": {"b1": [0, 1, 2], "b2": "None"},
+    "c": [3, 4],
+    "d": "Str"
+    }
+```
+
+可以看到加载 `b.json` 对象后得到的 `Config` 在继承了 `a.yaml` 中的成员后对已有的 `c`，`d` 成员进行了覆盖。
+
+同时，该 `Config` 在初始化`dict`（加载文件暂时未实现）会自动地根据 `.` 进行层级划分
+```python
+>>> options = {"model.backbone.name": "ResNet",
+>>>            "model.backbone.depth": 50}
+>>> cfg = gorilla.Config({"model": {"backbone": {"name": "VGG"}}})
+>>> cfg.merge_from_dict(options)
+>>> print(cfg)
+Config (path: None): {
+    "model":{
+        "backbone": {
+            "name": "ResNet",
+            "depth": 50}}}
+```
+但是在加载的时候`Config(dict)`和`Config.fromfile(filename)`并不会自动进行层级划分，需要注意。另外就是上面例子中提到的 `merge_from_dict` 成员函数，它可以根据融合对象对已有的配置进行融合覆盖，上面的例子就表明了，`name` 这个成员原本为 `VGG` 被 `ResNet` 覆盖了。
+
+另外就是许多同学非常喜欢使用 `argparse` 管理超参数，为了方面管理我们希望实现 `cfg` 和 `args` 的统一，经过我们的思考，我们提供了 `merge_args_and_cfg` 函数，实现融合：
+```python
+def merge_args_and_cfg(cfg: Optional[Config]=None, args: Optional[ArgumentParser]=None) -> Config
+```
+输入分别为 `cfg` 和 `args` 融合得到新的 `cfg`，由于 `args` 中的参数优先度往往比 `cfg` 中的参数高，所以我们利用了上面所说的 `merge_from_dict` 函数实现了两者的融合，对于相同的参数，则利用 `args` 中的参数进行覆盖。
+
 
