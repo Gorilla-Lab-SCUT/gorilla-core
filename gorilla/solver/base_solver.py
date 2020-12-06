@@ -25,7 +25,7 @@ class BaseSolver(metaclass=ABCMeta):
         self.dataloaders = dataloaders
         self.lr_scheduler = lr_scheduler
         self.cfg = cfg
-        self.epoch = cfg.start_epoch
+        self.epoch = cfg.get("start_epoch", 0)
         self.logger = logger
         self.writer = SummaryWriter(log_dir=cfg.log)
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch

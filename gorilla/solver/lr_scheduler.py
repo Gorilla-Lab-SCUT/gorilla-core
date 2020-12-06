@@ -14,7 +14,7 @@ import torch
 
 #### pytorch base lr_scheduler
 from torch.optim.lr_scheduler import (CosineAnnealingLR, CyclicLR, ExponentialLR,
-                                      MultiStepLR, OneCycleLR, StepLR, LambdaLR)
+                                      MultiStepLR, OneCycleLR, LambdaLR)
 
 
 class PolyLR(torch.optim.lr_scheduler._LRScheduler):
@@ -55,6 +55,50 @@ class PolyLR(torch.optim.lr_scheduler._LRScheduler):
         # The new interface
         return self.get_lr()
 
+
+class StepLR(torch.optim.lr_scheduler._LRScheduler):
+    r"""Decays the learning rate of each parameter group by gamma every
+    step_size epochs. Notice that such decay can happen simultaneously with
+    other changes to the learning rate from outside this scheduler. When
+    last_epoch=-1, sets initial lr as lr.
+
+    Args:
+        optimizer (Optimizer): Wrapped optimizer.
+        step_size (int): Period of learning rate decay.
+        gamma (float): Multiplicative factor of learning rate decay.
+            Default: 0.1.
+        last_epoch (int): The index of last epoch. Default: -1.
+
+    Example:
+        >>> # Assuming optimizer uses lr = 0.05 for all groups
+        >>> # lr = 0.05     if epoch < 30
+        >>> # lr = 0.005    if 30 <= epoch < 60
+        >>> # lr = 0.0005   if 60 <= epoch < 90
+        >>> # ...
+        >>> scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
+        >>> for epoch in range(100):
+        >>>     train(...)
+        >>>     validate(...)
+        >>>     scheduler.step()
+    """
+
+    def __init__(self, optimizer, step_size, gamma=0.1, last_epoch=-1):
+        self.step_size = step_size
+        self.gamma = gamma
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self):
+        if (self.last_epoch == 0) or (self.last_epoch % self.step_size != 0):
+            return [group["lr"] * group.get("lr_multi", 1.0)
+                for group in self.optimizer.param_groups]
+        return [group["lr"] * self.gamma * group.get("lr_multi", 1.0)
+            for group in self.optimizer.param_groups]
+
+    def _get_closed_form_lr(self):
+        return [base_lr * self.gamma ** (self.last_epoch // self.step_size)
+                for base_lr in self.base_lrs]
+
+
 class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(
         self,
@@ -89,6 +133,40 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     def _compute_values(self) -> List[float]:
         # The new interface
         return self.get_lr()
+
+
+class InvLR(torch.optim.lr_scheduler._LRScheduler):
+    r"""
+    Note p as current epoch or iter number according to user setting;
+    Note maxp as num_epochs or num_iters according to user setting;
+    p / maxp ranges from [0, 1].
+    Then lr(p) = base_lr * (1 + gamma * p / maxp)**(-power).
+
+    Args:
+        optimizer (Optimizer): Wrapped optimizer.
+        maxp (int): Maximum epochs (or maximum iterations if
+            lr_scheduler.step() is called each iteration)
+        gamma (float): Default: 0.1.
+        power (float): Default: 0.75.
+        last_epoch (int): The index of last epoch. Default: -1.
+
+    Example:
+        >>> scheduler = InvLR(optimizer, gamma=10, power=0.75)
+        >>> for epoch in range(100):
+        >>>     train(...)
+        >>>     validate(...)
+        >>>     scheduler.step()
+    """
+    def __init__(self, optimizer, maxp, gamma=10, power=0.75, last_epoch=-1):
+        self.gamma = gamma
+        self.power = power
+        self.maxp = maxp
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self):
+        progress = self.last_epoch / self.maxp
+        return [base_lr * (1 + self.gamma * progress)**(-self.power) * group.get("lr_mult", 1.0)
+            for group, base_lr in zip(self.optimizer.param_groups, self.base_lrs)]
 
 
 class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
@@ -229,7 +307,7 @@ def adjust_learning_rate(optimizer, epoch, args, mode="auto", value=0.1, namelis
     Return
     ------
     The function has no return
-    """    
+    """
     select_groups = []
     if len(namelist) == 0:
         select_groups = optimizer.param_groups
