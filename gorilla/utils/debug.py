@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 def check(*args, **kwargs):
-    """
+    r"""
     Usage:
         s = "string"
         l = [1, 2, 3, 4, 5, 6]
@@ -19,14 +19,14 @@ def check(*args, **kwargs):
         check(s, l, ll, l=l, ll=ll, n=n, t=t, d=d, dd=dd)    
     """
     def strip(s):
-        """strip and get the content between two apostrophe
+        r"""strip and get the content between two apostrophe
         dtype('float64') --> float64
         <class 'numpy.ndarray'> --> numpy.ndarray
         """
         return str(s).split("'")[1]
 
     def go(kw, arg, dl=5, ind=0):
-        """
+        r"""
         Args:
             kw (str): Name of a variable or keyword of a dict
             arg: Variable of any type
@@ -65,7 +65,7 @@ def check(*args, **kwargs):
         go(kw, arg)
 
 def display(name, param):
-    """This function can be used to debug in data loading pipeline and model forwarding."""
+    r"""This function can be used to debug in data loading pipeline and model forwarding."""
     if isinstance(param, torch.Tensor):
         print("{} max: {:+.5f} min: {:+.5f} mean: {:+.5f} abs mean: {:+.5f} size:{}".format(
             name.ljust(45), param.max().item(), param.min().item(),
@@ -120,7 +120,7 @@ class myTimer():
         self.end = time.time()
 
     def set_point(self):
-        """set_point is equal to show_interval_time without output info."""
+        r"""set_point is equal to show_interval_time without output info."""
         self.end = time.time()
 
     def show_total_time(self, string='total'):

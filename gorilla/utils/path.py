@@ -72,7 +72,7 @@ def symlink(src, dst, overwrite=True, **kwargs):
     os.symlink(src, dst, **kwargs)
 
 
-def scandir(dir_path, prefix=None, suffix=None, recursive=False):
+def scandir(dir_path, suffix=None, recursive=False):
     r"""Scan a directory to find the interested files.
 
     Args:
@@ -84,44 +84,32 @@ def scandir(dir_path, prefix=None, suffix=None, recursive=False):
     Returns:
         A generator for all the interested files with relative pathes.
     """
-    if not is_filepath(dir_path):
-        raise TypeError("`dir_path` must be a string or Path object")
-    dir_path = str(dir_path)
+    if isinstance(dir_path, (str, Path)):
+        dir_path = str(dir_path)
+    else:
+        raise TypeError("`dir_path` must be a string or Path object, but got {}".format(type(dir_path)))
 
     if (suffix is not None) and not isinstance(suffix, (str, tuple)):
-        raise TypeError("`suffix` must be a string or tuple of strings")
-
-    if (prefix is not None) and not isinstance(prefix, (str, tuple)):
-        raise TypeError("`prefix` must be a string or tuple of strings")
+        raise TypeError("`suffix` must be a string or tuple of strings, but got {}".format(type(suffix)))
 
     root = dir_path
 
-    def _scandir(dir_path, prefix, suffix, recursive):
+    def _scandir(dir_path, suffix, recursive):
         for entry in os.scandir(dir_path):
-            if not entry.name.startswith(".") and entry.is_file():
-                # usr relpath to record temp dir
+            if not entry.name.startswith('.') and entry.is_file():
                 rel_path = osp.relpath(entry.path, root)
-                # not specify prefix and suffix
-                if (prefix is None) and (suffix is None):
+                if suffix is None:
                     yield rel_path
-                # just specify prefix
-                elif (suffix is None) and rel_path.startswith(prefix):
-                    yield rel_path
-                # just specify suffix
-                elif (prefix is None) and rel_path.endswith(suffix):
-                    yield rel_path
-                # both specify
-                elif rel_path.startswith(prefix) and rel_path.endswith(suffix):
+                elif rel_path.endswith(suffix):
                     yield rel_path
             else:
                 if recursive:
-                    yield from _scandir(entry.path,
-                                        suffix=suffix,
-                                        recursive=recursive)
+                    yield from _scandir(
+                        entry.path, suffix=suffix, recursive=recursive)
                 else:
                     continue
 
-    return _scandir(dir_path, prefix=prefix, suffix=suffix, recursive=recursive)
+    return _scandir(dir_path, suffix=suffix, recursive=recursive)
 
 
 def find_vcs_root(path, markers=(".git", )):
