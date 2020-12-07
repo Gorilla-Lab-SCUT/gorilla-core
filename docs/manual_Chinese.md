@@ -18,7 +18,7 @@ gorilla
 ```
 
 
- 下面介绍一下常用的函数。
+下面介绍一下常用的函数。
 ---
 ## fileio
 `fileio` 模块支持直接对 `.json`, `.yaml`, `.pkl` 的加载和读取
@@ -254,7 +254,7 @@ def resume(model,
            map_location="default")
 ```
 
-## **显存试错**
+### **显存试错**
 这里仅涉及到一个函数，来自 `detectron2` 库，`retry_if_cuda_oom`，这个函数可以可以看作对函数的包装函数，其功能在于在一定程度上避免OOM的情况
 ```python
 def retry_if_cuda_oom(func)
@@ -265,7 +265,7 @@ def retry_if_cuda_oom(func)
 match_quality_matrix=retry_if_cuda_oom(pairwise_iou)(gt_boxes_i,anchors_i)
 ```
 
-# Config
+## Config
 该模块提供了非常实用的配置类`Config`。
 它支持从多种文件格式（包括 `.py`，`.json`  `.yml` 和 `.yaml`）加载配置。加载进来的配置类`Config`与`dict`有相似的性质，更方便的是它不仅可以用`config["key"]` 的方式索引，更可以通过 `config.key` 的方式索引，也支持 `**config` 实现函数参数的键值传递。
 ```python
@@ -331,7 +331,7 @@ def merge_args_and_cfg(cfg: Optional[Config]=None, args: Optional[ArgumentParser
 ```
 输入分别为 `cfg` 和 `args` 融合得到新的 `cfg`，由于 `args` 中的参数优先度往往比 `cfg` 中的参数高，所以我们利用了上面所说的 `merge_from_dict` 函数实现了两者的融合，对于相同的参数，则利用 `args` 中的参数进行覆盖。
 
-# Core
+## Core
 Core 作为代码库的核心，里面包含了许多必要的函数，其中也包括很多杂项函数，这一部分我们还在整理中，目前对外有两个设置的函数。
 一个是设置随机数种子的 `set_random_seed`
 ```python
@@ -371,7 +371,7 @@ PyTorch built with:
 ```
 剩下的函数我们也在进行整理。
 
-# solver
+## solver
 该模块主要是设计网络训练的辅助函数。
 - **学习率策略**
 
@@ -487,14 +487,14 @@ OrderedDict([('a', 11.0), ('b', 11.2)])
 None
 ```
 
-# losses
+## losses
 losses 模块目前仅提供了定义在 `detectron2` 中的三个损失函数：
 ```python
 sigmoid_focal_loss, giou_loss, smooth_l1_loss
 ```
 如果同学们有常用且通用的losses欢迎以函数的形式向代码库贡献。
 
-# nn
+## nn
 nn 模块中定义了常用的网络及其函数。
 函数主要以初始化为主，实现了以下的初始化：
 ```python
@@ -623,7 +623,7 @@ GorillaFC(
 )
 ```
 
-# evaluation
+## evaluation
 该模块是一个基类模块，也就是没有实现具体的功能，由于同学们涉及到的数据集比较多，同时每个人任务不尽相同，为了更好的管理，在 `gorilla-core` 中不放置具体的数据集，数据集的接口将分别放置在 `gorilla2d/gorilla3d` 中，这里仅提供一个验证接口的范式 `DatasetEvaluator`。
 ```python
 class DatasetEvaluator:
