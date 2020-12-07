@@ -49,8 +49,8 @@ class GorillaFC(nn.Sequential):
                  out_features,
                  bias=True,
                  name="",
-                 norm_cfg=dict(type="BN1d"),
-                 act_cfg=dict(type="ReLU", inplace=True),
+                 norm_cfg=dict(name="BN1d"),
+                 act_cfg=dict(name="ReLU", inplace=True),
                  dropout=None,
                  order=["FC", "norm", "act", "dropout"]):
         super().__init__()
@@ -80,7 +80,7 @@ class GorillaFC(nn.Sequential):
             else:
                 num_features = FC.in_features
             self.norm_cfg.update(num_features=num_features)
-            norm_caller = get_torch_layer_caller(self.norm_cfg.pop("type"))
+            norm_caller = get_torch_layer_caller(self.norm_cfg.pop("name"))
             norm = norm_caller(**self.norm_cfg)
         else:
             if "norm" in self.order:
@@ -93,7 +93,7 @@ class GorillaFC(nn.Sequential):
         with_act = (self.act_cfg is not None)
         act = None
         if with_act:
-            act_caller = get_torch_layer_caller(self.act_cfg.pop("type"))
+            act_caller = get_torch_layer_caller(self.act_cfg.pop("name"))
             act = act_caller(**self.act_cfg)
         else:
             if "act" in self.order:
@@ -122,7 +122,7 @@ class GorillaFC(nn.Sequential):
         #    their own `reset_parameters` methods.
         if not hasattr(FC, "init_weights"):
             a, nonlinearity = math.sqrt(5), "relu"
-            if self.act_cfg is not None and self.act_cfg["type"] == "LeakyReLU":
+            if self.act_cfg is not None and self.act_cfg["name"] == "LeakyReLU":
                 a = self.act_cfg.get("negative_slope", 0.01)
                 nonlinearity = "leaky_relu"
             kaiming_init(FC,

@@ -14,6 +14,6 @@ from .transformer import (Transformer, TransformerEncoder, TransformerDecoder,
                           TransformerEncoderLayer, TransformerDecoderLayer,
                           build_transformer)
 
-from .layer_builder import build_from_package, get_torch_layer_caller
+from .layer_builder import NAME_MAP, build_from_package, get_torch_layer_caller
 
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
