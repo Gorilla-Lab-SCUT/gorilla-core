@@ -89,6 +89,13 @@ class Timer:
         self._t_last = time()
         return dur
 
+    def reset(self):
+        r"""
+        Reset a new _t_start.
+        """
+        self._is_running = False
+        self.start()
+
 
 _g_timers = {}  # global timers
 

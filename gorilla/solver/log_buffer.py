@@ -38,11 +38,12 @@ class LogBuffer:
                 raise TypeError("var must be a Sequence with length of 2"
                                 " or float, but got {}".format(type(var)))
 
+    # TODO: 能否支持Logbuffer返回HistoryBuffer的latest
     def average(self, n=0):
         r"""Average latest n values or all values."""
         assert n >= 0
         for key in self._val_history:
-            avg = self._val_history[key].avgerage(n)
+            avg = self._val_history[key].average(n)
             self._output[key] = avg
 
     def get(self, name):
@@ -83,7 +84,7 @@ class HistoryBuffer:
         """
         return np.median(self._values[-window_size:])
 
-    def avgerage(self, window_size: int) -> float:
+    def average(self, window_size: int) -> float:
         r"""
         Return the mean of the latest `window_size` values in the buffer.
         """

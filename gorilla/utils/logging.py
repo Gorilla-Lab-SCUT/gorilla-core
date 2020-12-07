@@ -1,5 +1,6 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 
+import os
 import logging
 
 import torch.distributed as dist
@@ -58,6 +59,8 @@ def get_logger(name, log_file=None, log_level=logging.INFO):
 
     # only rank 0 will add a FileHandler
     if rank == 0 and log_file is not None:
+        if not os.path.isdir(os.path.dirname(log_file)):
+            os.mkdir(os.path.dirname(log_file))
         file_handler = logging.FileHandler(log_file, "w")
         handlers.append(file_handler)
 
