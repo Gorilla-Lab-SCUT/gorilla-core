@@ -487,7 +487,175 @@ OrderedDict([('a', 11.0), ('b', 11.2)])
 None
 ```
 
+# losses
+losses 模块目前仅提供了定义在 `detectron2` 中的三个损失函数：
+```python
+sigmoid_focal_loss, giou_loss, smooth_l1_loss
+```
+如果同学们有常用且通用的losses欢迎以函数的形式向代码库贡献。
 
+# nn
+nn 模块中定义了常用的网络及其函数。
+函数主要以初始化为主，实现了以下的初始化：
+```python
+def constant_init(module: nn.Module, val, bias=0)
+    ...
+def xavier_init(module: nn.Module, gain=1, bias=0, distribution="normal")
+    ...
+def normal_init(module: nn.Module, mean=0, std=1, bias=0)
+    ...
+def uniform_init(module: nn.Module, a=0, b=1, bias=0)
+    ...
+def kaiming_init(module: nn.Module,
+                 a=0,
+                 mode="fan_out",
+                 nonlinearity="relu",
+                 bias=0,
+                 distribution="normal")
+    ...
+def c2_xavier_init(module: nn.Module)
+    ...
+def c2_msra_init(module: nn.Module):
+    ...
+def bias_init_with_prob(prior_prob)
+    ...
+```
+开箱即用的网络结构有 `AlexNet, VGG, ResNet` [图卷积](https://github.com/tkipf/pygcn) `GraphConvolution, GCN` 以及来自[DETR](https://github.com/facebookresearch/detr)的 `Transformer, TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer`
+另外，由于我们自己搭建卷积网络或者全连接网络的时候另外还需要搭配相应的`activation`和`norm`这里我们提供了 `GorillaConv` 类，通过给定相应的配置即可形成一个相应的卷积层：
+```python
+class GorillaConv(nn.Sequential):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 padding=0,
+                 dilation=1,
+                 groups=1,
+                 bias=True,
+                 name="",
+                 D=2,
+                 norm_cfg=None,
+                 act_cfg=dict(name="ReLU", inplace=True),
+                 with_spectral_norm=False,
+                 padding_mode="zeros",
+                 order=["conv", "norm", "act"])
+```
+只要是非常简单的输入相应的参数即可生成相应的卷积层：
+```python
+>>> import gorilla
+# 卷积后带激活函数（默认为ReLU）
+>>> gorilla.GorillaConv(8, 16, 3)
+GorillaConv(
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1))
+  (act): ReLU(inplace=True)
+)
+# 一维卷积（给定D）
+>>> gorilla.GorillaConv(8, 16, 3, D=1)
+GorillaConv(
+  (conv): Conv1d(8, 16, kernel_size=(3,), stride=(1,))
+  (act): ReLU(inplace=True)
+)
+# 只要卷积（给定act_cfg）
+>>> gorilla.GorillaConv(8, 16, 3, act_cfg=None)
+GorillaConv(
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1))
+)
+# 带上bn（给定norm_cfg）
+>>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"name": "BN2d"})
+GorillaConv(
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1), bias=False)
+  (norm): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (act): ReLU(inplace=True)
+)
+# activation在bn之前（调整order）
+>>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"name": "BN2d"},order=["conv", "act", "norm"])
+GorillaConv(
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1), bias=False)
+  (act): ReLU(inplace=True)
+  (norm): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+)
+# bn在conv之前（调整order，注意bn会自动获取特征维度）
+>>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"name": "BN2d"},order=["norm", "conv", "act"])
+GorillaConv(
+  (norm): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1), bias=False)
+  (act): ReLU(inplace=True)
+)
+```
+同时也有面向全连接的 `GorillaFC`
+```python
+class GorillaFC(nn.Sequential):
+    def __init__(self,
+                 in_features,
+                 out_features,
+                 bias=True,
+                 name="",
+                 norm_cfg=dict(name="BN1d"),
+                 act_cfg=dict(name="ReLU", inplace=True),
+                 dropout=None,
+                 order=["FC", "norm", "act", "dropout"])
+```
+用起来比 `GorillaConv` 更加的简单
+```python
+>>> import gorilla
+>>> gorilla.GorillaFC(8, 16)
+GorillaFC(
+  (FC): Linear(in_features=8, out_features=16, bias=True)
+  (norm): BatchNorm1d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (act): ReLU(inplace=True)
+)
+>>> gorilla.GorillaFC(8, 16, norm_cfg=None) # 不带bn
+GorillaFC(
+  (FC): Linear(in_features=8, out_features=16, bias=True)
+  (act): ReLU(inplace=True)
+)
+>>> gorilla.GorillaFC(8, 16, act_cfg=None) # 不带act
+GorillaFC(
+  (FC): Linear(in_features=8, out_features=16, bias=True)
+  (norm): BatchNorm1d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+)
+>>> gorilla.GorillaFC(8, 16, order=["norm", "FC", "act", "dropout"]) # bn在FC前
+GorillaFC(
+  (norm): BatchNorm1d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (FC): Linear(in_features=8, out_features=16, bias=True)
+  (act): ReLU(inplace=True)
+)
+```
 
+# evaluation
+该模块是一个基类模块，也就是没有实现具体的功能，由于同学们涉及到的数据集比较多，同时每个人任务不尽相同，为了更好的管理，在 `gorilla-core` 中不放置具体的数据集，数据集的接口将分别放置在 `gorilla2d/gorilla3d` 中，这里仅提供一个验证接口的范式 `DatasetEvaluator`。
+```python
+class DatasetEvaluator:
+    def reset(self):
+        pass
 
+    def process(self, inputs, outputs):
+        pass
+
+    def evaluate(self):
+        pass
+```
+对于数据集验证，我们希望是在每次网络进行前传后通过 `process` 函数接受相应的 `prediction/gt` 进行相应的处理保存起来。当跑完验证集后利用 `evaluate` 函数进行验证得到验证的结果。这样的设计能够保证脚本的纯净度，并且方便他人复用。
+当对同一个数据集有多个任务指标时，我们也有 `DatasetEvaluator`：
+```python
+class DatasetEvaluators(DatasetEvaluator):
+    def __init__(self, evaluators):
+        super().__init__()
+        self._evaluators = evaluators
+
+    def reset(self):
+        for evaluator in self._evaluators:
+            evaluator.reset()
+
+    def process(self, inputs, outputs):
+        for evaluator in self._evaluators:
+            evaluator.process(inputs, outputs)
+
+    def evaluate(self):
+        results = OrderedDict()
+        for evaluator in self._evaluators:
+            result = evaluator.evaluate()
+```
+显然这个是基于 `DatasetEvaluator` 的包装器，实现原理非常简单，我们希望当一个数据集有多个任务指标时，能够根据任务指标分开写再用 `DatasetEvaluator` 类包装成一个数据集的验证接口。
 
