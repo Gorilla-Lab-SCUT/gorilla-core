@@ -39,17 +39,29 @@ class LogBuffer:
                 raise TypeError("var must be a Sequence with length of 2"
                                 " or float, but got {}".format(type(var)))
 
-    # TODO: 能否支持Logbuffer返回HistoryBuffer的latest
     def average(self, n=0):
         r"""Average latest n values or all values."""
         assert n >= 0
         for key in self._val_history:
-            avg = self._val_history[key].average(n)
-            self._output[key] = avg
+            self._output[key] = self._val_history[key].average(n)
 
     def get(self, name):
         r"""Get the values of name"""
         return self._val_history.get(name, None)
+
+    @property
+    def avg(self):
+        avg_dict = {}
+        for key in self._val_history:
+            avg_dict[key] = self._val_history[key].avg
+        return avg_dict
+        
+    @property
+    def latest(self):
+        latest_dict = {}
+        for key in self._val_history:
+            latest_dict[key] = self._val_history[key].latest
+        return latest_dict
 
 
 class HistoryBuffer:
@@ -59,6 +71,9 @@ class HistoryBuffer:
     """
 
     def __init__(self) -> None:
+        self.clear()
+
+    def clear(self) -> None:
         self._values: List[float] = []
         self._nums: List[float] = []
         self._count: int = 0
