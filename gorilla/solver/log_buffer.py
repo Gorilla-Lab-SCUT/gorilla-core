@@ -29,6 +29,7 @@ class LogBuffer:
         assert isinstance(vars, dict)
         for key, var in vars.items():
             if isinstance(var, Sequence) and len(var) == 2:
+                var = list(var) # change tuple
                 var[0] = float(var[0])
                 self._val_history[key].update(*var)
             elif isinstance(var, (int, float)):

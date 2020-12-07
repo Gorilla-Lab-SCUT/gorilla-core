@@ -1,8 +1,7 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 
+from .build import (build_lr_scheduler, build_optimizer, build_optimizer_v2)
 from .base_solver import BaseSolver
-from .build import (build_lr_scheduler, bulid_solver,
-                    build_optimizer, build_optimizer_v2)
 from .log_buffer import (LogBuffer, HistoryBuffer)
 from .grad_clipper import (GradClipper, build_grad_clipper)
 from .lr_scheduler import (WarmupCosineLR, WarmupMultiStepLR, WarmupPolyLR,

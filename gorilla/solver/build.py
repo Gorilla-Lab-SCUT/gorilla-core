@@ -5,18 +5,8 @@ from ..config import Config
 import torch
 
 from . import lr_scheduler as lr_schedulers
-from .base_solver import BaseSolver
 
 from ..core import is_seq_of
-
-
-def bulid_solver(model, optimizer, dataloaders, lr_scheduler, cfg, logger=None):
-    return BaseSolver(model,
-                      optimizer,
-                      dataloaders,
-                      lr_scheduler,
-                      cfg,
-                      logger)
 
 
 def build_optimizer(model: torch.nn.Module,

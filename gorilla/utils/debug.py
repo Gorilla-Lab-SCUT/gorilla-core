@@ -101,32 +101,3 @@ def check_rand_state():
         int(state[8]) + (int(state[9])<<8),
         int(state[16]) + (int(state[17])<<8)))
 
-class myTimer():
-    r"""Print time information in different stages
-    Example:
-        T = Timer()
-        T.start() # point A; start timing
-        # do something
-        T.show_interval_time() # point B; show time interval between AB
-        # do other things
-        T.show_interval_time() # point C; show time interval between BC
-        T.show_total_time() # show time interval between AC
-    """
-    def __init__(self):
-        pass
-
-    def start(self):
-        self.begin = time.time()
-        self.end = time.time()
-
-    def set_point(self):
-        r"""set_point is equal to show_interval_time without output info."""
-        self.end = time.time()
-
-    def show_total_time(self, string='total'):
-        print( 'total - {}: {:.3f}s'.format(string, time.time() - self.begin ) )
-
-    def show_interval_time(self, string='interval'):
-        print( 'inverval - {}: {:.3f}s'.format(string, time.time() - self.end ) )
-        self.end = time.time()
-

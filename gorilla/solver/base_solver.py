@@ -8,35 +8,34 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from .log_buffer import LogBuffer
+from .build import build_optimizer, build_lr_scheduler
 
 
 class BaseSolver(metaclass=ABCMeta):
     r"""Base class of model solver."""
     def __init__(self,
                  model,
-                 optimizer,
                  dataloaders,
-                 lr_scheduler,
                  cfg,
                  logger=None):
         # initial essential parameters
         self.model = model
-        self.optimizer = optimizer
+        self.optimizer = build_optimizer(model, cfg.optimizer)
+        self.lr_scheduler = build_lr_scheduler(self.optimizer, cfg.lr_scheduler)
         self.dataloaders = dataloaders
-        self.lr_scheduler = lr_scheduler
         self.cfg = cfg
         self.epoch = cfg.get("start_epoch", 0)
         self.logger = logger
         self.writer = SummaryWriter(log_dir=cfg.log)
-        self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
+        self.iter = 0 # cumulative iter number, doesn't flush when come into a new epoch
         self.log_buffer = LogBuffer()
 
         # the hooks container (optional)
         self._hooks = []
 
-        self.do_before_training()
+        self.prepare()
 
-    def do_before_training(self):
+    def prepare(self):
         # set random seed to keep the result reproducible
         if self.cfg.seed != 0:
             from ..core import set_random_seed
