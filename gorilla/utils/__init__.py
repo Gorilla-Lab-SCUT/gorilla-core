@@ -18,11 +18,6 @@ from .model import (check_model, check_grad, check_params, check_optimizer, regi
 
 from .debug import (check, display, check_rand_state)
 
-from .checkpoint import (_load_checkpoint, load_checkpoint, load_state_dict,
-                         load_url_dist, resume, save_checkpoint,
-                         resume_checkpoint, save_summary, weights_to_cpu,
-                         get_state_dict, is_module_wrapper)
-
 from .memory import retry_if_cuda_oom
 
 __all__ = [k for k in globals().keys() if not k.startswith("_")]

@@ -8,7 +8,7 @@ import numpy as np
 class LogBuffer:
     def __init__(self):
         self._val_history = defaultdict(HistoryBuffer)
-        self._output = OrderedDict()
+        self._output = {}
 
     @property
     def values(self):

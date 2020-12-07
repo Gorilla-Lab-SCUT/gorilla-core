@@ -9,6 +9,8 @@ from tensorboardX import SummaryWriter
 
 from .log_buffer import LogBuffer
 from .build import build_optimizer, build_lr_scheduler
+from .checkpoint import resume
+from ..utils import check_file_exist
 
 
 class BaseSolver(metaclass=ABCMeta):
@@ -25,7 +27,7 @@ class BaseSolver(metaclass=ABCMeta):
         self.dataloaders = dataloaders
         self.cfg = cfg
         self.logger = logger
-        self.epoch = cfg.get("start_epoch", 0)
+        self.epoch = cfg.get("start_epoch", 1)
         self.log_buffer = LogBuffer()
         self.tb_writer = SummaryWriter(log_dir=cfg.log) # tensorboard writer
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
@@ -52,25 +54,41 @@ class BaseSolver(metaclass=ABCMeta):
     @abstractmethod
     def solve(self):
         r"""solve(self) aims to define each epoch training operation"""
-        pass
+        self.clear()
         # the whole training processing
 
     @abstractmethod
     def train(self):
         r"""train(self) aims to define each step training operation"""
-        self.log_buffer.clear()
+        self.clear()
         # epoch training
 
     @abstractmethod
     def evaluate(self):
         r"""evaluate(self) aims to define each evaluation operation"""
-        self.log_buffer.clear()
+        self.clear()
         # evaluation
 
+    def clear(self):
+        r"""clear log buffer
+        """
+        self.log_buffer.clear()
+
     def write(self):
+        self.logger.info("Epoch: {}".format(self.epoch))
         self.log_buffer.average()
         for key, avg in self.log_buffer.output.items():
             self.tb_writer.add_scalar(key, avg, self.epoch)
+
+    def resume(self, checkpoint):
+        check_file_exist(checkpoint)
+        resume(self.model,
+               checkpoint,
+               self.optimizer,
+               self.lr_scheduler)
+
+    def set_epoch(self, epoch):
+        self.epoch = epoch
 
     def quit(self):
         self.tb_writer.close()

@@ -205,55 +205,6 @@ python的logging库已经非常完善和易用了，这里仅介绍函数 `get_r
 def get_root_logger(log_file=None, log_level=logging.INFO, timestamp=None)
 ```
 
-### **模型读写管理**
-
-该模块还提供了模型读写管理的功能函数。
-对于使用 `DataParallel/DistributedDataParallel` 包装并行的网络的名称前缀都会有 `.module` ，对于这种情况，无论时保存和读写都需要在加载或者保存时进行前缀的处理，我们提供的函数则帮你处理了这些繁琐的工作。
-
-有 `is_module_wrapper` 来判断是否对其进行了并行的包装，进而在保存时，
-仅保存其 `.module` 部分，也就是把 `.module` 去掉了；在加载时，则仅将网络加载进 `.module` 部分。
-
-- 保存
-
-保存网络的函数为 `save_checkpoint`，将模型参数保存为 `filename`：
-```python
-def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None)
-```
-该函数还支持保存对 `optimizer` 以及 `lr_scheduler` 进行保存，以便在下次导入训练时还原训练的关键参数，在这里保存的 `dict` 键值索引名称如下：
-```python
-checkpoint = {
-    "state_dict": 网络参数,
-    "optimizer": optimizer参数,
-    "scheduler": lr_scheduler参数,
-    "meta": 存放任意参数的字典，例如时间/epoch数等,
-}
-```
-当保存对象输入为 `None` 默认保存为 **空字典**。
-
-- 读取
-
-读取网络的部分这里介绍两个函数： `load_checkpoint` 和 `resume`。
-`load_checkpoint` 是仅针对网络参数加载的函数。
-```python
-def load_checkpoint(model,
-                    filename,
-                    map_location=None,
-                    strict=False,
-                    logger=None)
-```
-支持从 `url` 下载所需的权重。在支持直接导入模型参数的基础上（既`checkpoint`本身就是`state_dict`），也为了支持上述的 `checkpoint` 键值索引也进行了相应的判断和处理。
-
-另外一个函数就是对 `load_checkpoitn` 函数的扩展和包装 `resume`。当我们训练网络中断，继续训练的时候，我们在已经保存 `optimizer` 和 `lr_scheduler` 的基础上，需要把它们也加载进来。`resume` 函数就可以看作在 `load_checkpoint` 的基础上实现 `load_optimizer` 和 `load_lr_scheduler` 的功能：
-```python
-def resume(model,
-           filename,
-           optimizer=None,
-           scheduler=None,
-           resume_optimizer=True,
-           resume_scheduler=True,
-           map_location="default")
-```
-
 ### **显存试错**
 这里仅涉及到一个函数，来自 `detectron2` 库，`retry_if_cuda_oom`，这个函数可以可以看作对函数的包装函数，其功能在于在一定程度上避免OOM的情况
 ```python
@@ -331,9 +282,70 @@ def merge_args_and_cfg(cfg: Optional[Config]=None, args: Optional[ArgumentParser
 ```
 输入分别为 `cfg` 和 `args` 融合得到新的 `cfg`，由于 `args` 中的参数优先度往往比 `cfg` 中的参数高，所以我们利用了上面所说的 `merge_from_dict` 函数实现了两者的融合，对于相同的参数，则利用 `args` 中的参数进行覆盖。
 
-## Core
-Core 作为代码库的核心，里面包含了许多必要的函数，其中也包括很多杂项函数，这一部分我们还在整理中，目前对外有两个设置的函数。
-一个是设置随机数种子的 `set_random_seed`
+## core
+core 作为代码库的核心，里面包含了许多必要的函数，其中也包括很多杂项函数，这一部分我们还在整理中。
+一个是用于拼接列表的 `concat_list`：
+```python
+>>> import gorilla
+>>> # def concat_list(in_list) -> list
+>>> gorilla.concat_list([[0, 1, 2], [3, 4], [6]])
+[0, 1, 2, 3, 4, 6]
+>>> gorilla.concat_list([[0, 1, 2], (3, 4), [6]]) # 必须全部为list  
+[[0, 1, 2], (3, 4), [6]]
+```
+一个是用于划分列表的 `slice_list`：
+```python
+>>> import gorilla
+>>> #def slice_list(in_list, lens) -> list
+>>> gorilla.slice_list([0, 1, 2, 3, 4, 6], [1, 3, 2])
+[[0], [1, 2, 3], [4, 6]]
+>>> gorilla.slice_list([0, 1, 2, 3, 4, 6], [1, 3, 3])
+ValueError: ... # 必须正好长度
+>>> gorilla.slice_list([0, 1, 2, 3, 4, 6], 3)
+[[0, 1, 2], [3, 4, 6]]
+>>> gorilla.slice_list([0, 1, 2, 3, 4, 6], 2)
+[[0, 1], [2, 3], [4, 6]]
+>>> gorilla.slice_list([0, 1, 2, 3, 4, 6], 4)
+ValueError: ... # 必须正好整除
+>>> gorilla.slice_list([0, 1, 2, 3, 4, 6], 1)
+[[0], [1], [2], [3], [4], [6]] # 可用于内部包装list
+```
+
+同时，在提供了一系列的序列转换函数：
+```python
+def convert_list(input_list, type):
+    return list(map(type, input_list))
+
+convert_list_str = functools.partial(convert_list, type=str)
+convert_list_int = functools.partial(convert_list, type=int)
+convert_list_float = functools.partial(convert_list, type=float)
+```
+可以非常方便的对序列进行类型转换：
+```python
+>>> import gorilla
+>>> gorilla.convert_list_str([0., 1, 2., 3, 4., 6])
+['0', '1', '2', '3', '4', '6']
+>>> gorilla.convert_list_float(["0", 1, "2", 3, 4, "6"])
+[0.0, 1.0, 2.0, 3.0, 4.0, 6.0]
+```
+
+相应的序列类型判断函数：
+```python
+def is_seq_of(seq, expected_type, seq_type=None) -> bool
+is_list_of = functools.partial(is_seq_of, expected_type=list)
+is_tuple_of = functools.partial(is_seq_of, expected_type=tuple)
+```
+可以非常方便地对序列中成员的类型进行判断
+```python
+>>> import gorilla
+>>> gorilla.is_list_of([[0, 2], [4], [1, 3, 2]])
+True
+>>> gorilla.is_list_of([[0, 2], (4), [1, 3, 2]])
+False
+```
+
+
+一个是设置随机数种子的 `set_random_seed`：
 ```python
 set_random_seed(seed, deterministic=False, use_rank_shift=False)
 ```
@@ -368,6 +380,14 @@ PyTorch built with:
   - CuDNN 7.6.3
   - Magma 2.5.1
   - Build settings: BLAS=MKL, BUILD_NAMEDTENSOR=OFF, BUILD_TYPE=Release, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -fopenmp -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -O2 -fPIC -Wno-narrowing -Wall -Wextra -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Wno-stringop-overflow, DISABLE_NUMA=1, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, USE_CUDA=True, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, USE_STATIC_DISPATCH=OFF,
+```
+
+其中还有像以下的杂项函数：
+```python
+def is_power2(num: int) -> bool:
+    return num != 0 and ((num & (num - 1)) == 0)
+def is_multiple(num: [int, float], multiple: [int, float]) -> bool:
+    return num != 0 and num % multiple == 0.
 ```
 剩下的函数我们也在进行整理。
 
@@ -439,6 +459,55 @@ Parameter Group 0
 
 另外针对训练的 `pipelipe`，我们也提供了一个非常基础的基类 `BaseSolver`，里面提供了一些非常简单的接口，希望同学们的 pipeline 可以继承该 `Solver` 进行复写，由于每个人任务不同，需要的功能很可能区别很大，因此我们不强行规定 `pipeline`，希望以后同学们能够形成统一的规范，我们也能对这部分代码进行更好地整合。
 
+- **模型读写管理**
+
+该模块还提供了模型读写管理的功能函数。
+对于使用 `DataParallel/DistributedDataParallel` 包装并行的网络的名称前缀都会有 `.module` ，对于这种情况，无论时保存和读写都需要在加载或者保存时进行前缀的处理，我们提供的函数则帮你处理了这些繁琐的工作。
+
+有 `is_module_wrapper` 来判断是否对其进行了并行的包装，进而在保存时，
+仅保存其 `.module` 部分，也就是把 `.module` 去掉了；在加载时，则仅将网络加载进 `.module` 部分。
+
+- 保存
+
+保存网络的函数为 `save_checkpoint`，将模型参数保存为 `filename`：
+```python
+def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None)
+```
+该函数还支持保存对 `optimizer` 以及 `lr_scheduler` 进行保存，以便在下次导入训练时还原训练的关键参数，在这里保存的 `dict` 键值索引名称如下：
+```python
+checkpoint = {
+    "state_dict": 网络参数,
+    "optimizer": optimizer参数,
+    "scheduler": lr_scheduler参数,
+    "meta": 存放任意参数的字典，例如时间/epoch数等,
+}
+```
+当保存对象输入为 `None` 默认保存为 **空字典**。
+
+- 读取
+
+读取网络的部分这里介绍两个函数： `load_checkpoint` 和 `resume`。
+`load_checkpoint` 是仅针对网络参数加载的函数。
+```python
+def load_checkpoint(model,
+                    filename,
+                    map_location=None,
+                    strict=False,
+                    logger=None)
+```
+支持从 `url` 下载所需的权重。在支持直接导入模型参数的基础上（既`checkpoint`本身就是`state_dict`），也为了支持上述的 `checkpoint` 键值索引也进行了相应的判断和处理。
+
+另外一个函数就是对 `load_checkpoitn` 函数的扩展和包装 `resume`。当我们训练网络中断，继续训练的时候，我们在已经保存 `optimizer` 和 `lr_scheduler` 的基础上，需要把它们也加载进来。`resume` 函数就可以看作在 `load_checkpoint` 的基础上实现 `load_optimizer` 和 `load_lr_scheduler` 的功能：
+```python
+def resume(model,
+           filename,
+           optimizer=None,
+           scheduler=None,
+           resume_optimizer=True,
+           resume_scheduler=True,
+           map_location="default")
+```
+
 - **日志变量存储器**
 
 如何保存日志有时候需要写些循环和赋值运算操作，在这里我们提供了两个类方便变量的存储。
@@ -473,15 +542,20 @@ def update(self, value: float, num: Optional[float] = None) -> None
 >>> buffer = gorilla.LogBuffer()
 >>> buffer.update({"a": 10, "b": [10, 2]})
 >>> buffer.update({"a": 12, "b": [12, 3]})
->>> buffer.average() # 调用HistoryBuffer的avgerate计算均值
+>>> buffer.update({"a": 14, "b": [13, 4]})
+>>> buffer.avg  # 调用HistoryBuffer的avg计算全局均值
+{'a': 12.0, 'b': 12.0}
+>>> buffer.latest # 最新输入的值
+{'a': 14.0, 'b': 13.0}
+>>> buffer.average(2) # 调用HistoryBuffer的avgerate计算后个输入均值
 >>> buffer.output
-OrderedDict([('a', 11.0), ('b', 11.2)])
+{'a': 13.0, 'b': 12.571428571428571}
 >>> buffer.get("b")
 <gorilla.solver.log_buffer.HistoryBuffer at 0x7f8cbf4f59b0>
 >>> buffer.get("b").values
-[10.0, 12.0]
+[10.0, 12.0, 13.0]
 >>> buffer.get("b").nums
-[2, 3]
+[2, 3, 4]
 >>> buffer.clear()
 >>> buffer.get("b")
 None

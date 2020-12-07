@@ -12,7 +12,6 @@ from six.moves import map, zip
 def convert_list(input_list, type):
     return list(map(type, input_list))
 
-
 convert_list_str = functools.partial(convert_list, type=str)
 convert_list_int = functools.partial(convert_list, type=int)
 convert_list_float = functools.partial(convert_list, type=float)
@@ -68,8 +67,8 @@ def is_seq_of(seq, expected_type, seq_type=None) -> bool:
     return True
 
 
-is_list_of = functools.partial(is_seq_of, seq_type=list)
-is_tuple_of = functools.partial(is_seq_of, seq_type=tuple)
+is_list_of = functools.partial(is_seq_of, expected_type=list)
+is_tuple_of = functools.partial(is_seq_of, expected_type=tuple)
 
 
 def slice_list(in_list, lens) -> list:
@@ -252,4 +251,11 @@ def multi_apply(func, *args, **kwargs):
     pfunc = functools.partial(func, **kwargs) if kwargs else func
     map_results = map(pfunc, *args)
     return tuple(map(list, zip(*map_results)))
+
+def is_power2(num: int) -> bool:
+    return num != 0 and ((num & (num - 1)) == 0)
+
+def is_multiple(num: (int, float), multiple: (int, float)) -> bool:
+    return num != 0 and num % multiple == 0.
+
 
