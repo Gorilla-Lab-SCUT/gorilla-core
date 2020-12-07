@@ -18,7 +18,7 @@ gorilla
 ```
 
 
- 下面介绍一下常用的函数。
+下面介绍一下常用的函数。
 ---
 ## fileio
 `fileio` 模块支持直接对 `.json`, `.yaml`, `.pkl` 的加载和读取
@@ -254,7 +254,7 @@ def resume(model,
            map_location="default")
 ```
 
-## **显存试错**
+### **显存试错**
 这里仅涉及到一个函数，来自 `detectron2` 库，`retry_if_cuda_oom`，这个函数可以可以看作对函数的包装函数，其功能在于在一定程度上避免OOM的情况
 ```python
 def retry_if_cuda_oom(func)
@@ -265,7 +265,7 @@ def retry_if_cuda_oom(func)
 match_quality_matrix=retry_if_cuda_oom(pairwise_iou)(gt_boxes_i,anchors_i)
 ```
 
-# Config
+## Config
 该模块提供了非常实用的配置类`Config`。
 它支持从多种文件格式（包括 `.py`，`.json`  `.yml` 和 `.yaml`）加载配置。加载进来的配置类`Config`与`dict`有相似的性质，更方便的是它不仅可以用`config["key"]` 的方式索引，更可以通过 `config.key` 的方式索引，也支持 `**config` 实现函数参数的键值传递。
 ```python
@@ -331,4 +331,331 @@ def merge_args_and_cfg(cfg: Optional[Config]=None, args: Optional[ArgumentParser
 ```
 输入分别为 `cfg` 和 `args` 融合得到新的 `cfg`，由于 `args` 中的参数优先度往往比 `cfg` 中的参数高，所以我们利用了上面所说的 `merge_from_dict` 函数实现了两者的融合，对于相同的参数，则利用 `args` 中的参数进行覆盖。
 
+## Core
+Core 作为代码库的核心，里面包含了许多必要的函数，其中也包括很多杂项函数，这一部分我们还在整理中，目前对外有两个设置的函数。
+一个是设置随机数种子的 `set_random_seed`
+```python
+set_random_seed(seed, deterministic=False, use_rank_shift=False)
+```
+通常来说只用给定 `seed` 即可，里面本质操作就是分别设置 `np/torch/random` 的 `seed`，在这里只用通过一行代码即可解决。
+
+另一个函数则是用于收集环境信息的函数 `collect_env_info`，该函数不用任何输入，运行后直接返回当前环境信息的字符串：
+```python
+>>> import gorilla
+>>> print(gorilla.collect_env_info())
+-------------------  ------------------------------------------------------------------------------------------
+sys.platform         linux
+Python               3.7.0 (default, Oct  9 2018, 10:31:47) [GCC 7.3.0]
+numpy                1.19.2
+gorilla              0.2.3.6 @/data/lab-liang.zhihao/code/gorilla-core/gorilla
+GORILLA_ENV_MODULE   <not set>
+PyTorch              1.3.0 @/home/lab-liang.zhihao/miniconda3/envs/pointgroup/lib/python3.7/site-packages/torch
+PyTorch debug build  False
+GPU available        True
+GPU 0,1,2,3,4,5,6,7  GeForce RTX 2080 Ti (arch=7.5)
+CUDA_HOME            /usr/local/cuda-10.0
+torchvision          unknown
+cv2                  4.4.0
+-------------------  ------------------------------------------------------------------------------------------
+PyTorch built with:
+  - GCC 7.3
+  - Intel(R) Math Kernel Library Version 2020.0.2 Product Build 20200624 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v0.20.5 (Git Hash 0125f28c61c1f822fd48570b4c1066f96fcb9b2e)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - NNPACK is enabled
+  - CUDA Runtime 10.1
+  - NVCC architecture flags: -gencode;arch=compute_35,code=sm_35;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_50,code=compute_50
+  - CuDNN 7.6.3
+  - Magma 2.5.1
+  - Build settings: BLAS=MKL, BUILD_NAMEDTENSOR=OFF, BUILD_TYPE=Release, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -fopenmp -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -O2 -fPIC -Wno-narrowing -Wall -Wextra -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Wno-stringop-overflow, DISABLE_NUMA=1, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, USE_CUDA=True, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, USE_STATIC_DISPATCH=OFF,
+```
+剩下的函数我们也在进行整理。
+
+## solver
+该模块主要是设计网络训练的辅助函数。
+- **学习率策略**
+
+在训练的时候我们希望大家的学习率调整策略尽量使用 `torch.optim.lr_scheduler` 中提供的 `scheduler` 实现，如果是自己写的学习率变化函数也尽量使用 `torch.optim.lr_scheduler.LambdaLR` 进行包装。我们在已有的学习率策略的基础上还提供了四种学习率策略分别是：
+```python
+WarmupMultiStepLR, WarmupCosineLR, WarmupPolyLR, PolyLR, InvLR
+```
+它们都是继承自 `torch.optim.lr_scheduler._LRScheduler`，如果有同学有新的学习率策略是原本没有的，希望可以遵循相应的格式贡献到代码库中。
+
+- **优化器和学习率策略构建函数**
+
+另外，我们也提供了非常轻量级的构建函数，分别是：
+```python
+def build_single_optimizer(
+        model: torch.nn.Module,
+        optimizer_cfg: [Config, Dict]) -> torch.optim.Optimizer
+
+def build_lr_scheduler(
+        optimizer: torch.optim.Optimizer,
+        lr_scheduler_cfg: [Config, Dict],
+        lambda_func=None) -> torch.optim.lr_scheduler._LRScheduler
+```
+其中的 `optimizer_cfg` 和 `lr_scheduler_cfg` 分别是传给 `Optimizer` 和 `xxxLR` 的键值对，至于要调用哪个 `Optimizer` 和 `xxxLR`，则在 `cfg` 里面定义好 `name` 即可
+
+```python
+>>> import gorilla
+>>> model = gorilla.VGG(16)
+>>> # 构建optimizer
+>>> optimizer_cfg = {"name": "Adam", "lr": 0.002}
+>>> optimizer = gorilla.build_optimizer(model, optimizer_cfg)
+>>> optimizer
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 0.002
+    weight_decay: 0
+)
+>>> # 构建lr_scheduler
+>>> scheduler_cfg = {"name": "MultiStepLR", "milestones": [30, 80], "gamma": 0.1}
+>>> scheduler = gorilla.build_lr_scheduler(optimizer, scheduler_cfg)
+>>> scheduler
+<torch.optim.lr_scheduler.MultiStepLR at 0x7f7da41f99e8>
+```
+当这些写入配置文件中就可以非常方便的进行构建了。
+> NOTE: `build_optimizer` 可以用 `build_optimizer_v2` 代替，原本功能保持不变的同时支持多 `Optimizer` 的构建。
+
+- **梯度裁剪器**
+
+另外针对梯度裁剪的需求，我们也提供了 `GradClipper` 类似上面构建梯度裁剪器，以及 `build_grad_clipper` 的构建接口。
+```python
+>>> import gorilla
+>>> # 两者得到的 clipper 是一样的
+>>> clipper = gorilla.GradClipper({"name": "norm", "max_norm": 20})
+>>> clipper = gorilla.build_grad_clipper({"name": "norm", "max_norm": 20})
+>>> ...
+>>> loss.backward()
+>>> grad_norm = clipper.clip(model.parameters())
+>>> optimizer.step()
+```
+`clip` 成员函数本质上是调用 `torch.nn.utils.clip_grad.clip_grad_{norm/value}_` 函数，熟悉的同学也可以直接调用这个函数。
+
+- **pipeline 管理**
+
+另外针对训练的 `pipelipe`，我们也提供了一个非常基础的基类 `BaseSolver`，里面提供了一些非常简单的接口，希望同学们的 pipeline 可以继承该 `Solver` 进行复写，由于每个人任务不同，需要的功能很可能区别很大，因此我们不强行规定 `pipeline`，希望以后同学们能够形成统一的规范，我们也能对这部分代码进行更好地整合。
+
+- **日志变量存储器**
+
+如何保存日志有时候需要写些循环和赋值运算操作，在这里我们提供了两个类方便变量的存储。
+一个是针对单个变量的 `HistoryBuffer`，无需参数直接初始化即可。当需要更新的时候调用 `update` 函数：
+```python
+def update(self, value: float, num: Optional[float] = None) -> None
+```
+输入值以及该值的数量（相当于比重，默认为`1`），然后输入的值和数量分别存在 `list` 中，后续在算 `avg` 时会根据数量进行加权得到。
+```python
+>>> import gorilla
+>>> buffer = gorilla.HistoryBuffer()
+>>> buffer.update(10)
+>>> buffer.update(12)
+>>> buffer.update(14, 2)
+>>> buffer.update(15)
+>>> buffer.avg
+13.0 # (10 + 12 + 14 + 15) / (1 + 1 + 2 + 1)
+>>> buffer.values
+[10, 12, 14, 15]
+>>> buffer.nums
+[1, 1, 2, 1]
+>>> buffer.latest
+15
+>>> buffer.average(3)
+13.75 # (12 + 14 + 15) / (1 + 2 + 1) # 求values后三个的均值
+>>> buffer.average(3) # 求values后三个的中位数
+14.0
+```
+在此基础上我们提供了 `LogBuffer` 类结合 `HistoryBuffer` 实现多个变量的列表管理。`LogBuffer` 可以看作是值成员为 `HistoryBuffer` 的字典，`LogBuffer` 的 `update` 为字典。
+```python
+>>> import gorilla
+>>> buffer = gorilla.LogBuffer()
+>>> buffer.update({"a": 10, "b": [10, 2]})
+>>> buffer.update({"a": 12, "b": [12, 3]})
+>>> buffer.average() # 调用HistoryBuffer的avgerate计算均值
+>>> buffer.output
+OrderedDict([('a', 11.0), ('b', 11.2)])
+>>> buffer.get("b")
+<gorilla.solver.log_buffer.HistoryBuffer at 0x7f8cbf4f59b0>
+>>> buffer.get("b").values
+[10.0, 12.0]
+>>> buffer.get("b").nums
+[2, 3]
+>>> buffer.clear()
+>>> buffer.get("b")
+None
+```
+
+## losses
+losses 模块目前仅提供了定义在 `detectron2` 中的三个损失函数：
+```python
+sigmoid_focal_loss, giou_loss, smooth_l1_loss
+```
+如果同学们有常用且通用的losses欢迎以函数的形式向代码库贡献。
+
+## nn
+nn 模块中定义了常用的网络及其函数。
+函数主要以初始化为主，实现了以下的初始化：
+```python
+def constant_init(module: nn.Module, val, bias=0)
+    ...
+def xavier_init(module: nn.Module, gain=1, bias=0, distribution="normal")
+    ...
+def normal_init(module: nn.Module, mean=0, std=1, bias=0)
+    ...
+def uniform_init(module: nn.Module, a=0, b=1, bias=0)
+    ...
+def kaiming_init(module: nn.Module,
+                 a=0,
+                 mode="fan_out",
+                 nonlinearity="relu",
+                 bias=0,
+                 distribution="normal")
+    ...
+def c2_xavier_init(module: nn.Module)
+    ...
+def c2_msra_init(module: nn.Module):
+    ...
+def bias_init_with_prob(prior_prob)
+    ...
+```
+开箱即用的网络结构有 `AlexNet, VGG, ResNet` [图卷积](https://github.com/tkipf/pygcn) `GraphConvolution, GCN` 以及来自[DETR](https://github.com/facebookresearch/detr)的 `Transformer, TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer`
+另外，由于我们自己搭建卷积网络或者全连接网络的时候另外还需要搭配相应的`activation`和`norm`这里我们提供了 `GorillaConv` 类，通过给定相应的配置即可形成一个相应的卷积层：
+```python
+class GorillaConv(nn.Sequential):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 padding=0,
+                 dilation=1,
+                 groups=1,
+                 bias=True,
+                 name="",
+                 D=2,
+                 norm_cfg=None,
+                 act_cfg=dict(name="ReLU", inplace=True),
+                 with_spectral_norm=False,
+                 padding_mode="zeros",
+                 order=["conv", "norm", "act"])
+```
+只要是非常简单的输入相应的参数即可生成相应的卷积层：
+```python
+>>> import gorilla
+# 卷积后带激活函数（默认为ReLU）
+>>> gorilla.GorillaConv(8, 16, 3)
+GorillaConv(
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1))
+  (act): ReLU(inplace=True)
+)
+# 一维卷积（给定D）
+>>> gorilla.GorillaConv(8, 16, 3, D=1)
+GorillaConv(
+  (conv): Conv1d(8, 16, kernel_size=(3,), stride=(1,))
+  (act): ReLU(inplace=True)
+)
+# 只要卷积（给定act_cfg）
+>>> gorilla.GorillaConv(8, 16, 3, act_cfg=None)
+GorillaConv(
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1))
+)
+# 带上bn（给定norm_cfg）
+>>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"name": "BN2d"})
+GorillaConv(
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1), bias=False)
+  (norm): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (act): ReLU(inplace=True)
+)
+# activation在bn之前（调整order）
+>>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"name": "BN2d"},order=["conv", "act", "norm"])
+GorillaConv(
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1), bias=False)
+  (act): ReLU(inplace=True)
+  (norm): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+)
+# bn在conv之前（调整order，注意bn会自动获取特征维度）
+>>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"name": "BN2d"},order=["norm", "conv", "act"])
+GorillaConv(
+  (norm): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1), bias=False)
+  (act): ReLU(inplace=True)
+)
+```
+同时也有面向全连接的 `GorillaFC`
+```python
+class GorillaFC(nn.Sequential):
+    def __init__(self,
+                 in_features,
+                 out_features,
+                 bias=True,
+                 name="",
+                 norm_cfg=dict(name="BN1d"),
+                 act_cfg=dict(name="ReLU", inplace=True),
+                 dropout=None,
+                 order=["FC", "norm", "act", "dropout"])
+```
+用起来比 `GorillaConv` 更加的简单
+```python
+>>> import gorilla
+>>> gorilla.GorillaFC(8, 16)
+GorillaFC(
+  (FC): Linear(in_features=8, out_features=16, bias=True)
+  (norm): BatchNorm1d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (act): ReLU(inplace=True)
+)
+>>> gorilla.GorillaFC(8, 16, norm_cfg=None) # 不带bn
+GorillaFC(
+  (FC): Linear(in_features=8, out_features=16, bias=True)
+  (act): ReLU(inplace=True)
+)
+>>> gorilla.GorillaFC(8, 16, act_cfg=None) # 不带act
+GorillaFC(
+  (FC): Linear(in_features=8, out_features=16, bias=True)
+  (norm): BatchNorm1d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+)
+>>> gorilla.GorillaFC(8, 16, order=["norm", "FC", "act", "dropout"]) # bn在FC前
+GorillaFC(
+  (norm): BatchNorm1d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (FC): Linear(in_features=8, out_features=16, bias=True)
+  (act): ReLU(inplace=True)
+)
+```
+
+## evaluation
+该模块是一个基类模块，也就是没有实现具体的功能，由于同学们涉及到的数据集比较多，同时每个人任务不尽相同，为了更好的管理，在 `gorilla-core` 中不放置具体的数据集，数据集的接口将分别放置在 `gorilla2d/gorilla3d` 中，这里仅提供一个验证接口的范式 `DatasetEvaluator`。
+```python
+class DatasetEvaluator:
+    def reset(self):
+        pass
+
+    def process(self, inputs, outputs):
+        pass
+
+    def evaluate(self):
+        pass
+```
+对于数据集验证，我们希望是在每次网络进行前传后通过 `process` 函数接受相应的 `prediction/gt` 进行相应的处理保存起来。当跑完验证集后利用 `evaluate` 函数进行验证得到验证的结果。这样的设计能够保证脚本的纯净度，并且方便他人复用。
+当对同一个数据集有多个任务指标时，我们也有 `DatasetEvaluator`：
+```python
+class DatasetEvaluators(DatasetEvaluator):
+    def __init__(self, evaluators):
+        super().__init__()
+        self._evaluators = evaluators
+
+    def reset(self):
+        for evaluator in self._evaluators:
+            evaluator.reset()
+
+    def process(self, inputs, outputs):
+        for evaluator in self._evaluators:
+            evaluator.process(inputs, outputs)
+
+    def evaluate(self):
+        results = OrderedDict()
+        for evaluator in self._evaluators:
+            result = evaluator.evaluate()
+```
+显然这个是基于 `DatasetEvaluator` 的包装器，实现原理非常简单，我们希望当一个数据集有多个任务指标时，能够根据任务指标分开写再用 `DatasetEvaluator` 类包装成一个数据集的验证接口。
 
