@@ -164,9 +164,24 @@ class InvLR(torch.optim.lr_scheduler._LRScheduler):
         super().__init__(optimizer, last_epoch)
 
     def get_lr(self):
-        progress = self.last_epoch / self.maxp
-        return [base_lr * (1 + self.gamma * progress)**(-self.power) * group.get("lr_mult", 1.0)
-            for group, base_lr in zip(self.optimizer.param_groups, self.base_lrs)]
+        choice = 2
+        if choice == 1:
+            # implementation 1 (mine): fixed gamma(10), the shape of lr-iter curve will keep
+            # the same although maxp are different
+            progress = self.last_epoch / self.maxp
+            return [
+                base_lr * (1 + self.gamma * progress)**(-self.power) *
+                group.get("lr_mult", 1.0) for group, base_lr in zip(
+                    self.optimizer.param_groups, self.base_lrs)
+            ]
+        elif choice == 2:
+            # implementation 2 (Long Mingsheng): fixed gamma(0.001), the same last_epoch will
+            # lead to the same lr, although maxp are different
+            return [
+                base_lr * (1 + self.gamma * self.last_epoch)**(-self.power) *
+                group.get("lr_mult", 1.0) for group, base_lr in zip(
+                    self.optimizer.param_groups, self.base_lrs)
+            ]
 
 
 class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
