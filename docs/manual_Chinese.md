@@ -176,17 +176,17 @@ it takes 1.0 seconds
 该模块提供了**gpu监视和自动功能索引函数**。
 `get_free_gpu` 函数可以获取当前满足条件的 **gpu的id索引列表**，默认为检索空余显存超过11G的gpu，如果需要检索空闲（无占用程序）的gpu，则设置 `mode="process"` 即可。
 ```python
-def get_free_gpu(mode="memory", memory_need=11000) -> list
+def get_free_gpu(mode="memory", memory_need=11000) -> list:
 ```
 
 在此基础上，如果要监视多gpu，我们则提供了 `supervise_gpu` 函数，`num_gpu` 为需要获取的gpu的数量，`mode` 与 `memory_need` 同上，当该程序发现有该数量符合条件的gpu时，则返回这些gpu的id索引列表，否则一直等待，直到有空闲gpu满足 `num_gpu` 的数量。
 ```python
-def supervise_gpu(num_gpu=1, mode="memory", memory_need=11000) -> list
+def supervise_gpu(num_gpu=1, mode="memory", memory_need=11000) -> list:
 ```
 
 最后还有自动设置 `CUDA_VISIBLE_DEVICES` 的函数，通过设置 `os.environ["CUDA_VISIBLE_DEVICES"]` 实现：
 ```python
-def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need=11000)
+def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need=11000):
 ```
 当 `gpu_ids` 给定，则设置为给定的 `gpu_ids` 为 `os.environ["CUDA_VISIBLE_DEVICES"]`，否则调用 `supervise_gpu` 函数获取符合空闲条件的gpu，直接设置。可以免除 `CUDA_VISIBLE_DEVICES=x python script.py` 的前缀工作。
 
@@ -194,7 +194,7 @@ def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need
 
 `gorilla.utils.path` 中定义了些许函数，本质上是对 `os` 中一些函数的包装，其中有可以递归遍历文件夹获取相应后缀的文件列表的 `scandir` 函数：
 ```python
-def scandir(dir_path, suffix=None, recursive=False)
+def scandir(dir_path, suffix=None, recursive=False):
 ```
 指定遍历根目录 `dir_path`，就可以搜索符合后缀为 `suffix`（可以为包含多个后缀的 `tuple`） 的文件，`recursive=True` 则递归搜索完所有的子文件夹，最终返回为 `generator`，可以通过 `list(.)` 转为列表。
 
@@ -202,18 +202,65 @@ def scandir(dir_path, suffix=None, recursive=False)
 
 python的logging库已经非常完善和易用了，这里仅介绍函数 `get_root_logger`，实现功能也非常简单，本质上调用了`logging.getLogger` 然后对里面一些参数和格式进行了设置。
 ```python
-def get_root_logger(log_file=None, log_level=logging.INFO, timestamp=None)
+def get_root_logger(log_file=None, log_level=logging.INFO, timestamp=None):
 ```
 
 ### **显存试错**
 这里仅涉及到一个函数，来自 `detectron2` 库，`retry_if_cuda_oom`，这个函数可以可以看作对函数的包装函数，其功能在于在一定程度上避免OOM的情况
 ```python
-def retry_if_cuda_oom(func)
+def retry_if_cuda_oom(func):
 ```
 这里仅放一个 `detectron2` 中的使用案例，这个是2d检测任务，对生成的 `anchor` 与 `gt_bboxes` 进行匹配，由于 `anchor` 的数量很多所以可能会出现OOM的情况，当捕获到OOM异常时，会先执行`torch.cuda.empty_cache()`操作再进行尝试，如果依旧OOM，则将其放到cpu上运行。
 不过如果是网络过大输出过大特征图导致的OOM则无效，仅对索引函数有效。
 ```python
 match_quality_matrix=retry_if_cuda_oom(pairwise_iou)(gt_boxes_i,anchors_i)
+```
+
+### **调试/复现**
+`check_model`函数用于查看网络各层的输入输出shape，并测试模型能否正常前向：
+```python
+>>> model = DANN(cfg)
+>>> check_model([3, 224, 224], model)  # 第一个参数是输入图片的CHW
+```
+在复现其他人的工作时，有时候会出现"自己的代码看着跟他的一样，但实际结果却差很多"的现象。为了精确地找到问题所在，我们可能需要完全复现出对方的模型初始参数、optimizer、lr schedule等等，这里有一些辅助函数，可以帮助对比两边的模型，梯度，甚至是随机数生成器的状态。
+
+`display`函数用于呈现tensor和ndarray的统计特征(max, min, mean, mean of abs)，有助于简便地查看目标输出是否合乎预期：
+```python
+>>> tmp = torch.random(100, 100)
+>>> display("Unnamed", tmp)
+Unnamed               max: +0.99995 min: +0.00008 mean: +0.50400 abs mean: +0.50400 size:[100, 100]
+```
+`check_params`函数可以打印网络每一层参数的统计特征，主要用于复现时跟对方的模型作对比：
+```python
+>>> check_params(model)
+```
+输出信息形如：
+```python
+backbone.layer4.2.conv3.weight       max: +0.27977 min: -0.15117 mean: -0.00003 abs mean: +0.01062 size:[2048, 512, 1, 1]
+backbone.layer4.2.bn3.weight         max: +1.32046 min: +0.11236 mean: +0.71596 abs mean: +0.71596 size:[2048]
+backbone.layer4.2.bn3.bias           max: +0.18839 min: -0.15042 mean: +0.02461 abs mean: +0.02775 size:[2048]
+```
+
+`check_grad`函数可以打印网络每一层参数的梯度，也是主要用于复现时跟对方的模型作对比：
+```python
+>>> loss.backward()
+>>> check_grad(model)
+```
+输出信息形如：
+```python
+grad of backbone.layer4.2.conv3.weight   max: +0.02633 min: -0.02751 mean: +0.00003 abs mean: +0.00205 size:[2048, 512, 1, 1]
+grad of backbone.layer4.2.bn3.weight     max: +0.00572 min: -0.01189 mean: +0.00003 abs mean: +0.00102 size:[2048]
+grad of backbone.layer4.2.bn3.bias       max: +0.00297 min: -0.00445 mean: +0.00002 abs mean: +0.00067 size:[2048]
+```
+
+`check_optimizer`函数可以打印`Optimizer`的一些信息，目前还比较粗糙，只包含了对SGD的支持：
+```python
+>>> check_optimizer(optimizer)
+```
+
+`check_rand_state`函数可以打印`numpy`, `random`以及`torch`各自的随机数生成器的状态信息，如果两份代码在某个位置设定了相同的随机数种子，期间调用同样多次的随机数生成之后，预期应当得到完全一致的生成器状态。
+```python
+>>> check_rand_state()
 ```
 
 ## Config
@@ -278,7 +325,7 @@ Config (path: None): {
 
 另外就是许多同学非常喜欢使用 `argparse` 管理超参数，为了方面管理我们希望实现 `cfg` 和 `args` 的统一，经过我们的思考，我们提供了 `merge_args_and_cfg` 函数，实现融合：
 ```python
-def merge_args_and_cfg(cfg: Optional[Config]=None, args: Optional[ArgumentParser]=None) -> Config
+def merge_args_and_cfg(cfg: Optional[Config]=None, args: Optional[ArgumentParser]=None) -> Config:
 ```
 输入分别为 `cfg` 和 `args` 融合得到新的 `cfg`，由于 `args` 中的参数优先度往往比 `cfg` 中的参数高，所以我们利用了上面所说的 `merge_from_dict` 函数实现了两者的融合，对于相同的参数，则利用 `args` 中的参数进行覆盖。
 
@@ -331,7 +378,7 @@ convert_list_float = functools.partial(convert_list, type=float)
 
 相应的序列类型判断函数：
 ```python
-def is_seq_of(seq, expected_type, seq_type=None) -> bool
+def is_seq_of(seq, expected_type, seq_type=None) -> bool:
 is_list_of = functools.partial(is_seq_of, expected_type=list)
 is_tuple_of = functools.partial(is_seq_of, expected_type=tuple)
 ```
@@ -395,7 +442,7 @@ def is_multiple(num: [int, float], multiple: [int, float]) -> bool:
 该模块主要是设计网络训练的辅助函数。
 - **学习率策略**
 
-在训练的时候我们希望大家的学习率调整策略尽量使用 `torch.optim.lr_scheduler` 中提供的 `scheduler` 实现，如果是自己写的学习率变化函数也尽量使用 `torch.optim.lr_scheduler.LambdaLR` 进行包装。我们在已有的学习率策略的基础上还提供了四种学习率策略分别是：
+在训练的时候我们希望大家的学习率调整策略尽量使用 `torch.optim.lr_scheduler` 中提供的 `scheduler` 实现，如果是自己写的学习率变化函数也尽量使用 `torch.optim.lr_scheduler.LambdaLR` 进行包装。我们在已有的学习率策略的基础上还提供了多种学习率策略，分别是：
 ```python
 WarmupMultiStepLR, WarmupCosineLR, WarmupPolyLR, PolyLR, InvLR
 ```
@@ -407,12 +454,12 @@ WarmupMultiStepLR, WarmupCosineLR, WarmupPolyLR, PolyLR, InvLR
 ```python
 def build_single_optimizer(
         model: torch.nn.Module,
-        optimizer_cfg: [Config, Dict]) -> torch.optim.Optimizer
+        optimizer_cfg: [Config, Dict]) -> torch.optim.Optimizer:
 
 def build_lr_scheduler(
         optimizer: torch.optim.Optimizer,
         lr_scheduler_cfg: [Config, Dict],
-        lambda_func=None) -> torch.optim.lr_scheduler._LRScheduler
+        lambda_func=None) -> torch.optim.lr_scheduler._LRScheduler:
 ```
 其中的 `optimizer_cfg` 和 `lr_scheduler_cfg` 分别是传给 `Optimizer` 和 `xxxLR` 的键值对，至于要调用哪个 `Optimizer` 和 `xxxLR`，则在 `cfg` 里面定义好 `name` 即可
 
@@ -437,8 +484,73 @@ Parameter Group 0
 >>> scheduler
 <torch.optim.lr_scheduler.MultiStepLR at 0x7f7da41f99e8>
 ```
-当这些写入配置文件中就可以非常方便的进行构建了。
-> NOTE: `build_optimizer` 可以用 `build_optimizer_v2` 代替，原本功能保持不变的同时支持多 `Optimizer` 的构建。
+
+至于`scheduler`的使用方法，一般是跟`Optimizer`放一起：
+```python
+optimizer.step()
+scheduler.step()
+```
+`build_optimizer`既支持构建一个包含多组参数的`Optimizer`：
+```python
+>>> optimizer_cfg = {"name": "SGD", "lr": 0.01, "paramwise_cfg": {"moduleA": {"lr_mult": 0.1}, "moduleB": {"lr_mult": 1.0}}}
+>>> optimizer = gorilla.build_optimizer(model, optimizer_cfg)
+>>> optimizer
+SGD (
+Parameter Group 0
+    dampening: 0
+    lr: 0.01
+    lr_mult: 0.1
+    momentum: 0
+    name: moduleA
+    nesterov: False
+    weight_decay: 0
+
+Parameter Group 1
+    dampening: 0
+    lr: 0.01
+    lr_mult: 1.0
+    momentum: 0
+    name: moduleB
+    nesterov: False
+    weight_decay: 0
+)
+```
+也支持构建多个`Optimizer`：
+```python
+>>> optimizer_cfg = {"multi_optimizer": True, 
+                     "optimizerA": {"name": "SGD", "lr": 0.01, "paramwise_cfg": {"moduleA": "lr_mult": 0.1, "moduleB": "lr_mult": 1.0}}
+                     "optimizerB": {"name": "SGD", "lr": 0.01, "paramwise_cfg": {"moduleC": {}}} }
+>>> optimizer = gorilla.build_optimizer(model, optimizer_cfg)
+>>> optimizer
+{'optimizerA': SGD (
+Parameter Group 0
+    dampening: 0
+    lr: 0.01
+    lr_mult: 0.1
+    momentum: 0
+    name: moduleA
+    nesterov: False
+    weight_decay: 0
+
+Parameter Group 1
+    dampening: 0
+    lr: 0.01
+    lr_mult: 1.0
+    momentum: 0
+    name: moduleB
+    nesterov: False
+    weight_decay: 0
+), 'optimizerB': SGD (
+Parameter Group 0
+    dampening: 0
+    lr: 0.01
+    momentum: 0
+    name: moduleC
+    nesterov: False
+    weight_decay: 0
+)
+```
+把相关的参数写入配置文件中就可以非常方便的进行构建了。
 
 - **梯度裁剪器**
 
@@ -471,7 +583,7 @@ Parameter Group 0
 
 保存网络的函数为 `save_checkpoint`，将模型参数保存为 `filename`：
 ```python
-def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None)
+def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
 ```
 该函数还支持保存对 `optimizer` 以及 `lr_scheduler` 进行保存，以便在下次导入训练时还原训练的关键参数，在这里保存的 `dict` 键值索引名称如下：
 ```python
@@ -493,7 +605,7 @@ def load_checkpoint(model,
                     filename,
                     map_location=None,
                     strict=False,
-                    logger=None)
+                    logger=None):
 ```
 支持从 `url` 下载所需的权重。在支持直接导入模型参数的基础上（既`checkpoint`本身就是`state_dict`），也为了支持上述的 `checkpoint` 键值索引也进行了相应的判断和处理。
 
@@ -505,7 +617,7 @@ def resume(model,
            scheduler=None,
            resume_optimizer=True,
            resume_scheduler=True,
-           map_location="default")
+           map_location="default"):
 ```
 
 - **日志变量存储器**
@@ -513,7 +625,7 @@ def resume(model,
 如何保存日志有时候需要写些循环和赋值运算操作，在这里我们提供了两个类方便变量的存储。
 一个是针对单个变量的 `HistoryBuffer`，无需参数直接初始化即可。当需要更新的时候调用 `update` 函数：
 ```python
-def update(self, value: float, num: Optional[float] = None) -> None
+def update(self, value: float, num: Optional[float] = None) -> None:
 ```
 输入值以及该值的数量（相当于比重，默认为`1`），然后输入的值和数量分别存在 `list` 中，后续在算 `avg` 时会根据数量进行加权得到。
 ```python
@@ -572,26 +684,26 @@ sigmoid_focal_loss, giou_loss, smooth_l1_loss
 nn 模块中定义了常用的网络及其函数。
 函数主要以初始化为主，实现了以下的初始化：
 ```python
-def constant_init(module: nn.Module, val, bias=0)
+def constant_init(module: nn.Module, val, bias=0):
     ...
-def xavier_init(module: nn.Module, gain=1, bias=0, distribution="normal")
+def xavier_init(module: nn.Module, gain=1, bias=0, distribution="normal"):
     ...
-def normal_init(module: nn.Module, mean=0, std=1, bias=0)
+def normal_init(module: nn.Module, mean=0, std=1, bias=0):
     ...
-def uniform_init(module: nn.Module, a=0, b=1, bias=0)
+def uniform_init(module: nn.Module, a=0, b=1, bias=0):
     ...
 def kaiming_init(module: nn.Module,
                  a=0,
                  mode="fan_out",
                  nonlinearity="relu",
                  bias=0,
-                 distribution="normal")
+                 distribution="normal"):
     ...
-def c2_xavier_init(module: nn.Module)
+def c2_xavier_init(module: nn.Module):
     ...
 def c2_msra_init(module: nn.Module):
     ...
-def bias_init_with_prob(prior_prob)
+def bias_init_with_prob(prior_prob):
     ...
 ```
 开箱即用的网络结构有 `AlexNet, VGG, ResNet` [图卷积](https://github.com/tkipf/pygcn) `GraphConvolution, GCN` 以及来自[DETR](https://github.com/facebookresearch/detr)的 `Transformer, TransformerEncoder, TransformerDecoder, TransformerEncoderLayer, TransformerDecoderLayer`
@@ -613,7 +725,7 @@ class GorillaConv(nn.Sequential):
                  act_cfg=dict(name="ReLU", inplace=True),
                  with_spectral_norm=False,
                  padding_mode="zeros",
-                 order=["conv", "norm", "act"])
+                 order=["conv", "norm", "act"]):
 ```
 只要是非常简单的输入相应的参数即可生成相应的卷积层：
 ```python
@@ -668,7 +780,7 @@ class GorillaFC(nn.Sequential):
                  norm_cfg=dict(name="BN1d"),
                  act_cfg=dict(name="ReLU", inplace=True),
                  dropout=None,
-                 order=["FC", "norm", "act", "dropout"])
+                 order=["FC", "norm", "act", "dropout"]):
 ```
 用起来比 `GorillaConv` 更加的简单
 ```python
@@ -711,7 +823,7 @@ class DatasetEvaluator:
         pass
 ```
 对于数据集验证，我们希望是在每次网络进行前传后通过 `process` 函数接受相应的 `prediction/gt` 进行相应的处理保存起来。当跑完验证集后利用 `evaluate` 函数进行验证得到验证的结果。这样的设计能够保证脚本的纯净度，并且方便他人复用。
-当对同一个数据集有多个任务指标时，我们也有 `DatasetEvaluator`：
+当对同一个数据集有多个任务指标时，我们也有 `DatasetEvaluators`：
 ```python
 class DatasetEvaluators(DatasetEvaluator):
     def __init__(self, evaluators):
@@ -731,5 +843,4 @@ class DatasetEvaluators(DatasetEvaluator):
         for evaluator in self._evaluators:
             result = evaluator.evaluate()
 ```
-显然这个是基于 `DatasetEvaluator` 的包装器，实现原理非常简单，我们希望当一个数据集有多个任务指标时，能够根据任务指标分开写再用 `DatasetEvaluator` 类包装成一个数据集的验证接口。
-
+显然这个是基于 `DatasetEvaluator` 的包装器，实现原理非常简单，我们希望当一个数据集有多个任务指标时，能够根据任务指标分开写再用 `DatasetEvaluators` 类包装成一个数据集的验证接口。
