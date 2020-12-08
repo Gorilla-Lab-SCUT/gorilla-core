@@ -9,19 +9,6 @@ from . import lr_scheduler as lr_schedulers
 from ..core import is_seq_of
 
 
-def build_optimizer(model: torch.nn.Module,
-                    cfg: [Config, Dict]) -> torch.optim.Optimizer:
-    r"""
-    Build an optimizer from config.
-    """
-    name = cfg.pop("name")
-
-    cfg["params"] = filter(lambda p: p.requires_grad, model.parameters())
-
-    optimizer_caller = getattr(torch.optim, name)
-    return optimizer_caller(**cfg)
-
-
 def build_single_optimizer(
         model: torch.nn.Module,
         optimizer_cfg: [Config, Dict]) -> torch.optim.Optimizer:
@@ -49,7 +36,7 @@ def build_single_optimizer(
     return optimizer_caller(**optimizer_cfg)
 
 
-def build_optimizer_v2(model: torch.nn.Module,
+def build_optimizer(model: torch.nn.Module,
                        optimizer_cfg: [Config, Dict]) -> torch.optim.Optimizer:
     r"""
     Build an optimizer from config, supporting multi optimizers.

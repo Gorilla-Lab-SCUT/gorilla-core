@@ -9,7 +9,7 @@ from .lr_scheduler import (WarmupCosineLR, WarmupMultiStepLR, WarmupPolyLR,
                            MultiStepLR, OneCycleLR, StepLR, LambdaLR,
                            adjust_learning_rate)
 
-from .build import (build_lr_scheduler, build_optimizer, build_optimizer_v2)
+from .build import (build_lr_scheduler, build_optimizer)
 
 from .checkpoint import (_load_checkpoint, load_checkpoint, load_state_dict,
                          load_url_dist, resume, save_checkpoint,
