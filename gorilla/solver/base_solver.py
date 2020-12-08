@@ -1,9 +1,9 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 import os
-import torch
 import random
 from abc import ABCMeta, abstractmethod
 
+import torch
 import numpy as np
 from tensorboardX import SummaryWriter
 
@@ -89,6 +89,14 @@ class BaseSolver(metaclass=ABCMeta):
 
     def set_epoch(self, epoch):
         self.epoch = epoch
+
+    def get_max_memory(self):
+        device = list(self.model.parameters())[0].device
+        mem = torch.cuda.max_memory_allocated(device=device)
+        mem_mb = torch.tensor([mem / (1024 * 1024)],
+                              dtype=torch.int,
+                              device=device)
+        return mem_mb.item()
 
     def quit(self):
         self.tb_writer.close()

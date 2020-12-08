@@ -14,10 +14,10 @@ from .processbar import (ProgressBar, track_progress, init_pool,
 
 from .timer import (Timer, check_time)
 
-from .model import (check_model, check_grad, check_params, check_optimizer, register_hook, parameter_count, parameter_count_table)
+from .model import (check_model, check_grad, check_params, check_optimizer, register_hook)
 
 from .debug import (check, display, check_rand_state)
 
-from .memory import retry_if_cuda_oom
+from .memory import retry_if_cuda_oom, parameter_count, parameter_count_table
 
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
