@@ -312,7 +312,7 @@ def resnet152(args, **kwargs):
 
 
 def resnet(args, **kwargs):
-    print("==> Creating model "{}"".format(args.arch))
+    print("==> Creating model '{}'".format(args.arch))
     if args.arch == "resnet18":
         return resnet18(args)
     elif args.arch == "resnet34":
