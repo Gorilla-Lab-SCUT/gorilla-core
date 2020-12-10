@@ -5,11 +5,11 @@ from torch.autograd import Function
 import math
 
 model_urls = {
-    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
-    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
-    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
-    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
+    "resnet18": "https://download.pytorch.org/models/resnet18-5c106cde.pth",
+    "resnet34": "https://download.pytorch.org/models/resnet34-333f7ec4.pth",
+    "resnet50": "https://download.pytorch.org/models/resnet50-19c8e357.pth",
+    "resnet101": "https://download.pytorch.org/models/resnet101-5d3b4d8f.pth",
+    "resnet152": "https://download.pytorch.org/models/resnet152-b121ed2d.pth",
 }
 
 
@@ -27,10 +27,10 @@ class BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None):
-        '''
+        r"""
         The number of channels in the network:
         input: inplanes --> planes --> planes: output
-        '''
+        """
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -90,7 +90,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=1000):
-        """
+        r"""
         Parameters:
         ----------
         block: a class inherited from nn.Module
@@ -134,7 +134,7 @@ class ResNet(nn.Module):
                 m.bias.data.zero_()
 
     def _make_layer(self, block, planes, num_block, stride=1):
-        """
+        r"""
         Make a layer that contain some residual blocks.
         Parameters
         ----------
@@ -188,7 +188,7 @@ class ResNet(nn.Module):
 
 
 def resnet18(args, **kwargs):
-    """
+    r"""
     Constructs a ResNet-18 model
     Parameters
     ----------
@@ -202,10 +202,10 @@ def resnet18(args, **kwargs):
     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
     pretrained_dict = {}
     if args.pretrained:
-        print('Load the ImageNet pretrained model')
-        pretrained_dict = model_zoo.load_url(model_urls['resnet18'])
+        print("Load the ImageNet pretrained model")
+        pretrained_dict = model_zoo.load_url(model_urls["resnet18"])
         model_dict = model.state_dict()
-        # The length of model_dict is 120, and the length of pretrain_dict is 102, but the difference is just that every BN layer lack a parameter named 'num_batches_tracked', and the last fc layer's weight and bias(17+1[metadata]+2)
+        # The length of model_dict is 120, and the length of pretrain_dict is 102, but the difference is just that every BN layer lack a parameter named "num_batches_tracked", and the last fc layer"s weight and bias(17+1[metadata]+2)
         pretrained_dict_temp = {
             k: v
             for k, v in pretrained_dict.items() if k in model_dict
@@ -217,7 +217,7 @@ def resnet18(args, **kwargs):
 
 
 def resnet34(args, **kwargs):
-    """
+    r"""
     Constructs a ResNet-34 model
     Parameters
     ----------
@@ -231,8 +231,8 @@ def resnet34(args, **kwargs):
     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
     pretrained_dict = {}
     if args.pretrained:
-        print('Load the ImageNet pretrained model')
-        pretrained_dict = model_zoo.load_url(model_urls['resnet34'])
+        print("Load the ImageNet pretrained model")
+        pretrained_dict = model_zoo.load_url(model_urls["resnet34"])
         model_dict = model.state_dict()
         pretrained_dict_temp = {
             k: v
@@ -245,14 +245,14 @@ def resnet34(args, **kwargs):
 
 
 def resnet50(args, **kwargs):
-    """Constructs a ResNet-50 model.
+    r"""Constructs a ResNet-50 model.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if args.pretrained:
-        print('Load the ImageNet pretrained model')
-        pretrained_dict = model_zoo.load_url(model_urls['resnet50'])
+        print("Load the ImageNet pretrained model")
+        pretrained_dict = model_zoo.load_url(model_urls["resnet50"])
         model_dict = model.state_dict()
         pretrained_dict_temp = {
             k: v
@@ -262,7 +262,7 @@ def resnet50(args, **kwargs):
         model.load_state_dict(model_dict)
 
 
-#     if args.ablation == 'baseline':
+#     if args.ablation == "baseline":
 #         model.fc = nn.Linear(num_of_feature_map, args.num_classes)
 #     else:
 #         model.fc = nn.Linear(num_of_feature_map, args.num_classes * 2)
@@ -270,7 +270,7 @@ def resnet50(args, **kwargs):
 
 
 def resnet101(args, **kwargs):
-    """
+    r"""
     Constructs a ResNet-101 model
     Parameters
     ----------
@@ -283,8 +283,8 @@ def resnet101(args, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     if args.pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
-    # modify the structure of the model, change the number of the fc layer's output to the one we need
+        model.load_state_dict(model_zoo.load_url(model_urls["resnet101"]))
+    # modify the structure of the model, change the number of the fc layer"s output to the one we need
     num_of_feature_map = model.fc.in_features
     model.fc = nn.Linear(num_of_feature_map, args.num_classes_t)
     # initial the new fc layer
@@ -295,7 +295,7 @@ def resnet101(args, **kwargs):
 
 
 def resnet152(args, **kwargs):
-    """
+    r"""
     Constructs a ResNet-152 model
     Parameters
     ----------
@@ -308,20 +308,20 @@ def resnet152(args, **kwargs):
     """
     pass
 
-    return model
+    return 
 
 
 def resnet(args, **kwargs):
-    print("==> Creating model '{}'".format(args.arch))
-    if args.arch == 'resnet18':
+    print("==> Creating model "{}"".format(args.arch))
+    if args.arch == "resnet18":
         return resnet18(args)
-    elif args.arch == 'resnet34':
+    elif args.arch == "resnet34":
         return resnet34(args)
-    elif args.arch == 'resnet50':
+    elif args.arch == "resnet50":
         return resnet50(args)
-    elif args.arch == 'resnet101':
+    elif args.arch == "resnet101":
         return resnet101(args)
-    elif args.arch == 'resnet152':
+    elif args.arch == "resnet152":
         return resnet152(args)
     else:
-        raise ValueError('Unrecognized model architecture'.args.arch)
+        raise ValueError("Unrecognized model architecture {}".format(args.arch))
