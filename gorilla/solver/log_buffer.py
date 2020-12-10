@@ -1,6 +1,6 @@
-# Copyright (c) Open-MMLab. All rights reserved.
-from typing import List, Optional, Tuple, Sequence
-from collections import OrderedDict, defaultdict
+# Copyright (c) Gorilla-Lab. All rights reserved.
+from typing import List, Optional, Sequence
+from collections import defaultdict
 
 import numpy as np
 

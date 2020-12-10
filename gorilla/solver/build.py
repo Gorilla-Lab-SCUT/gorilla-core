@@ -1,4 +1,4 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Gorilla-Lab. and its affiliates.
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Type, Union
 
 from ..config import Config
