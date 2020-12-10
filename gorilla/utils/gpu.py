@@ -1,15 +1,10 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 import os
-import gc
 import time
 import warnings
-import datetime
-import argparse
-import subprocess
 
 import pynvml
 import torch
-import numpy as np
 from gpustat import GPUStatCollection
 
 from ..core import convert_list_str
@@ -17,8 +12,6 @@ from ..core import convert_list_str
 # init
 pynvml.nvmlInit()
 NUM_GPUS = pynvml.nvmlDeviceGetCount()
-
-# NUM_GPUS = torch.cuda.device_count()
 
 
 def get_free_gpu(mode="memory", memory_need=11000) -> list:
@@ -111,6 +104,7 @@ def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need
     # all gpus in this machine
     gpu_ids = ",".join(convert_list_str(gpu_ids))
     # return  gpu_ids
+    os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = gpu_ids
 
 
