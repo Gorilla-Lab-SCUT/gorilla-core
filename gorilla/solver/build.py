@@ -8,6 +8,13 @@ from . import lr_scheduler as lr_schedulers
 
 from ..core import is_seq_of
 
+# the default optimizer and lr_scheduler config dict
+OPTIM = {"name": "Adam",
+         "lr": 0.001}
+
+SCHEDULER = {"name": "StepLR",
+             "step_size": 10000}
+
 
 def build_single_optimizer(
         model: torch.nn.Module,
@@ -37,7 +44,7 @@ def build_single_optimizer(
 
 
 def build_optimizer(model: torch.nn.Module,
-                       optimizer_cfg: [Config, Dict]) -> torch.optim.Optimizer:
+                    optimizer_cfg: [Config, Dict]=OPTIM) -> torch.optim.Optimizer:
     r"""
     Build an optimizer from config, supporting multi optimizers.
     If there is no omission, build_optimizer_v2 can take the place of
@@ -60,7 +67,7 @@ def build_optimizer(model: torch.nn.Module,
 
 def build_lr_scheduler(
         optimizer: torch.optim.Optimizer,
-        lr_scheduler_cfg: [Config, Dict],
+        lr_scheduler_cfg: [Config, Dict]=SCHEDULER,
         lambda_func=None) -> torch.optim.lr_scheduler._LRScheduler:
     r"""
     Build a LR scheduler from config.

@@ -142,7 +142,7 @@ def collect_env_info():
     return env_str
 
 
-def set_random_seed(seed, deterministic=False, use_rank_shift=False):
+def set_random_seed(seed, deterministic=False, use_rank_shift=False, logger=None):
     r"""Set random seed.
     Args:
         seed (int): Seed to be used.
@@ -153,6 +153,12 @@ def set_random_seed(seed, deterministic=False, use_rank_shift=False):
         rank_shift (bool): Whether to add rank number to the random seed to
             have different random seed in different threads. Default: False.
     """
+    message = "set random seed: {}".format(seed)
+    if logger is not None:
+        logger.info(message)
+    else:
+        print(message)
+        
     if use_rank_shift:
         rank, _ = get_dist_info()
         seed += rank

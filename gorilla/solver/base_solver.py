@@ -19,12 +19,13 @@ class BaseSolver(metaclass=ABCMeta):
                  model,
                  dataloaders,
                  cfg,
-                 logger=None):
+                 logger=None,
+                 **kwargs):
         # initial essential parameters
         self.model = model
+        self.dataloaders = dataloaders
         self.optimizer = build_optimizer(model, cfg.optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, cfg.lr_scheduler)
-        self.dataloaders = dataloaders
         self.cfg = cfg
         self.logger = logger
         self.epoch = cfg.get("start_epoch", 1)
@@ -32,72 +33,52 @@ class BaseSolver(metaclass=ABCMeta):
         self.tb_writer = SummaryWriter(log_dir=cfg.log) # tensorboard writer
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
 
-        # the hooks container (optional)
-        self._hooks = []
-
         self.get_ready()
 
-    def get_ready(self):
+    def get_ready(self, **kwargs):
         # set random seed to keep the result reproducible
-        if self.cfg.seed != 0:
+        seed = self.cfg.get("seed", 0)
+        if seed != 0:
             from ..core import set_random_seed
-            print("set random seed:", self.cfg.seed)
-            set_random_seed(self.cfg.seed)
-        else:  # do not set random seed
-            pass
+            print("set random seed:", seed)
+            set_random_seed(seed, logger=self.logger)
 
-    @property
-    def complete_training_flag(self):
-        return self.iter > self.cfg.max_iters or \
-            self.epoch > self.cfg.max_epoch
+    def resume(self, checkpoint, **kwargs):
+        check_file_exist(checkpoint)
+        self.meta = resume(self.model,
+                           checkpoint,
+                           self.optimizer,
+                           self.lr_scheduler)
+        if "epoch" in self.meta:
+            self.epoch = self.meta["epoch"]
 
-    @abstractmethod
-    def solve(self):
-        r"""solve(self) aims to define each epoch training operation"""
-        self.clear()
-        # the whole training processing
-
-    @abstractmethod
-    def train(self):
-        r"""train(self) aims to define each step training operation"""
-        self.clear()
-        # epoch training
-
-    @abstractmethod
-    def evaluate(self):
-        r"""evaluate(self) aims to define each evaluation operation"""
-        self.clear()
-        # evaluation
-
-    def clear(self):
-        r"""clear log buffer
-        """
-        self.log_buffer.clear()
-
-    def write(self):
+    def write(self, **kwargs):
         self.logger.info("Epoch: {}".format(self.epoch))
         self.log_buffer.average()
         for key, avg in self.log_buffer.output.items():
             self.tb_writer.add_scalar(key, avg, self.epoch)
 
-    def resume(self, checkpoint):
-        check_file_exist(checkpoint)
-        meta = resume(self.model,
-                     checkpoint,
-                     self.optimizer,
-                     self.lr_scheduler)
-        self.set_epoch(meta["epoch"] + 1)  # start at the next epoch
+    def clear(self, **kwargs):
+        r"""clear log buffer
+        """
+        self.log_buffer.clear()
 
-    def set_epoch(self, epoch):
-        self.epoch = epoch
+    @abstractmethod
+    def solve(self, **kwargs):
+        r"""solve(self) aims to define each epoch training operation"""
+        self.clear()
+        # the whole training processing
 
-    def get_max_memory(self):
-        device = list(self.model.parameters())[0].device
-        mem = torch.cuda.max_memory_allocated(device=device)
-        mem_mb = torch.tensor([mem / (1024 * 1024)],
-                              dtype=torch.int,
-                              device=device)
-        return mem_mb.item()
+    @abstractmethod
+    def train(self, **kwargs):
+        r"""train(self) aims to define each step training operation"""
+        self.clear()
+        # epoch training
 
-    def quit(self):
-        self.tb_writer.close()
+    @abstractmethod
+    def evaluate(self, **kwargs):
+        r"""evaluate(self) aims to define each evaluation operation"""
+        self.clear()
+        # evaluation
+
+

@@ -123,7 +123,7 @@ def load_checkpoint(model,
         state_dict = checkpoint
     # strip prefix of state_dict
     if list(state_dict.keys())[0].startswith("module."):
-        state_dict = {k[7:]: v for k, v in checkpoint["state_dict"].items()}
+        state_dict = {k[7:]: v for k, v in checkpoint["model"].items()}
     # load state_dict
     load_state_dict(model, state_dict, strict, logger)
     return checkpoint
@@ -174,7 +174,10 @@ def resume(model,
             raise TypeError(
                 "scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {}".format(type(scheduler)))
 
-    return checkpoint["meta"]
+    if "meta" in checkpoint:
+        return checkpoint["meta"]
+    else:
+        return {}
 
 
 def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
@@ -200,7 +203,7 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
 
     checkpoint = {
         "meta": meta,
-        "state_dict": weights_to_cpu(get_state_dict(model))
+        "model": weights_to_cpu(get_state_dict(model))
     }
     # save optimizer state dict in the checkpoint
     if optimizer is not None:
