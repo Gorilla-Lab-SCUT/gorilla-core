@@ -31,6 +31,7 @@ class BaseSolver(metaclass=ABCMeta):
         self.log_buffer = LogBuffer()
         self.tb_writer = SummaryWriter(log_dir=cfg.log) # tensorboard writer
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
+        self.meta = {}
 
         # the hooks container (optional)
         self._hooks = []
@@ -82,11 +83,10 @@ class BaseSolver(metaclass=ABCMeta):
 
     def resume(self, checkpoint):
         check_file_exist(checkpoint)
-        meta = resume(self.model,
-                     checkpoint,
-                     self.optimizer,
-                     self.lr_scheduler)
-        self.set_epoch(meta["epoch"] + 1)  # start at the next epoch
+        self.meta = resume(self.model,
+                           checkpoint,
+                           self.optimizer,
+                           self.lr_scheduler)
 
     def set_epoch(self, epoch):
         self.epoch = epoch

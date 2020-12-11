@@ -200,7 +200,7 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
 
     checkpoint = {
         "meta": meta,
-        "state_dict": weights_to_cpu(get_state_dict(model))
+        "model": weights_to_cpu(get_state_dict(model))
     }
     # save optimizer state dict in the checkpoint
     if optimizer is not None:
