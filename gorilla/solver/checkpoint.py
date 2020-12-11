@@ -98,7 +98,7 @@ def load_state_dict(module, state_dict, strict=False, logger=None):
 def load_checkpoint(model,
                     filename,
                     map_location=None,
-                    strict=False,
+                    strict=True,
                     logger=None):
     r"""Load checkpoint from a file or URI.
     Args:
@@ -116,9 +116,9 @@ def load_checkpoint(model,
     if not isinstance(checkpoint, dict):
         raise RuntimeError(
             "No state_dict found in checkpoint file {}".format(filename))
-    # get state_dict from checkpoint
-    if "state_dict" in checkpoint:
-        state_dict = checkpoint["state_dict"]
+    # get model state_dict from checkpoint
+    if "model" in checkpoint:
+        state_dict = checkpoint["model"]
     else:
         state_dict = checkpoint
     # strip prefix of state_dict
@@ -174,6 +174,7 @@ def resume(model,
             raise TypeError(
                 "scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {}".format(type(scheduler)))
 
+    return checkpoint["meta"]
 
 
 def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):

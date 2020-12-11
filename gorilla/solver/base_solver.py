@@ -82,10 +82,11 @@ class BaseSolver(metaclass=ABCMeta):
 
     def resume(self, checkpoint):
         check_file_exist(checkpoint)
-        resume(self.model,
-               checkpoint,
-               self.optimizer,
-               self.lr_scheduler)
+        meta = resume(self.model,
+                     checkpoint,
+                     self.optimizer,
+                     self.lr_scheduler)
+        self.set_epoch(meta["epoch"] + 1)  # start at the next epoch
 
     def set_epoch(self, epoch):
         self.epoch = epoch

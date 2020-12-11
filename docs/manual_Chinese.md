@@ -588,10 +588,10 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
 该函数还支持保存对 `optimizer` 以及 `lr_scheduler` 进行保存，以便在下次导入训练时还原训练的关键参数，在这里保存的 `dict` 键值索引名称如下：
 ```python
 checkpoint = {
-    "state_dict": 网络参数,
+    "model": model参数,
     "optimizer": optimizer参数,
     "scheduler": lr_scheduler参数,
-    "meta": 存放任意参数的字典，例如时间/epoch数等,
+    "meta": 存放任意参数的字典，例如时间/epoch数/正确率等,
 }
 ```
 当保存对象输入为 `None` 默认保存为 **空字典**。
@@ -604,12 +604,12 @@ checkpoint = {
 def load_checkpoint(model,
                     filename,
                     map_location=None,
-                    strict=False,
+                    strict=True,
                     logger=None):
 ```
 支持从 `url` 下载所需的权重。在支持直接导入模型参数的基础上（既`checkpoint`本身就是`state_dict`），也为了支持上述的 `checkpoint` 键值索引也进行了相应的判断和处理。
 
-另外一个函数就是对 `load_checkpoitn` 函数的扩展和包装 `resume`。当我们训练网络中断，继续训练的时候，我们在已经保存 `optimizer` 和 `lr_scheduler` 的基础上，需要把它们也加载进来。`resume` 函数就可以看作在 `load_checkpoint` 的基础上实现 `load_optimizer` 和 `load_lr_scheduler` 的功能：
+另外一个函数就是对 `load_checkpoint` 函数的扩展和包装 `resume`。当我们训练网络中断，继续训练的时候，我们在已经保存 `optimizer` 和 `lr_scheduler` 的基础上，需要把它们也加载进来。`resume` 函数就可以看作在 `load_checkpoint` 的基础上实现 `load_optimizer` 和 `load_lr_scheduler` 的功能：
 ```python
 def resume(model,
            filename,
@@ -618,7 +618,11 @@ def resume(model,
            resume_optimizer=True,
            resume_scheduler=True,
            map_location="default"):
+    ## 恢复model, optimizer和scheduler
+    return checkpoint["meta"]
 ```
+`resume`函数会返回我们之前保存的`meta`信息，然后我们就可以在`solver`自己的`resume`函数中把我们需要的`meta`信息恢复出来。
+
 
 - **日志变量存储器**
 
