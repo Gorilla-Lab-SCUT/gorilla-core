@@ -135,18 +135,22 @@ def resume(model,
            scheduler=None,
            resume_optimizer=True,
            resume_scheduler=True,
-           map_location="default"):
+           map_location="default",
+           strict=True,
+           **kwargs):
     if map_location == "default":
         if torch.cuda.is_available():
             device_id = torch.cuda.current_device()
             checkpoint = load_checkpoint(
                 model,
                 filename,
-                map_location=lambda storage, loc: storage.cuda(device_id))
+                strict=strict,
+                map_location=lambda storage, loc: storage.cuda(device_id),
+                **kwargs)
         else:
-            checkpoint = load_checkpoint(model, filename)
+            checkpoint = load_checkpoint(model, filename, strict=strict, **kwargs)
     else:
-        checkpoint = load_checkpoint(model, filename, map_location=map_location)
+        checkpoint = load_checkpoint(model, filename, strict=strict, map_location=map_location, **kwargs)
 
     if "optimizer" in checkpoint and resume_optimizer:
         if optimizer is None:

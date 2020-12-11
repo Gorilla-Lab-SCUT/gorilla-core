@@ -53,10 +53,11 @@ class BaseSolver(metaclass=ABCMeta):
         self.meta = resume(self.model,
                            checkpoint,
                            self.optimizer,
-                           self.lr_scheduler)
+                           self.lr_scheduler,
+                           **kwargs)
         # 如果 meta 中有epoch信息，则写入当前solver
         if "epoch" in self.meta:
-            self.epoch = self.meta["epoch"]
+            self.epoch = self.meta["epoch"] + 1
 
     def write(self, **kwargs):
         # NOTE: 由于大家使用tensorboard的习惯不同，这里仅实现了最

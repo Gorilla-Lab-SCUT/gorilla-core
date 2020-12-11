@@ -48,7 +48,8 @@ class BaseSolver(metaclass=ABCMeta):
         self.meta = resume(self.model,
                            checkpoint,
                            self.optimizer,
-                           self.lr_scheduler)
+                           self.lr_scheduler,
+                           **kwargs)
         if "epoch" in self.meta:
             self.epoch = self.meta["epoch"] + 1
 
