@@ -41,7 +41,6 @@ class BaseSolver(metaclass=ABCMeta):
         seed = self.cfg.get("seed", 0)
         if seed != 0:
             from ..core import set_random_seed
-            print("set random seed:", seed)
             set_random_seed(seed, logger=self.logger)
 
     def resume(self, checkpoint, **kwargs):
@@ -51,7 +50,7 @@ class BaseSolver(metaclass=ABCMeta):
                            self.optimizer,
                            self.lr_scheduler)
         if "epoch" in self.meta:
-            self.epoch = self.meta["epoch"]
+            self.epoch = self.meta["epoch"] + 1
 
     def write(self, **kwargs):
         self.logger.info("Epoch: {}".format(self.epoch))

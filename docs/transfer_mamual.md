@@ -44,7 +44,6 @@ class BaseSolver(metaclass=ABCMeta):
         seed = self.cfg.get("seed", 0)
         if seed != 0:
             from ..core import set_random_seed
-            print("set random seed:", seed)
             set_random_seed(seed, logger=self.logger)
 
     def resume(self, checkpoint, **kwargs):
