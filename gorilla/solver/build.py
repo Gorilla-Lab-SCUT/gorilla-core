@@ -69,13 +69,26 @@ def build_lr_scheduler(
         optimizer: torch.optim.Optimizer,
         lr_scheduler_cfg: [Config, Dict]=SCHEDULER,
         lambda_func=None) -> torch.optim.lr_scheduler._LRScheduler:
-    r"""
+    r"""Author: liang.zhihao
     Build a LR scheduler from config.
+
+    Note:
+        "name" must be in lr_scheduler_cfg
+
+    Args:
+        optimizer (torch.optim.Optimizer): Input Optimizer
+        lr_scheduler_cfg ([Cofnig, Dict]): learning rate scheduler
+        lambda_func(lambda, optional): Custom learning rate function,
+                                       for using LambdaLR
+
     Example:
         cfg = Config.fromfile(cfg.config_file)
         model = build_model(cfg)
         optimizer = build_optimizer(model, cfg.optimizer)
         lr_scheduler = build_lr_scheduler(optimizer, cfg.lr_scheduler)
+
+    Returns:
+        _LRScheduler: the learning rate scheduler
     """
     name = lr_scheduler_cfg.pop("name")
     lr_scheduler_cfg["optimizer"] = optimizer
@@ -87,5 +100,7 @@ def build_lr_scheduler(
             is_seq_of(lambda_func, Callable), "lambda_func is invalid"
         lr_scheduler_cfg["lr_lambda"] = lambda_func
 
+    # get the caller
     scheduler_caller = getattr(lr_schedulers, name)
     return scheduler_caller(**lr_scheduler_cfg)
+
