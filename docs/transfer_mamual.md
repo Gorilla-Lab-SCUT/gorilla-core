@@ -151,5 +151,59 @@ class SpecificSolver(gorilla.BaseSolver):
 训练脚本方便希望同学们根据自己的情况套以上模板，由于同学们测试条件和处理各异，测试脚本则不对同学们做要求。
 
 ## config & argparse
+如何管理实验流程，大体上无非就两种方式，一种是配置文件，将其读取成 `dict` 对象后从中索引参数；第二种就是 `Argparse`，通过命令行输入以及默认的设置来确定参数。
+大部分情况则是两者进行结合，配置文件确定不常改变的参数例如optimizer参数，数据集路径等，`Argparse`则是用来设置较为灵活的参数，例如学习率，保存地址等。
+这里的话我们也是提供了辅助同学们进行配置管理的工具函数。
+在配置管理方面，我们这里对同学们提四个要求：
+1. 配置文件要有分层，而且至少有以下分层（以 `.yaml` 为例）：
+```yaml
+model:
+    ...
+data:
+    ...
+optimizer:
+    ...
+lr_scheduler:
+    ...
+```
+可以有多的子配置项，但是这四个子配置项是不可少的。
+
+1. 其中的子配置项 `optimizer` 以及 `scheduler` 要符合以下要求（ `model` 以及 `data` 由于同学们需求各异，则不对内部参数进行统一要求）：
+```yaml
+optimizer:
+    name: Adam,
+    lr: 0.001
+lr_scheduler:
+    name: StepLR,
+    step_size: 10000
+```
+这里希望同学们统一使用 `torch.optim.lr_scheduler` 中的 `_LRScheduler` 派生的各种学习率策略实现，尽量不要使用自己的学习率函数，如果有自己的需求可以基于 `_LRScheduler` 派生出自己的学习率策略并贡献到代码库（例如我们就利用这种方式实现了 `PolyLR` 以及带有各种预热机制的学习率策略）或者使用 `LambdaLR` 实现自定义学习率，以上的解决方案基本能够覆盖学习率策略的不同情况。
+上面 `optimizer/lr_scheduler` 的配置格式是为了配合我们的 `build_optimizer/build_lr_scheduler` 函数使用，在上面提到的`BaseSolver`中这样调用：
+```python
+class (metaclass=ABCMeta):
+    def __init__(self, **kwargs):
+        ...
+        # 构建优化器以及学习率策略（具体可以看源码实现）
+        self.optimizer = build_optimizer(model, cfg.optimizer)
+        self.lr_scheduler = build_lr_scheduler(self.optimizer, cfg.lr_scheduler)
+        ...
+```
+这两个构建函数的原理也非常简单，根据 `name` 成员获取相应的声明后剩余的参数结合 `model/optimizer` 作为初始化的参数得到相应的 `optimizer/lr_scheduler`。
+以 `build_optimizer(model, cfg.optimizer)` 为例，根据 `name: "Adam"` 获得了 `torch.optim.Adam` 的声明，其 API 如下：
+```python
+torch.optim.Adam(params, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
+```
+对于大部分同学来说要负责的参数是 `params` 和 `lr`，所以 `build_optimizer` 内部会获取 `model` 中的参数作为 `params`，紧接着把配置文件中的 `cfg: 0.001` 作为 `lr`，如果要给的那个 `betas` 假设为 `[0.9, 0.99]`，那么配置文件改为以下即可：
+```yaml
+optimizer:
+    name: Adam,
+    lr: 0.001
+    betas: [0.9, 0.99]
+```
+`build_lr_scheduler` 同理，它根据 `name` 获取相应的声明，接受 `optimizer` 为首位参数，剩余的从配置文件中读取。
+
+3. 以上配置文件尽可能使用我们的 `Config` 类进行管理，这部分我们直接使用了 `mmcv` 提供了 `Config` 类，所以是有 bug free 的保证的，我们也会，里面提供了非常好的性质其中主要函数为 `Config.fromfile` 同学们可通过阅读之前的介绍手册了解。
+4. 同学们在获取 `cfg` 和 `args` 后应尽早将两者合成一个 `cfg`，保证后面的 pipeline 只通过一个 `cfg` 管理配置参数。`args` 作为 `argparse.NameSpace` 可以通过Python内置的 `vars(.)` 转换成 `dict`。
+   当然为了辅助同学们进行融合，我们也提供了 `merge_cfg_and_args` 函数，直接将 `cfg` 和 `args` 合并成一个总的 `cfg`，本质就是将 `args` 中的参数融合进 `cfg` 中，如果有重合的参数，则以 `args` 中的参数对 `cfg` 中的参数进行覆盖。
 
 

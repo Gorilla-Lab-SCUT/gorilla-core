@@ -323,9 +323,9 @@ Config (path: None): {
 ```
 但是在加载的时候`Config(dict)`和`Config.fromfile(filename)`并不会自动进行层级划分，需要注意。另外就是上面例子中提到的 `merge_from_dict` 成员函数，它可以根据融合对象对已有的配置进行融合覆盖，上面的例子就表明了，`name` 这个成员原本为 `VGG` 被 `ResNet` 覆盖了。
 
-另外就是许多同学非常喜欢使用 `argparse` 管理超参数，为了方面管理我们希望实现 `cfg` 和 `args` 的统一，经过我们的思考，我们提供了 `merge_args_and_cfg` 函数，实现融合：
+另外就是许多同学非常喜欢使用 `argparse` 管理超参数，为了方面管理我们希望实现 `cfg` 和 `args` 的统一，经过我们的思考，我们提供了 `merge_cfg_and_args` 函数，实现融合：
 ```python
-def merge_args_and_cfg(cfg: Optional[Config]=None, args: Optional[ArgumentParser]=None) -> Config:
+def merge_cfg_and_args(cfg: Optional[Config]=None, args: Optional[ArgumentParser]=None) -> Config:
 ```
 输入分别为 `cfg` 和 `args` 融合得到新的 `cfg`，由于 `args` 中的参数优先度往往比 `cfg` 中的参数高，所以我们利用了上面所说的 `merge_from_dict` 函数实现了两者的融合，对于相同的参数，则利用 `args` 中的参数进行覆盖。
 

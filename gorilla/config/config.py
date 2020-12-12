@@ -461,7 +461,7 @@ class DictAction(Action):
         setattr(namespace, self.dest, options)
 
 
-def merge_args_and_cfg(cfg: Optional[Config]=None, args: Optional[Namespace]=None) -> Config:
+def merge_cfg_and_args(cfg: Optional[Config]=None, args: Optional[Namespace]=None) -> Config:
     r"""merge args and cfg into a Config by calling 'merge_from_dict' func
 
     Args:
