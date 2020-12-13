@@ -1,12 +1,11 @@
 # Copyright (c) Gorilla-Lab. and its affiliates.
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Type, Union
 
-from ..config import Config
 import torch
 
 from . import lr_scheduler as lr_schedulers
-
 from ..core import is_seq_of
+from ..config import Config
 
 # the default optimizer and lr_scheduler config dict
 OPTIM = {"name": "Adam",
@@ -19,7 +18,7 @@ SCHEDULER = {"name": "StepLR",
 def build_single_optimizer(
         model: torch.nn.Module,
         optimizer_cfg: [Config, Dict]) -> torch.optim.Optimizer:
-    r"""
+    r"""Author: zhang.haojian
     Build a single optimizer from optimizer config, supporting multi parameter
     groups with different setting in an optimizer
     """
@@ -39,13 +38,21 @@ def build_single_optimizer(
                 "name": key,
                 **value
             })
-    optimizer_caller = getattr(torch.optim, name)
+    
+    try:
+        # a rich pytorch optimizer library
+        # https://github.com/jettify/pytorch-optimizer
+        import torch_optimizer
+        optimizer_caller = getattr(torch_optimizer, name)
+    except:
+        optimizer_caller = getattr(torch.optim, name)
+    
     return optimizer_caller(**optimizer_cfg)
 
 
 def build_optimizer(model: torch.nn.Module,
                     optimizer_cfg: [Config, Dict]=OPTIM) -> torch.optim.Optimizer:
-    r"""
+    r"""Author: zhang.haojian
     Build an optimizer from config, supporting multi optimizers.
     If there is no omission, build_optimizer_v2 can take the place of
     build_optimizer without changing the API
