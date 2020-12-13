@@ -92,6 +92,9 @@ def build_lr_scheduler(
     """
     name = lr_scheduler_cfg.pop("name")
     lr_scheduler_cfg["optimizer"] = optimizer
+    if isinstance(optimizer, dict):
+        # TODO: 暂不支持对多optimizer建立lr_scheduler，后面再想想怎么做
+        return None
 
     # specificial for LambdaLR
     if name == "LambdaLR":

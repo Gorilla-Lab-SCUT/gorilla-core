@@ -150,6 +150,65 @@ class SpecificSolver(gorilla.BaseSolver):
 ```
 训练脚本方便希望同学们根据自己的情况套以上模板，由于同学们测试条件和处理各异，测试脚本则不对同学们做要求。
 
+## evaluator
+然后是 `evaluator` 部分，该部分在于实现指标的计算（比如正确率），在以后的项目中希望同学们将计算指标部分的代码以 `evaluator`**类** 的形式进行包装，而不是分散地写在脚本中。
+在我们的核心库`gorilla-core`中提供了`evaluator`的基类`DatasetEvaluator`：
+```python
+class DatasetEvaluator:
+    def reset(self):
+        # 进行一轮测试前需要重置evaluator
+        pass
+
+    def process(self, inputs, outputs):
+        # 处理一个/多个batch的数据，为调用evaluate()做准备
+        pass
+
+    def evaluate(self):
+        # 评估整个dataset的数据
+        pass
+```
+一个简单的样例是用于分类任务的`ClsEvaluator`：
+```python
+class ClsEvaluator(DatasetEvaluator):
+    r"""
+    Evaluator of classification task, support instance accuary and class-wise accuracy.
+    """
+
+    def __init__(self, ...):
+        # 略
+        self.reset()
+
+    def reset(self):
+        self._output = None
+        self._gt = None
+
+    def process(self, output, gt):
+        if self._output is None:
+            self._output = output.detach().cpu()
+            self._gt = gt.cpu()
+        else:
+            self._output = torch.cat((self._output, output.detach().cpu()), dim=0)
+            self._gt = torch.cat((self._gt, gt.cpu()), dim=0)
+
+    def evaluate(self):
+        acc = accuracy(self._output, self._gt)
+        return acc
+```
+具体的用法，举一个简单的例子：
+```python
+for _, (inputs, gt) in enumerate(dataloader):
+    outputs = self.model(inputs)
+    # 在训练或测试中获得一个batch的数据之后，调用`process`方法，把数据保存下来
+    self.evaluator.process(outputs, gt)
+
+# 在一个epoch的训练或测试结束之后，调用`evaluate`方法，计算整个epoch收集的数据的指标
+acc = self.evaluator.evaluate()
+# 在下一轮计算开始之前，需要调用`reset`方法清空evaluator的缓存
+evaluator.reset()
+```
+其中`evaluate`方法用到的accuracy是根据输出和标签计算正确率的函数，比较通用，应当置于gorilla/evaluation/metric/目录下，专属于2d或3d任务的就放到gorilla2d(gorilla3d)/evaluation/metric/目录下。使用Evaluator之后，我们就不再在solver中大幅插入计算指标的脚本，而是写一个通用的计算指标的函数（比如上面的`accuracy`），然后在evaluator中调用这个函数。
+
+
 ## config & argparse
 如何管理实验流程，大体上无非就两种方式，一种是配置文件，将其读取成 `dict` 对象后从中索引参数；第二种就是 `Argparse`，通过命令行输入以及默认的设置来确定参数。
 大部分情况则是两者进行结合，配置文件确定不常改变的参数例如optimizer参数，数据集路径等，`Argparse`则是用来设置较为灵活的参数，例如resume权重，保存地址等。
