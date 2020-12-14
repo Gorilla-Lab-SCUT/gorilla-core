@@ -50,6 +50,7 @@ class BaseSolver(metaclass=ABCMeta):
                            self.optimizer,
                            self.lr_scheduler,
                            **kwargs)
+        self.logger.info("resume from: {}".format(checkpoint))
         if "epoch" in self.meta:
             self.epoch = self.meta["epoch"] + 1
 

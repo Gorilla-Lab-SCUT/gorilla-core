@@ -33,7 +33,7 @@ class BaseSolver(metaclass=ABCMeta):
         # 初始化记录容器，用于写入tensorboard，要了解原理观看源码
         self.log_buffer = LogBuffer()
         # tensorboard 容器
-        self.tb_writer = SummaryWriter(log_dir=cfg.log) 
+        self.tb_writer = SummaryWriter(log_dir=cfg.log_dir) 
 
         # 准备训练前的设置
         self.get_ready()
@@ -55,6 +55,7 @@ class BaseSolver(metaclass=ABCMeta):
                            self.optimizer,
                            self.lr_scheduler,
                            **kwargs)
+        self.logger.info("resume from: {}".format(checkpoint))
         # 如果 meta 中有epoch信息，则写入当前solver
         if "epoch" in self.meta:
             self.epoch = self.meta["epoch"] + 1
@@ -298,6 +299,67 @@ dataloader:
     workers_per_gpu: 8  # num_workers
 ```
 这样的话只是读取的时候可能需要多写些索引，但是这样可以通过 `Network(**cfg.network)`, `Datset(**cfg.dataset)` 直接读取参数进行初始化也是很好的方式。
+
+## log
+对于日志文件的保存，我们对同学们保存日志的路径做出以下要求：
+```sh
+root/log
+  └── log_sub_dir
+        ├── epoch_00001.pth # 如果以epoch为节点存储
+        ├── epoch_{num_epoch}.pth
+        ├── epoch_00128.pth
+        ├── ...
+        ├── iter_00001.pth # 如果以iter为节点存储
+        ├── iter_{num_iter}.pth
+        ├── iter_01000.pth
+        ├── ...
+        ├── events*** # tensorboard 信息文件
+        ├── ...
+        ├── 20201214_133002.log # 以时间戳作为 log 文件前缀
+        ├── %Y%m%d_%H%M%S.log
+        └── 20201214_143002.log
+```
+我们希望同学们的根日志目录统一设为当前项目根目录下的 `log` 文件夹。大部分同学的 `log` 子文件夹的命名往往和参数有关，例如学习率/网络模型等参数，我们在这里提供了函数：
+```python
+def get_log_dir(root: str="log", prefix: str=None, suffix: str=None, **kwargs) -> str:
+```
+它看起来比较复杂但是功能非常实在，下面的例子即可说明：
+```python
+>>> import gorilla
+>>> # 根据输入参数动态拼接得到日志目录
+>>> gorilla.get_log_dir(lr=0.001, bs=4)
+"log/lr_0.001_bs_4"
+>>> gorilla.get_log_dir(lr=0.001, bs=4, optim="Adam")
+"log/lr_0.001_bs_4_Adam"
+>>> gorilla.get_log_dir(lr=0.001, bs=4, optim="Adam", suffix="test") # 支持添加后缀
+"log/lr_0.001_bs_4_Adam_test"
+>>> gorilla.get_log_dir(lr=0.001, bs=4, optim="Adam", prefix="new") # 支持添加前缀
+"log/new_lr_0.001_bs_4_Adam_test"
+>>> gorilla.get_log_dir(lr=0.001, bs=4, optim="Adam", prefix="new", suffix="test") # 支持同时添加前后缀
+"log/lr_0.001_bs_4_Adam_test"
+```
+以上代码实现实际非常简单，同学们可以观看源码了解，并且这样的功能非常的general，同学们基本无需再单独编写如何确定日志目录。
+同时，我们也提供了初始化 `Logger` 的函数 `get_logger`，具体可以观看源码，对于大部分同学来说只要给定 `log_file` 即可使用。
+另外我们结合了以上两个函数定义了复合函数：
+```python
+def collect_logger(root: str="log", prefix: str=None, suffix: str=None, **kwargs) -> [str, logging.Logger]:
+```
+`collect_logger` 输入与 `get_log_dir` 输入一致，另外自行调用时间戳，以时间戳为前缀在得到的 `log_dir` 下生成了 `{timestamp}.log` 文件作为日志存储文件。
+该函数的返回有两部分，第一个是表示利用 `get_log_dir` 生成的日志目录的字符串，第二个则是生成的 `Logger`。
+使用案例：
+```python
+>>> import os
+>>> import gorilla
+>>> log_dir, logger = gorilla.collect_logger(lr=0.001, optim="Adam", prefix="train", suffix="temp")
+>>> log_dir # 日志目录
+'log/train_lr_0.001_optim_Adam_temp'
+>>> logger # 日志记录器
+<Logger gorilla (INFO)>
+>>> os.listdir(log_dir) # 查看日志目录下内容
+['20201214_142937.log'] # 以时间戳为前缀的日志文件
+```
+
+
 
 ## comment
 由于同学们以后或多或少会对代码库进行贡献，为了更好地配合我们的工作，我们需要同学们在平时写代码的时候养成写注释的习惯，至少在上传代码库的部分要按照相应的规范编写代码，以下 `build_scheduler` 为例：
