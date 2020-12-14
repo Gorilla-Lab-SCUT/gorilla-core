@@ -413,7 +413,7 @@ def build_lr_scheduler(
 
 如果是类的声明函数同样，无需写 `Returns`，运行函数，如模型的 `forward` 以及其他类别的 `__call__`，如有必要也应该按照上面的标准进行相应注释的编写。
 
-这里使用VSCode的同学使用 **Python Docstring Generator** 这款注释生成插件，非常好用。同学们在写完代码后写注释也方便进行相应的 review。
+这里推荐使用VSCode的同学使用 **Python Docstring Generator** 这款注释生成插件，非常好用。同学们在写完代码后写注释也方便进行相应的 review。
 
 另外很多同学也有在网络前传或者进行tensor操作时在最后标注tensor尺寸的习惯。如果要标注张量尺寸，这里统一一下标注形式：
 ```python
@@ -429,7 +429,29 @@ r"""
 ```
 同样以方括号的形式放在含义解释前。
 
-
-
+## model
+目前在 `models` 方面仅对同学有一个要求，那就是在网络的输出格式为 `dict`，例如对于分类网络:
+```python
+class ClsNet(nn.Module):
+    def __init__:
+        ...
+    def forward(self, data):
+        ...
+        # 假设进行20类的分类任务，输出为 [bs, 20] 的 tensor
+        return pred # [bs, 20]
+```
+那么之后改为：
+```python
+class ClsNet(nn.Module):
+    def __init__:
+        ...
+    def forward(self, data):
+        ...
+        # 假设进行20类的分类任务，输出为 [bs, 20] 的 tensor
+        # 用 dict 包装起来
+        # 键值名称不做具体要求
+        return {"pred": pred} # [bs, 20]
+```
+对于 `modules` 来说暂时没有强制性要求，仅对 `models` 为例（在训练/测试脚本中被调用的网络）。
 
 
