@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 import torch.distributed as dist
 
-from .timer import timestamp
+from ..utils import timestamp
 from ..core import convert_list_str
 
 logger_initialized = {}

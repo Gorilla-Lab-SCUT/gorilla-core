@@ -7,8 +7,6 @@ from .gpu import (get_free_gpu, set_cuda_visible_devices)
 from .path import (is_filepath, check_file_exist, fopen, symlink,
                    scandir, find_vcs_root, mkdir_or_exist)
 
-from .logging import (get_logger, print_log, get_log_dir, collect_logger)
-
 from .processbar import (ProgressBar, track_progress, init_pool,
                          track_parallel_progress, track)
 
