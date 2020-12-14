@@ -8,15 +8,19 @@ created by [GorillaLab](empty)
 A toolbox for learning task for Gorilla-Lab
 
 ## Documents
-- TODO
+- [API](docs/manual_Chinese.md)
+- [transfer](docs/transfer_manual.md)
 
 
 ## Installation
+You can install directly by `pip`
+```sh
+pip install gorilla-core
+```
 Run this command in project directory
 ```sh
 python setup.py install(develop)
 ```
-
 
 
 
@@ -28,9 +32,11 @@ python setup.py install(develop)
 
 # TODO
 - [x] add utils
-- [ ] fix trainer
-- [ ] add base losses
-- [ ] simplify the pipeline
+- [x] fix build
+- [x] init BaseSovler
+- [ ] hook design
+- [ ] support registry
 - [ ] To be continue
 
-
+# Changelog
+TODO
