@@ -1,10 +1,17 @@
 # Copyright (c) Open-MMLab. All rights reserved.
 import re
-from time import time
+import time
 
+def timestamp() -> str:
+    r"""Author: liang.zhihao
+    Get time stamp
+
+    Returns:
+        str: str of time stamp
+    """
+    return time.strftime("%Y%m%d_%H%M%S", time.localtime())
 
 class TimerError(Exception):
-
     def __init__(self, message):
         self.message = message
         super(TimerError, self).__init__(message)
@@ -61,9 +68,9 @@ class Timer:
     def start(self):
         r"""Start the timer."""
         if not self._is_running:
-            self._t_start = time()
+            self._t_start = time.time()
             self._is_running = True
-        self._t_last = time()
+        self._t_last = time.time()
 
     def since_start(self):
         r"""Total time since the timer is started.
@@ -72,7 +79,7 @@ class Timer:
         """
         if not self._is_running:
             raise TimerError("timer is not running")
-        self._t_last = time()
+        self._t_last = time.time()
         return self._t_last - self._t_start
 
     def since_last(self):
@@ -85,8 +92,8 @@ class Timer:
         """
         if not self._is_running:
             raise TimerError("timer is not running")
-        dur = time() - self._t_last
-        self._t_last = time()
+        dur = time.time() - self._t_last
+        self._t_last = time.time()
         return dur
 
     def reset(self):

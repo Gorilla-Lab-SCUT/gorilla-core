@@ -200,9 +200,9 @@ def scandir(dir_path, suffix=None, recursive=False):
 
 ### **日志管理**
 
-python的logging库已经非常完善和易用了，这里仅介绍函数 `get_root_logger`，实现功能也非常简单，本质上调用了`logging.getLogger` 然后对里面一些参数和格式进行了设置。
+python的logging库已经非常完善和易用了，这里仅介绍函数 `get_logger`，实现功能也非常简单，本质上调用了`logging.getLogger` 然后对里面一些参数和格式进行了设置。
 ```python
-def get_root_logger(log_file=None, log_level=logging.INFO, timestamp=None):
+def get_logger(log_file=None, name="gorilla", log_level=logging.INFO, timestamp=None):
 ```
 
 ### **显存试错**

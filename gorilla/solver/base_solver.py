@@ -30,7 +30,7 @@ class BaseSolver(metaclass=ABCMeta):
         self.logger = logger
         self.epoch = cfg.get("start_epoch", 1)
         self.log_buffer = LogBuffer()
-        self.tb_writer = SummaryWriter(log_dir=cfg.log) # tensorboard writer
+        self.tb_writer = SummaryWriter(log_dir=cfg.log_dir) # tensorboard writer
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
         self.meta = {}
 
