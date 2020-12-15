@@ -3,7 +3,9 @@
 我们建立 `gorilla2d/3d` 的目的在于更好地对实验室的代码进行管理，同时，我们的代码库处于比较初始的阶段，为了更好地在辅助同学们开发的同时建立我们的代码库，我们希望同学们在平时开发的过程中尽可能地利用我们代码库已有的东西，同时也尽可能地向代码库贡献代码。
 如何利用 `gorilla-core` 辅助开发在 `transfer_manual` 中已经进行了说明，接下来该手册的目的在于如何更好地进行开发。
 
-## __init__.py
+---
+
+## \_\_init\_\_.py
 在 Python 库的开发中 `__init__.py` 的定义是不可缺少的，接下来会简要说明一下 `__init__.py` 所起到的作用，以 `gorilla3d` 库为例，其结构为：
 ```sh
 gorilla3d
@@ -104,4 +106,15 @@ from .shapenet import ShapeNetCls # 需要补充的内容
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
 ```
 以上就完成了数据集的添加，同时完善了相关的 `__init__.py` 实现了其简单调用。
+
+## python setup.py develop
+相信很多同学在安装包的时候最常用的操作是 `pip install package` 亦或者是下载源码后运行 `python setup.py install` 安装。
+这里要介绍的则是 `python setup.py develop` 这个命令，估计很多同学没有了解过这个命令，从后缀可以看得出来这里这样的安装模式是为开发者而设计的，而开发者需要的一个很重要的要求就是修改了某个内容后能够及时地得到反馈，以上面的例子来说就是当我往 `gorilla3d` 中添加了 `ShapeNetCls` 后，我要能马上验证：
+```python
+import gorilla3d
+dataset_caller = gorilla3d.ShapeNetCls
+```
+这里要说一下 Python 调用 package 时的原理，当运行 `import gorilla3d` 时会去搜索 `site-packages` 中名为 `gorilla3d` 的目录，如果是 `pip install ` 和 `python setup.py install` 则是进行相应的编译安装后将目录复制到 `site-packages` 中，如果是 `python setup.py develop` 则会在源码目录进行相应的编译安装，然后创造一个软连接到 `site-package` 中，这样在源码的任何操作都能直接反应到当前使用的环境中，无需跑到 `site-packages` 中修改。
+
+
 
