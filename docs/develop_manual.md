@@ -117,4 +117,13 @@ dataset_caller = gorilla3d.ShapeNetCls
 这里要说一下 Python 调用 package 时的原理，当运行 `import gorilla3d` 时会去搜索 `site-packages` 中名为 `gorilla3d` 的目录，如果是 `pip install ` 和 `python setup.py install` 则是进行相应的编译安装后将目录复制到 `site-packages` 中，如果是 `python setup.py develop` 则会在源码目录进行相应的编译安装，然后创造一个软连接到 `site-package` 中，这样在源码的任何操作都能直接反应到当前使用的环境中，无需跑到 `site-packages` 中修改。
 
 
+## 开发要求
+下面就来说明同学们在开发过程中需要注意的一些事情。需要同学们参与开发的库分别是 [gorilla2d](http://222.201.134.203:20818/GorillaLab/gorilla-2d) 和 [gorilla3d](http://222.201.134.203:20818/GorillaLab/gorilla-3d)，同学们根据自己的任务进行选择。
+- 首先需要同学们从主仓库中 `fork/派生` 得到自己的子仓库，之后贡献代码的方式需要同学们更新自己的仓库后 `pull&request/创建合并请求` 到主仓库从而更新代码库，不能直接对主仓库，代码进行更新。
+- `git clone` 源码后运行 `python setup.py develop` 进行编译安装，`gorilla3d` 中存在些许 `CUDA/C++` 拓展，所以安装会比较慢，然后就可以在本地修改和贡献相应的代码了。`Git` 的相关操作这里暂不进行说明，需要同学们自行了解。
+- 同学们应该操作的分支为 `dev` 分支，`master` 分支一般不进行直接操作，而是等 `dev` 分支处于某个稳定节点后进行融合更新，同学们 `fork/派生` 到自己的子仓库后也应该操作 `dev` 分支，`pull&request/创建合并请求` 操作也应该是请求 `dev` 分支的合并。
+- 同学们安装好上述代码库后，可以新建目录作为新项目，也可以在相应的 `gorilla2d(3d)/projects` 下新建目录作为新项目，这里不做要求，反正进行上述的操作后就可以实现 `import gorilla2d(3d)`。
+- **切记！commit内容一定要写好，commit内容必须能够反应当前commit进行了什么操作或者实现了什么功能**，鼓励同学们少量多次的提交，而不是一股脑的写好后一次性提交，也不方便我们进行review。
+- 什么东西应该放代码库里，其实并不要求同学们所有的代码都融入到代码库中，也不要求同学们所有的代码能替换的都使用我们的代码库进行替换，需要融入到代码库的东西有 `dataset/models/evaluator`。`dataset` 方面无需多说，一般研究进行到一定程度，数据集会是一个比较稳定的版本，不需要进行大幅的更改或者更改仅需参数即可实现，这部分的话就可以贡献到代码库中。另外 `evaluator` 的设计参考 `gorilla2d/3d` 的文档保证复用性。
+
 
