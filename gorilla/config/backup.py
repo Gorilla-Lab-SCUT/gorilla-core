@@ -26,6 +26,10 @@ def backup(log_dir: str,
     """
 
     backup_dir = osp.join(log_dir, "backup")
+    # if exist, remove the backup dir to avoid copytree exist error
+    if osp.exists(backup_dir):
+        shutil.rmtree(backup_dir)
+
     os.makedirs(backup_dir, exist_ok=True)
     # log gorilla version
     logger.info("gorilla-core version is {}".format(__version__))
