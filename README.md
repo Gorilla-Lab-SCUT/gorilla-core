@@ -8,7 +8,7 @@ created by [GorillaLab](empty)
 A toolbox for learning task for Gorilla-Lab
 
 ## Documents
-- [API](docs/manual_Chinese.md)
+- [API](docs/API_manual.md)
 - [transfer](docs/transfer_manual.md)
 
 
