@@ -198,12 +198,6 @@ def scandir(dir_path, suffix=None, recursive=False):
 ```
 指定遍历根目录 `dir_path`，就可以搜索符合后缀为 `suffix`（可以为包含多个后缀的 `tuple`） 的文件，`recursive=True` 则递归搜索完所有的子文件夹，最终返回为 `generator`，可以通过 `list(.)` 转为列表。
 
-### **日志管理**
-
-python的logging库已经非常完善和易用了，这里仅介绍函数 `get_logger`，实现功能也非常简单，本质上调用了`logging.getLogger` 然后对里面一些参数和格式进行了设置。
-```python
-def get_logger(log_file=None, name="gorilla", log_level=logging.INFO, timestamp=None):
-```
 
 ### **显存试错**
 这里仅涉及到一个函数，来自 `detectron2` 库，`retry_if_cuda_oom`，这个函数可以可以看作对函数的包装函数，其功能在于在一定程度上避免OOM的情况
@@ -264,6 +258,7 @@ grad of backbone.layer4.2.bn3.bias       max: +0.00297 min: -0.00445 mean: +0.00
 ```
 
 ## Config
+### 配置管理
 该模块提供了非常实用的配置类`Config`。
 它支持从多种文件格式（包括 `.py`，`.json`  `.yml` 和 `.yaml`）加载配置。加载进来的配置类`Config`与`dict`有相似的性质，更方便的是它不仅可以用`config["key"]` 的方式索引，更可以通过 `config.key` 的方式索引，也支持 `**config` 实现函数参数的键值传递。
 ```python
@@ -328,6 +323,54 @@ Config (path: None): {
 def merge_cfg_and_args(cfg: Optional[Config]=None, args: Optional[ArgumentParser]=None) -> Config:
 ```
 输入分别为 `cfg` 和 `args` 融合得到新的 `cfg`，由于 `args` 中的参数优先度往往比 `cfg` 中的参数高，所以我们利用了上面所说的 `merge_from_dict` 函数实现了两者的融合，对于相同的参数，则利用 `args` 中的参数进行覆盖。
+
+### **日志管理**
+python的logging库已经非常完善和易用了，但是具体的 `logger` 也需要进行非常多的设置，我们在这里提供了函数：
+```python
+def get_logger(log_file=None, name="gorilla", log_level=logging.INFO, timestamp=None):
+```
+在实际使用中仅需要给定 `log_file` 即可初始化获得相应的 `logger`。 
+
+### **备份管理**
+当代码版本更迭过多时，往往会遗忘结果所对应的代码版本，因为会有备份代码的需求。在此我们也提供了相应的辅助函数：
+```python
+def backup(log_dir: str,
+           backup_list: [List[str], str],
+           logger: logging.Logger=None,
+           contain_suffix :List=["*.py"], 
+           strict: bool=False) -> None:
+```
+使用例子如下：
+```python
+>>> import os
+>>> import gorilla
+>>> logger = gorilla.get_logger() # 初始化 logger
+>>> os.system("tree") # 目录结构
+.
+├── dir
+│   ├── dir.py
+│   ├── test
+│   │   ├── temp_dir.py
+│   │   └── temp_dir.pyc
+│   └── test1
+│       └── a.ipynb
+├── log
+│   └── temp
+└── temp.py
+>>> gorilla.backup("log/temp", ["temp.py", "dir"], logger)
+>>> os.system("tree log/temp")
+log/temp
+└── backup
+    ├── dir
+    │   ├── dir.py
+    │   ├── test
+    │   │   └── temp_dir.py
+    │   └── test1
+    └── temp.py
+```
+这样就可以实现了 `.py` 文件的备份，并且是保留了原有的目录结构。
+如果有更多类型需要注册的文件，则修改 `contain_suffix` 即可。
+
 
 ## core
 core 作为代码库的核心，里面包含了许多必要的函数，其中也包括很多杂项函数，这一部分我们还在整理中。
