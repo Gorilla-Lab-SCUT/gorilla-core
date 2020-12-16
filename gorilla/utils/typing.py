@@ -63,3 +63,22 @@ def assert_and_auto_type(func):
 
     return wrapper
 
+
+def to_float32(arr: np.ndarray) -> np.ndarray:
+    r"""Author: lei.jiabao
+    process float16 array specially
+    
+    Args:
+        arr (np.ndarray): the origin array
+    
+    Returns:
+        np.ndarray: array as float32
+    """
+    if arr.dtype == np.float16:
+        return arr.astype(np.float32) + 1e-4 * np.random.randn(*arr.shape).astype(np.float32)
+    elif arr.dtype == np.float32:
+        return arr
+    else:
+        return arr.astype(np.float32)
+
+
