@@ -454,4 +454,26 @@ class ClsNet(nn.Module):
 ```
 对于 `modules` 来说暂时没有强制性要求，仅对 `models` 为例（在训练/测试脚本中被调用的网络）。
 
+## dataset
+目前在 `dataset` 方面对同学们也是只有一个要求，那就是数据集的输出格式为 `dict`，以分类数据集为例：
+```python
+class  ClsDataset(Dataset):
+    def __init__(self, **kwargs):
+        ...
+    def __len__(self):
+        return ...
+    def __getitem__(self, index):
+        # 读取数据
+        path, target = self.data[index]
+        img = self.loader(path)
+        if self.transform is not None:
+            img = self.transform(img)
+
+        # 不要返回 tuple 或者单个 tensor
+        # return img, target, path
+
+        # 用 dict 简单包装一下
+        return dict(img=img, target=target, path=path)
+```
+其余数据集方面对同学们没有强制要求。
 
