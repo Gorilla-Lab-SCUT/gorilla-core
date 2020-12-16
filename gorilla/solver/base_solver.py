@@ -37,11 +37,7 @@ class BaseSolver(metaclass=ABCMeta):
         self.get_ready()
 
     def get_ready(self, **kwargs):
-        # set random seed to keep the result reproducible
-        seed = self.cfg.get("seed", 0)
-        if seed != 0:
-            from ..core import set_random_seed
-            set_random_seed(seed, logger=self.logger)
+        pass
 
     def resume(self, checkpoint, **kwargs):
         check_file_exist(checkpoint)

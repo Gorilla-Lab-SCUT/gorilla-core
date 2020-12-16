@@ -199,7 +199,9 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
                                 "Sigmoid",
                                 "Dropout",
                                 "BatchNorm1d",
-                                "BatchNorm2d"]
+                                "BatchNorm2d",
+                                "MaxPool2d",
+                                "AdaptiveAvgPool2d"]
                 if class_name not in base_classes:
                     return
             class_idx = classes_idx.get(class_name)

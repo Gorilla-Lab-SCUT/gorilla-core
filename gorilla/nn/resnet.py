@@ -246,8 +246,14 @@ def resnet34(args, **kwargs):
 
 def resnet50(args, **kwargs):
     r"""Constructs a ResNet-50 model.
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+    Parameters
+    ----------
+    pretrained: bool
+        If True, return a model pre-trained on ImageNet
+    Return
+    ------
+    model: nn.Sequential
+        A ResNet model
     """
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if args.pretrained:
@@ -261,11 +267,6 @@ def resnet50(args, **kwargs):
         model_dict.update(pretrained_dict_temp)
         model.load_state_dict(model_dict)
 
-
-#     if args.ablation == "baseline":
-#         model.fc = nn.Linear(num_of_feature_map, args.num_classes)
-#     else:
-#         model.fc = nn.Linear(num_of_feature_map, args.num_classes * 2)
     return model
 
 
@@ -283,13 +284,15 @@ def resnet101(args, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     if args.pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls["resnet101"]))
-    # modify the structure of the model, change the number of the fc layer"s output to the one we need
-    num_of_feature_map = model.fc.in_features
-    model.fc = nn.Linear(num_of_feature_map, args.num_classes_t)
-    # initial the new fc layer
-    model.fc.weight.data.normal_(0.0, 0.02)
-    model.fc.bias.data.normal_(0.0)
+        print("Load the ImageNet pretrained model")
+        pretrained_dict = model_zoo.load_url(model_urls["resnet101"])
+        model_dict = model.state_dict()
+        pretrained_dict_temp = {
+            k: v
+            for k, v in pretrained_dict.items() if k in model_dict
+        }
+        model_dict.update(pretrained_dict_temp)
+        model.load_state_dict(model_dict)
 
     return model
 
