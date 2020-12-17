@@ -1,17 +1,18 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 from copy import deepcopy
-from typing import List, Union, Callable
+from sys import set_asyncgen_hooks
+from typing import List, Dict, Union, Callable, Optional
+import importlib
+import ipdb
 
 import torch
 import torch.nn as nn
-import numpy as np
 
-from .weight_init import constant_init, kaiming_init
 from .layer_builder import get_torch_layer_caller
+# from .weight_init import constant_init
 from .weight_init import *
 
 class GorillaFC(nn.Sequential):
-    # TODO: modify comment and test
     r"""A FC block that bundles FC/norm/activation layers.
 
     This block simplifies the usage of fully connect layers, which are commonly
@@ -25,8 +26,8 @@ class GorillaFC(nn.Sequential):
     supports zero and circular padding, and we add "reflect" padding mode.
 
     Args:
-        in_channels (int): Same as nn.Conv2d.
-        out_channels (int): Same as nn.Conv2d.
+        in_features (int): Same as nn.Conv2d.
+        out_features (int): Same as nn.Conv2d.
         kernel_size (int | tuple[int]): Same as nn.Conv2d.
         stride (int | tuple[int]): Same as nn.Conv2d.
         padding (int | tuple[int]): Same as nn.Conv2d.
@@ -45,14 +46,15 @@ class GorillaFC(nn.Sequential):
             Default: ("FC", "norm", "act").
     """
     def __init__(self,
-                 in_features,
-                 out_features,
-                 bias=True,
-                 name="",
-                 norm_cfg=dict(name="BN1d"),
-                 act_cfg=dict(name="ReLU", inplace=True),
-                 dropout=None,
-                 order=["FC", "norm", "act", "dropout"]):
+                 in_features: int,
+                 out_features: int,
+                 bias: bool=True,
+                 name: str="",
+                 norm_cfg: Optional[Dict]=dict(name="BN1d"),
+                 act_cfg: Optional[Dict]=dict(name="ReLU", inplace=True),
+                 dropout: Optional[float]=None,
+                 init: Union[str, Callable]="kaiming",
+                 order: List[str]=["FC", "norm", "act", "dropout"]):
         super().__init__()
         assert norm_cfg is None or isinstance(norm_cfg, dict)
         assert act_cfg is None or isinstance(act_cfg, dict)
@@ -85,8 +87,14 @@ class GorillaFC(nn.Sequential):
             if "norm" in self.order:
                 self.order.remove("norm")
 
-        # Use msra init by default
-        self.init_weights(FC, norm)
+        # init FC and norm
+        if isinstance(init, str):
+            init_func = globals()["{}_init".format(init)]
+        elif isinstance(init, Callable):
+            init_func = init
+        init_func(FC)
+        if "norm" in self.order:
+            constant_init(norm, 1, bias=0)
 
         # build activation layer
         with_act = (self.act_cfg is not None)
@@ -109,38 +117,81 @@ class GorillaFC(nn.Sequential):
         for layer in self.order:
             self.add_module(name + layer, eval(layer))
 
-    def init_weights(self, FC, norm):
-        # TODO: modify this
-        # 1. It is mainly for customized fully connect layers with their own
-        #    initialization manners, and we do not want ConvModule to
-        #    overrides the initialization.
-        # 2. For customized fully connect layers without their own initialization
-        #    manners, they will be initialized by this method with default
-        #    `kaiming_init`.
-        # 3. For PyTorch's fully connect layers, they will be initialized anyway by
-        #    their own `reset_parameters` methods.
-        if not hasattr(FC, "init_weights"):
-            a, nonlinearity = np.sqrt(5), "relu"
-            if self.act_cfg is not None and self.act_cfg["name"] == "LeakyReLU":
-                a = self.act_cfg.get("negative_slope", 0.01)
-                nonlinearity = "leaky_relu"
-            kaiming_init(FC,
-                         a=a,
-                         mode="fan_in",
-                         nonlinearity="leaky_relu",
-                         distribution="uniform")
-        if norm is not None:
-            constant_init(norm, 1, bias=0)
+
+class MultiFC(nn.Sequential):
+    def __init__(
+            self,
+            nodes: List[int],
+            bias: Union[List[bool], bool]=True,
+            name: Union[List[str], str]="",
+            norm_cfg: Optional[Union[List[Dict], Dict]]=dict(name="BN1d"),
+            act_cfg: Optional[Union[List[Dict], Dict]]=dict(name="ReLU", inplace=True),
+            dropout: Optional[Union[List[float], float]]=None,
+            init: Union[str, Callable]="kaiming",
+            order: List[str]=["FC", "norm", "act", "dropout"],
+            drop_last: bool=True
+    ):
+        r"""Author: liang.zhihao
+        Build the multi FC layer easily
+
+        Args:
+            nodes (List[int]): The num of nodes of each layer (including input layer and output layer).
+            bias (Union[List[bool], bool], optional): With bias or not. Defaults to True. Refer to GoirllaFC.
+            name (Union[List[str], str], optional): Name of each FC. Defaults to "". Refer to GoirllaFC.
+            norm_cfg (Optional[Union[List[Dict], Dict]], optional): Norm cfg of each FC. Defaults to dict(name="BN1d"). Refer to GoirllaFC.
+            act_cfg (Optional[Union[List[Dict], Dict]], optional): Activation cfg of each FC. Defaults to dict(name="ReLU", inplace=True). Refer to GoirllaFC.
+            dropout (Optional[Union[List[float], float]], optional): Dropout ratio of each FC. Defaults to None. Refer to GoirllaFC.
+            init (Union[str, Callable], optional): Init func or init_func name. Defaults to "kaiming".
+            order (List[str], optional): FC layer order. Defaults to ["FC", "norm", "act", "dropout"].
+            drop_last (bool, optional): Drop out last layer's norm and activation or not. Defaults to True.
+
+        Returns:
+            [type]: [description]
+        """
+        super().__init__()
+        num_of_linears = len(nodes) - 1
+
+        def list_wrapper(x):
+            if isinstance(x, List):
+                assert len(x) == num_of_linears
+                return x
+            else:
+                return [x] * num_of_linears
+
+        bias_list = list_wrapper(bias)
+        name_list = list_wrapper(name)
+        act_cfg_list = list_wrapper(act_cfg)
+        norm_cfg_list = list_wrapper(norm_cfg)
+        dropout_list = list_wrapper(dropout)
+
+        # if drop last, remove the last layer's activation and norm
+        if drop_last:
+            act_cfg_list[-1] = None
+            norm_cfg_list[-1] = None
+        
+        for idx, (in_features, out_features, bias, name, norm_cfg, act_cfg, dropout) in \
+            enumerate(zip(nodes[:-1], nodes[1:], bias_list, name_list, norm_cfg_list, act_cfg_list, dropout_list)):
+            self.add_module(
+                str(idx),
+                GorillaFC(
+                    in_features=in_features,
+                    out_features=out_features,
+                    bias=bias,
+                    name=name,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg,
+                    dropout=dropout,
+                    init=init,
+                    order=order))
 
 
-class DenseFC(torch.nn.Module):
+class DenseFC(nn.Module):
     def __init__(
             self,
             nodes: List[int],
             arc_tale: List[List[int]],
             arc_tm_shape: List[List[int]],
-            init: Union[str, Callable]="geometric",  # `kaiming` or (`geometric` as in SAL paper)
-            geometric_radius: float=1.0,
+            init: Union[str, Callable]="geometric"
     ):
         r"""Author: lei.jiabao, liang.zhihao
         initialization for MLP of arbitrary architecture (specialized for cuam library)
@@ -195,20 +246,16 @@ class DenseFC(torch.nn.Module):
                     "geometric" is Geometric network initialization strategy described in 
                         paper `SAL: Sign Agnostic Learning of Shapes from Raw Data`. 
                         It is suitable for fitting a Signed Distance Field from raw point cloud (without normals or any sign).
-            
-            geometric_radius (float, optional): the radius of the ball when geometric initialization is used
-                Defaults to 1.0
         
         Note:
             the arc_tm_shape and the transform idx in arc_tale should be correpsond
         """
-        super(MLP, self).__init__()
+        super().__init__()
         self.nodes = nodes
         self.arc_tale = arc_tale
         self.arc_tm_shape = arc_tm_shape
-        self.geometric_radius = geometric_radius
 
-        # linear
+        # build linears
         self.num_of_linears = len(self.nodes) - 1
         self.linears = torch.nn.ModuleList()
         for linear_idx in range(self.num_of_linears):
@@ -217,7 +264,7 @@ class DenseFC(torch.nn.Module):
             # get the related init function and init
             last = (linear_idx == self.num_of_linears)
             if isinstance(init, str):
-                init_func = getattr(globals(), "{}_init".format(init))
+                init_func = globals()["{}_init".format(init)]
             elif isinstance(init, Callable):
                 init_func = init
             else:
@@ -296,7 +343,7 @@ class DenseFC(torch.nn.Module):
         arc_tm = []
         for i in range(self.num_of_tms):
             tms = self.tms[i]
-            if isinstance(tms), torch.nn.Identity):
+            if isinstance(tms, torch.nn.Identity):
                 arc_tm.append(torch.zeros([0, 0]))
             elif isinstance(tms, torch.nn.Linear):
                 arc_tm.append(tms.weight)
@@ -308,4 +355,3 @@ class DenseFC(torch.nn.Module):
                 arc_table[r, c] = self.arc_tale[r][c]
 
         return {"weights": weights, "biases": biases, "arc_tm": arc_tm, "arc_table": arc_table}
-
