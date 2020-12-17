@@ -157,10 +157,11 @@ class InvLR(torch.optim.lr_scheduler._LRScheduler):
         >>>     validate(...)
         >>>     scheduler.step()
     """
-    def __init__(self, optimizer, maxp, gamma=10, power=0.75, last_epoch=-1):
+    # def __init__(self, optimizer, maxp, gamma=10, power=0.75, last_epoch=-1):
+    def __init__(self, optimizer, gamma=10, power=0.75, last_epoch=-1):
         self.gamma = gamma
         self.power = power
-        self.maxp = maxp
+        # self.maxp = maxp
         super().__init__(optimizer, last_epoch)
 
     def get_lr(self):

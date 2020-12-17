@@ -1,16 +1,12 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 from copy import deepcopy
-from sys import set_asyncgen_hooks
 from typing import List, Dict, Union, Callable, Optional
-import importlib
-import ipdb
 
 import torch
 import torch.nn as nn
 
 from .layer_builder import get_torch_layer_caller
-# from .weight_init import constant_init
-from .weight_init import *
+from .weight_init import *  # constant_init, kaiming_init and so on
 
 class GorillaFC(nn.Sequential):
     r"""A FC block that bundles FC/norm/activation layers.
@@ -168,19 +164,19 @@ class MultiFC(nn.Sequential):
         if drop_last:
             act_cfg_list[-1] = None
             norm_cfg_list[-1] = None
-        
-        for idx, (in_features, out_features, bias, name, norm_cfg, act_cfg, dropout) in \
+
+        for idx, (in_features, out_features, b, n, norm, act, drop) in \
             enumerate(zip(nodes[:-1], nodes[1:], bias_list, name_list, norm_cfg_list, act_cfg_list, dropout_list)):
             self.add_module(
                 str(idx),
                 GorillaFC(
                     in_features=in_features,
                     out_features=out_features,
-                    bias=bias,
-                    name=name,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg,
-                    dropout=dropout,
+                    bias=b,
+                    name=n,
+                    norm_cfg=norm,
+                    act_cfg=act,
+                    dropout=drop,
                     init=init,
                     order=order))
 
