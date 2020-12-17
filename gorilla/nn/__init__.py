@@ -4,7 +4,7 @@ from .weight_init import (bias_init_with_prob, constant_init, kaiming_init,
                           c2_xavier_init, geometric_init)
 
 from .conv import GorillaConv
-from .FC import GorillaFC
+from .FC import GorillaFC, DenseFC
 from .vgg import VGG
 from .alexnet import AlexNet
 from .resnet import (BasicBlock, Bottleneck, ResNet, conv3x3, resnet18,

@@ -1,14 +1,14 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 from copy import deepcopy
-import warnings
-import math
+from typing import List, Union, Callable
 
 import torch
 import torch.nn as nn
+import numpy as np
 
 from .weight_init import constant_init, kaiming_init
 from .layer_builder import get_torch_layer_caller
-
+from .weight_init import *
 
 class GorillaFC(nn.Sequential):
     # TODO: modify comment and test
@@ -120,7 +120,7 @@ class GorillaFC(nn.Sequential):
         # 3. For PyTorch's fully connect layers, they will be initialized anyway by
         #    their own `reset_parameters` methods.
         if not hasattr(FC, "init_weights"):
-            a, nonlinearity = math.sqrt(5), "relu"
+            a, nonlinearity = np.sqrt(5), "relu"
             if self.act_cfg is not None and self.act_cfg["name"] == "LeakyReLU":
                 a = self.act_cfg.get("negative_slope", 0.01)
                 nonlinearity = "leaky_relu"
@@ -131,4 +131,181 @@ class GorillaFC(nn.Sequential):
                          distribution="uniform")
         if norm is not None:
             constant_init(norm, 1, bias=0)
+
+
+class DenseFC(torch.nn.Module):
+    def __init__(
+            self,
+            nodes: List[int],
+            arc_tale: List[List[int]],
+            arc_tm_shape: List[List[int]],
+            init: Union[str, Callable]="geometric",  # `kaiming` or (`geometric` as in SAL paper)
+            geometric_radius: float=1.0,
+    ):
+        r"""Author: lei.jiabao, liang.zhihao
+        initialization for MLP of arbitrary architecture (specialized for cuam library)
+
+        Args:
+            nodes (list): The num of nodes of each layer (including input layer and output layer).
+                For example, nodes = [3, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 1].
+
+            arc_tale (list): A list of list which specifies the architecture of MLP. 
+                For example, arc_tale = [[0], [1, 1, 0], [0], [1, 3, 0], [0], [1, 5, 0], [0], [1, 7, 0], [0], [0]].
+                Note: 
+                    len(arc_tale) should be equal to the num of hidden layers, i.e. len(nodes)-2
+
+                    'i' refer to arc_table id in the under example
+                    arc_tale[i][0] should be the number of incoming adding skip connection (0 <= i < len(arc_tale))
+                    len(arc_tale[i]) should be of length 1+2*arc_tale[i][0]
+                    arc_tale[i][1+2*j] should be the index of the source of the adding skip connection (0 <= j < arc_tale[i][0])
+                        refer to source id in the under example
+                    arc_tale[i][2+2*j] should be the index of the transformation matrix (0 <= j < arc_tale[i][0])
+
+                Example: [[0], [1, 1, 0], [0], [1, 3, 0], [0], [1, 5, 0], [0], [1, 7, 0], [0], [0]]
+
+                         ┌───────────────┐┌──────────────┐┌──────────────┐┌──────────────┐
+                         |               ↓|              ↓|              ↓|              ↓
+                [in] -> [h0] -> [h1] -> [h2] -> [h3] -> [h4] -> [h5] -> [h6] -> [h7] -> [h8] -> [h9] -> [out]
+     source_id:  0       1       2       3       4       5       6       7       8       9       10      11
+  arc_table_id:                  0       1       2       3       4       5       6       7       8       9
+
+                        [[0], [1, 1, 0], [0], [2, 3, 0, 1, 0], [0], [2, 5, 0, 1, 0], [0], [1, 7, 0], [0], [0]]
+
+
+                         ┌───────────────────────────────────────────────┐
+                         ├───────────────────────────────┐               |
+                         ├───────────────┐┌──────────────┤┌──────────────┤┌──────────────┐
+                         |               ↓|              ↓|              ↓|              ↓
+                [in] -> [h0] -> [h1] -> [h2] -> [h3] -> [h4] -> [h5] -> [h6] -> [h7] -> [h8] -> [h9] -> [out]
+     source_id:  0       1       2       3       4       5       6       7       8       9       10      11
+  arc_table_id:                  0       1       2       3       4       5       6       7       8       9
+
+                TIP: [.] represent the layers' features, 'in' and 'out' mean input and output 'h{num}' means the hidden layer
+                     '-' means the fc layer and '>' means the forward direction
+
+            arc_tm_shape (list): list of the shape of transformation matrices. 
+                For example, arc_tm_shape = [[0, 0]].
+                Note:
+                    if it is an identity matrix, please use shape==[0, 0] for performance optimization
+                    
+            init (str, optional): choose the method to initialize the parameters. options are "kaiming" or "geometric".
+                Defaults to "geometric".
+                Note:
+                    "kaiming" is the well-known kaiming initialization strategy
+                    "geometric" is Geometric network initialization strategy described in 
+                        paper `SAL: Sign Agnostic Learning of Shapes from Raw Data`. 
+                        It is suitable for fitting a Signed Distance Field from raw point cloud (without normals or any sign).
+            
+            geometric_radius (float, optional): the radius of the ball when geometric initialization is used
+                Defaults to 1.0
+        
+        Note:
+            the arc_tm_shape and the transform idx in arc_tale should be correpsond
+        """
+        super(MLP, self).__init__()
+        self.nodes = nodes
+        self.arc_tale = arc_tale
+        self.arc_tm_shape = arc_tm_shape
+        self.geometric_radius = geometric_radius
+
+        # linear
+        self.num_of_linears = len(self.nodes) - 1
+        self.linears = torch.nn.ModuleList()
+        for linear_idx in range(self.num_of_linears):
+            # init the linear linear
+            linear = torch.nn.Linear(self.nodes[linear_idx], self.nodes[linear_idx + 1], bias=True)
+            # get the related init function and init
+            last = (linear_idx == self.num_of_linears)
+            if isinstance(init, str):
+                init_func = getattr(globals(), "{}_init".format(init))
+            elif isinstance(init, Callable):
+                init_func = init
+            else:
+                raise TypeError("init must be 'str' or 'Callable', but got {}".format(type(init)))
+            init_func(linear, last)
+            self.linears.append(linear)
+
+        # activation
+        self.num_of_acts = self.num_of_linears
+        self.acts = torch.nn.ModuleList()
+        for i in range(self.num_of_acts):
+            if i != self.num_of_acts - 1:
+                self.acts.append(torch.nn.ReLU(inplace=True))
+            else:
+                self.acts.append(torch.nn.Identity())
+
+
+        # transform matrix
+        self.num_of_tms = len(self.arc_tm_shape)
+        self.tms = torch.nn.ModuleList()
+        for tm_shape in self.arc_tm_shape:
+            if tm_shape[0] == 0 and tm_shape[1] == 0:
+                self.tms.append(torch.nn.Identity())
+            else:
+                self.tms.append(torch.nn.Linear(in_features=tm_shape[1], out_features=tm_shape[0], bias=False))
+
+        # source of transform
+        self.srcs = {}
+        for arc in self.arc_tale:
+            for i in range(arc[0]):
+                self.srcs[arc[1 + 2 * i]] = None
+
+        self.outputs_list = []
+
+    def forward(self, x, requires_outputs_list=False):
+        if requires_outputs_list:
+            self.outputs_list.clear()
+
+        for linear_idx in range(self.num_of_linears):
+            # record the layer features
+            if linear_idx in self.srcs.keys():
+                self.srcs[linear_idx] = x
+
+            # linear forward
+            x = self.linears[linear_idx](x)
+
+            if linear_idx >= 1:
+                skip_arc = self.arc_tale[linear_idx - 1]
+                for j in range(skip_arc[0]):
+                    # get the former feature map
+                    src = self.srcs[skip_arc[1 + 2 * j]]
+                    # transformer forward
+                    transform = self.tms[skip_arc[2 + 2 * j]]
+                    # skip add
+                    x = x + transform(src)
+
+            x = self.acts[linear_idx](x)
+
+            # record output
+            if linear_idx != self.num_of_linears - 1:
+                if requires_outputs_list:
+                    self.outputs_list.append(x)
+
+        return x
+
+    def get_info(self):
+
+        weights = []
+        for i in range(self.num_of_linears):
+            weights.append(self.linears[i].weight)
+
+        biases = []
+        for i in range(self.num_of_linears):
+            biases.append(self.linears[i].bias)
+
+        arc_tm = []
+        for i in range(self.num_of_tms):
+            tms = self.tms[i]
+            if isinstance(tms), torch.nn.Identity):
+                arc_tm.append(torch.zeros([0, 0]))
+            elif isinstance(tms, torch.nn.Linear):
+                arc_tm.append(tms.weight)
+
+        arc_table_width = max([len(arc) for arc in self.arc_tale])
+        arc_table = torch.zeros([len(self.arc_tale), arc_table_width], dtype=torch.int32)
+        for r in range(len(self.arc_tale)):
+            for c in range(len(self.arc_tale[r])):
+                arc_table[r, c] = self.arc_tale[r][c]
+
+        return {"weights": weights, "biases": biases, "arc_tm": arc_tm, "arc_table": arc_table}
 
