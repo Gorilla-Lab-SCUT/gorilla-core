@@ -57,8 +57,7 @@ class GorillaFC(nn.Sequential):
         assert norm_cfg is None or isinstance(norm_cfg, dict)
         assert act_cfg is None or isinstance(act_cfg, dict)
 
-        assert set(order).difference(set(["FC", "norm", "act",
-                                          "dropout"])) == set()
+        assert set(order).difference(set(["FC", "norm", "act", "dropout"])) == set()
 
         self.order = deepcopy(order)
         self.norm_cfg = deepcopy(norm_cfg)
@@ -133,19 +132,3 @@ class GorillaFC(nn.Sequential):
         if norm is not None:
             constant_init(norm, 1, bias=0)
 
-
-class MultiFC(nn.Module):
-    r"""Multi FC layers based on GorillaFC.
-    Args:
-        params (list): each element is a params dict about one GorillaFC layer
-    """
-    def __init__(self, params):
-        super().__init__()
-        layers = []
-        for param in params:
-            layers.append(GorillaFC(**param))
-
-        self.model = nn.Sequential(*layers)
-
-    def forward(self, x):
-        return self.model(x)
