@@ -136,7 +136,7 @@ def auto_registry(registry: Registry, cls_dict: Dict):
 def build_from_cfg(cfg: Dict, registry: Registry, default_args: Optional[Dict]=None):
     r"""Build a module from config dict.
     Args:
-        cfg (dict): Config dict. It should at least contain the key "type".
+        cfg (dict): Config dict. It should at least contain the key "name".
         registry (:obj:`Registry`): The registry to search the type from.
         default_args (dict, optional): Default initialization arguments.
     Returns:
@@ -144,8 +144,8 @@ def build_from_cfg(cfg: Dict, registry: Registry, default_args: Optional[Dict]=N
     """
     if not isinstance(cfg, dict):
         raise TypeError("cfg must be a dict, but got {}".format(type(cfg)))
-    if "type" not in cfg:
-        if default_args is None or "type" not in default_args:
+    if "name" not in cfg:
+        if default_args is None or "name" not in default_args:
             raise KeyError(
                 "`cfg` or `default_args` must contain the key 'type', "
                 "but got {}\n{}".format(cfg, default_args))
@@ -162,17 +162,17 @@ def build_from_cfg(cfg: Dict, registry: Registry, default_args: Optional[Dict]=N
         for name, value in default_args.items():
             args.setdefault(name, value)
 
-    obj_type = args.pop("type")
-    if isinstance(obj_type, str):
-        obj_cls = registry.get(obj_type)
+    obj_name = args.pop("name")
+    if isinstance(obj_name, str):
+        obj_cls = registry.get(obj_name)
         if obj_cls is None:
             raise KeyError(
-                "{} is not in the {} registry".format(obj_type, registry.name))
-    elif inspect.isclass(obj_type):
-        obj_cls = obj_type
+                "{} is not in the {} registry".format(obj_name, registry.name))
+    elif inspect.isclass(obj_name):
+        obj_cls = obj_name
     else:
         raise TypeError(
-            "type must be a str or valid type, but got {}".format(type(obj_type)))
+            "type must be a str or valid type, but got {}".format(type(obj_name)))
 
     return obj_cls(**args)
 
