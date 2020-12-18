@@ -16,15 +16,34 @@ def is_filepath(x) -> bool:
     return isinstance(x, (str, Path))
 
 
-def check_file_exist(filename, msg_tmpl="file `{}` not exist or is a directory"):
+def check_file(filepath: [str, Path], msg_tmpl="file `{}` not exist or is a directory"):
     r"""Check path exists and file or not.
 
     Args:
-        filename (str | obj:`Path`): path address
+        filepath (str | obj:`Path`): path address
         msg_tmpl (str, optional): error message pattern. Defaults to "file `{}` not exist or is a directory".
     """
-    if not osp.isfile(filename):
-        raise FileNotFoundError(msg_tmpl.format(filename))
+    if isinstance(filepath, str):
+        if not osp.isfile(filepath):
+            raise FileNotFoundError(msg_tmpl.format(filepath))
+    elif isinstance(filepath, Path):
+        if not filepath.is_file():
+            raise FileNotFoundError(msg_tmpl.format(str(filepath)))
+
+
+def check_dir(dir_path, msg_tmpl="dir `{}` not exist or is a directory"):
+    r"""Check path exists and file or not.
+
+    Args:
+        dir_path (str | obj:`Path`): path address
+        msg_tmpl (str, optional): error message pattern. Defaults to "dir `{}` not exist or is a directory".
+    """
+    if isinstance(dir_path, str):
+        if not osp.isdir(dir_path):
+            raise FileNotFoundError(msg_tmpl.format(dir_path))
+    elif isinstance(dir_path, Path):
+        if not dir_path.is_dir():
+            raise FileNotFoundError(msg_tmpl.format(dir_path))
 
 
 def fopen(filepath, *args, **kwargs):
@@ -40,7 +59,7 @@ def fopen(filepath, *args, **kwargs):
         open session: open file session
     """
     try:
-        check_file_exist(filepath)
+        check_file(filepath)
     except:
         raise ValueError("`filepath` should be a string or a Path and not a directory")
     return open(str(filepath), *args, **kwargs)

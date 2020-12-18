@@ -10,7 +10,7 @@ from tensorboardX import SummaryWriter
 from .log_buffer import LogBuffer
 from .build import build_optimizer, build_lr_scheduler
 from .checkpoint import resume
-from ..utils import check_file_exist
+from ..utils import check_file
 
 
 class BaseSolver(metaclass=ABCMeta):
@@ -40,7 +40,7 @@ class BaseSolver(metaclass=ABCMeta):
         pass
 
     def resume(self, checkpoint, **kwargs):
-        check_file_exist(checkpoint)
+        check_file(checkpoint)
         self.meta = resume(self.model,
                            checkpoint,
                            self.optimizer,

@@ -13,7 +13,7 @@ from importlib import import_module
 from addict import Dict
 from yapf.yapflib.yapf_api import FormatCode
 
-from ..utils import check_file_exist
+from ..utils import check_file
 
 BASE_KEY = "_base_"
 DELETE_KEY = "_delete_"
@@ -119,7 +119,7 @@ class Config(object):
     @staticmethod
     def _file2dict(filename, use_predefined_variables=True):
         filename = osp.abspath(osp.expanduser(filename))
-        check_file_exist(filename)
+        check_file(filename)
         file_extname = osp.splitext(filename)[1]
         if file_extname not in [".py", ".json", ".yaml", ".yml"]:
             raise IOError("Only py/yml/yaml/json type are supported now!")

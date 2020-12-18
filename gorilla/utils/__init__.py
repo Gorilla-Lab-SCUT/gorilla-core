@@ -1,10 +1,9 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
-
 from .typing import (type_assert, convert_into_torch_tensor, convert_into_nparray, assert_and_auto_type, to_float32)
 
 from .gpu import (get_free_gpu, set_cuda_visible_devices)
 
-from .path import (is_filepath, check_file_exist, fopen, symlink,
+from .path import (is_filepath, check_file, check_dir, fopen, symlink,
                    scandir, find_vcs_root, mkdir_or_exist)
 
 from .processbar import (ProgressBar, track_progress, init_pool,
