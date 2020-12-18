@@ -15,4 +15,6 @@ from .env import set_random_seed, collect_env_info
 
 from .launch import launch
 
+from .registry import Registry, build_from_cfg
+
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
