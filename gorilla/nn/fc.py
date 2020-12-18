@@ -84,11 +84,12 @@ class GorillaFC(nn.Sequential):
                 self.order.remove("norm")
 
         # init FC and norm
-        if isinstance(init, str):
-            init_func = globals()["{}_init".format(init)]
-        elif isinstance(init, Callable):
-            init_func = init
-        init_func(FC)
+        if init is not None:
+            if isinstance(init, str):
+                init_func = globals()["{}_init".format(init)]
+            elif isinstance(init, Callable):
+                init_func = init
+            init_func(FC)
         if "norm" in self.order:
             constant_init(norm, 1, bias=0)
 
