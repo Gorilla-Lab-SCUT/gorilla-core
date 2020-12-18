@@ -4,10 +4,17 @@ from .log_buffer import (LogBuffer, HistoryBuffer)
 
 from .grad_clipper import (GradClipper, build_grad_clipper)
 
+
+#### pytorch base lr_scheduler
+try:
+    # torch version < 1.1.0 will cause import error
+    from .lr_scheduler import (CyclicLR, OneCycleLR)
+except:
+    pass
+
 from .lr_scheduler import (WarmupCosineLR, WarmupMultiStepLR, WarmupPolyLR,
-                           CosineAnnealingLR, CyclicLR, ExponentialLR, PolyLR,
-                           MultiStepLR, OneCycleLR, StepLR, LambdaLR,
-                           adjust_learning_rate)
+                           CosineAnnealingLR, ExponentialLR, PolyLR,
+                           MultiStepLR, StepLR, LambdaLR, adjust_learning_rate)
 
 from .build import (build_lr_scheduler, build_optimizer)
 
