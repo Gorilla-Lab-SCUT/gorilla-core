@@ -15,6 +15,10 @@ from .env import set_random_seed, collect_env_info
 
 from .launch import launch
 
-from .registry import Registry, build_from_cfg
+from .registry import Registry, build_from_cfg, auto_registry
+
+MODELS = Registry("models")
+MODULES = Registry("modules")
+DATASETS = Registry("datasets")
 
 __all__ = [k for k in globals().keys() if not k.startswith("_")]

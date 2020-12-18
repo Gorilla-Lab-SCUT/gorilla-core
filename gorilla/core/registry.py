@@ -1,7 +1,8 @@
-# Copyright (c) Open-MMLab. All rights reserved.
+# Copyright (c) Gorilla-Lab. All rights reserved.
 import inspect
 import warnings
 from functools import partial
+from typing import Optional, Dict, Type
 
 
 class Registry:
@@ -115,7 +116,24 @@ class Registry:
         return _register
 
 
-def build_from_cfg(cfg, registry, default_args=None):
+def auto_registry(registry: Registry, cls_dict: Dict):
+    r"""Author: liang.zhihao
+
+    Args:
+        registry (Registry): Registry
+        cls_dict (Dict): dict of Class
+    """
+    for key, cls in cls_dict.items():
+        # skip the "_" begin
+        if key.startswith("_"):
+            continue
+        # skip function(just register Class)
+        if not isinstance(cls, Type):
+            continue
+        registry._register_module(cls)
+
+
+def build_from_cfg(cfg: Dict, registry: Registry, default_args: Optional[Dict]=None):
     r"""Build a module from config dict.
     Args:
         cfg (dict): Config dict. It should at least contain the key "type".
