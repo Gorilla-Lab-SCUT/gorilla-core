@@ -13,8 +13,12 @@ import torch
 # MultiStepLR with WarmupLR but the current LRScheduler design doesn't allow it.
 
 #### pytorch base lr_scheduler
-from torch.optim.lr_scheduler import (CosineAnnealingLR, CyclicLR, ExponentialLR,
-                                      MultiStepLR, OneCycleLR, LambdaLR)
+try:
+    # torch version < 1.1.0 will cause import error
+    from torch.optim.lr_scheduler import (CyclicLR, OneCycleLR)
+except:
+    pass
+from torch.optim.lr_scheduler import (CosineAnnealingLR, ExponentialLR, MultiStepLR, LambdaLR)
 
 
 class PolyLR(torch.optim.lr_scheduler._LRScheduler):
