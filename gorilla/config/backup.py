@@ -60,7 +60,7 @@ def backup(log_dir: str,
 
         # dangerous dir warning
         if name in ["data", "log"]:
-            warnings.warn("{} maybe the unsuitable to backup".format(name))
+            warnings.warn("'{}' maybe the unsuitable to backup".format(name))
         if osp.isfile(name):
             shutil.copy(name, osp.join(backup_dir, name))
         if osp.isdir(name):

@@ -2,6 +2,7 @@
 from typing import List, Optional, Sequence
 from collections import defaultdict
 
+import torch
 import numpy as np
 
 
@@ -28,16 +29,18 @@ class LogBuffer:
     def update(self, vars):
         assert isinstance(vars, dict)
         for key, var in vars.items():
+            scalar_type = (int, float, torch.Tensor, np.ndarray)
             if isinstance(var, Sequence) and len(var) == 2:
                 var = list(var) # change tuple
                 var[0] = float(var[0])
                 self._val_history[key].update(*var)
-            elif isinstance(var, (int, float)):
+            elif isinstance(var, scalar_type):
                 var = float(var)
                 self._val_history[key].update(var)
             else:
-                raise TypeError("var must be a Sequence with length of 2"
-                                " or float, but got {}".format(type(var)))
+                raise TypeError("var must be a Sequence with length of 2, "
+                                "int, float, ndarray or Tensor scalar, "
+                                "but got {}".format(type(var)))
 
     def average(self, n=0):
         r"""Average latest n values or all values."""

@@ -385,9 +385,9 @@ class Config(object):
     def __iter__(self):
         return iter(self._cfg_dict)
 
-    def dump(self, file=None):
+    def dump(self, file=None, **kwargs):
         cfg_dict = super(Config, self).__getattribute__("_cfg_dict").to_dict()
-        if self.filename.endswith(".py"):
+        if file.endswith(".py"):
             if file is None:
                 return self.pretty_text
             else:
@@ -397,9 +397,9 @@ class Config(object):
             from gorilla.fileio import dump
             if file is None:
                 file_format = self.filename.split(".")[-1]
-                return dump(cfg_dict, file_format=file_format)
+                return dump(cfg_dict, file_format=file_format, **kwargs)
             else:
-                dump(cfg_dict, file)
+                dump(cfg_dict, file, **kwargs)
 
     def merge_from_dict(self, options):
         r"""Merge list into cfg_dict.
