@@ -42,7 +42,6 @@ class ProgressBar:
         if self.task_num > 0:
             percentage = self.completed / float(self.task_num)
             eta = int(elapsed * (1 - percentage) / percentage + 0.5)
-            # TODO: fix msg
             msg = "\r[{{}}] {}/{}, {:.1f} task/s, elapsed: {}s, " \
                   "ETA: {:5}s".format(self.completed, self.task_num, fps, int(elapsed + 0.5), eta)
 

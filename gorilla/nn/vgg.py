@@ -3,8 +3,6 @@ import logging
 
 import torch.nn as nn
 
-# TODO: modify load_checkpoint
-# from ..runner import load_checkpoint
 from .weight_init import constant_init, kaiming_init, normal_init
 
 
@@ -125,7 +123,6 @@ class VGG(nn.Module):
     def init_weights(self, pretrained=None):
         if isinstance(pretrained, str):
             logger = logging.getLogger()
-            # load_checkpoint(self, pretrained, strict=False, logger=logger)
         elif pretrained is None:
             for m in self.modules():
                 if isinstance(m, nn.Conv2d):

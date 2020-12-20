@@ -21,4 +21,7 @@ MODELS = Registry("models")
 MODULES = Registry("modules")
 DATASETS = Registry("datasets")
 
+from functools import partial
+build_model = partial(build_from_cfg, registry=MODELS)
+
 __all__ = [k for k in globals().keys() if not k.startswith("_")]

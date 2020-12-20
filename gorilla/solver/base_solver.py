@@ -4,14 +4,13 @@ import random
 from abc import ABCMeta, abstractmethod
 
 import torch
-import numpy as np
 from tensorboardX import SummaryWriter
 
 from .log_buffer import LogBuffer
 from .build import build_optimizer, build_lr_scheduler
 from .checkpoint import resume
 from ..utils import check_file
-
+from ..core import build_model
 
 class BaseSolver(metaclass=ABCMeta):
     r"""Base class of model solver."""
@@ -22,7 +21,13 @@ class BaseSolver(metaclass=ABCMeta):
                  logger=None,
                  **kwargs):
         # initial essential parameters
-        self.model = model
+        if issubclass(model, torch.nn.module):
+            self.model = model
+        elif isinstance(model, dict):
+            self.model = build_model(model)
+        else:
+            raise TypeError("`model` must be `nn.module` or cfg `dict`, but got `{}`".format(type(model)))
+        
         self.dataloaders = dataloaders
         self.optimizer = build_optimizer(model, cfg.optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, cfg.lr_scheduler)

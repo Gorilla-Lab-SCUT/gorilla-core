@@ -4,7 +4,6 @@ import warnings
 from functools import partial
 from typing import Optional, Dict, Type
 
-
 class Registry:
     r"""A registry to map strings to classes.
     Args:
