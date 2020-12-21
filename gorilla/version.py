@@ -1,2 +1,2 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
-__version__ = "0.2.5.2"
+__version__ = "0.2.5.3"

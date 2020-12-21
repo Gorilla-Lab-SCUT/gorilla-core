@@ -21,10 +21,10 @@ class BaseSolver(metaclass=ABCMeta):
                  logger=None,
                  **kwargs):
         # initial essential parameters
-        if issubclass(model, torch.nn.module):
-            self.model = model
-        elif isinstance(model, dict):
+        if isinstance(model, dict):
             self.model = build_model(model)
+        elif isinstance(model, torch.nn.Module):
+            self.model = model
         else:
             raise TypeError("`model` must be `nn.module` or cfg `dict`, but got `{}`".format(type(model)))
         
