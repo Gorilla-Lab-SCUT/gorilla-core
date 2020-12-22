@@ -14,6 +14,7 @@ import torch.nn.functional as F
 from torch import nn, Tensor
 
 
+# TODO: fix transformer part
 class Transformer(nn.Module):
     def __init__(self,
                  d_model=512,

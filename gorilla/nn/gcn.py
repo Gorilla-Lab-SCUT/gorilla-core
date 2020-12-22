@@ -1,4 +1,5 @@
 import math
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -42,16 +43,25 @@ class GraphConvolution(Module):
                + str(self.out_features) + ")"
 
 
-class GCN(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout):
+class GCN(nn.Sequential):
+    def __init__(self,
+                 channels: List[int],
+                 dropout: float=0.0):
+        r"""Author: liang.zhihao
+        Graph Convolution Block
+
+        Args:
+            channels (List[int]):  The num of features of each layer (including input layer and output layer).
+            dropout (float, optional): Dropout ratio. Defaults to 0.0.
+        """
         super(GCN, self).__init__()
+        assert len(channels) >= 2
+        self.num_layers = len(channels) - 1
+        for idx, (in_features, out_features) in enumerate(zip(channels[:-1], channels[1:])):
+            idx = idx + 1
+            self.add_module("gc{}".format(idx), GraphConvolution(in_features, out_features))
+            # explict the last layer
+            if idx != self.num_layers:
+                self.add_module("ReLU{}".format(idx), nn.ReLU(inplace=True))
+                self.add_module("dropout{}".format(idx), nn.Dropout(dropout))
 
-        self.gc1 = GraphConvolution(nfeat, nhid)
-        self.gc2 = GraphConvolution(nhid, nclass)
-        self.dropout = dropout
-
-    def forward(self, x, adj):
-        x = F.relu(self.gc1(x, adj))
-        x = F.dropout(x, self.dropout, training=self.training)
-        x = self.gc2(x, adj)
-        return F.log_softmax(x, dim=1)

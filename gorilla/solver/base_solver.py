@@ -20,7 +20,8 @@ class BaseSolver(metaclass=ABCMeta):
                  cfg,
                  logger=None,
                  **kwargs):
-        # initial essential parameters
+        # TODO: the model builder is ugly and need to 
+        # integrate into solver elegant
         if isinstance(model, dict):
             self.model = build_model(model)
         elif isinstance(model, torch.nn.Module):
@@ -28,6 +29,7 @@ class BaseSolver(metaclass=ABCMeta):
         else:
             raise TypeError("`model` must be `nn.module` or cfg `dict`, but got `{}`".format(type(model)))
         
+        # initial essential parameters
         self.dataloaders = dataloaders
         self.optimizer = build_optimizer(model, cfg.optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, cfg.lr_scheduler)
@@ -42,7 +44,13 @@ class BaseSolver(metaclass=ABCMeta):
         self.get_ready()
 
     def get_ready(self, **kwargs):
-        pass
+        # NOTE: import here to avoid import circular init
+        # TODO: fix here
+        from .hook import HookManager
+        self.hook_manager = HookManager()
+        self.hook_manager.concat_solver(self)
+        self.register_hook()
+        # self.logger.info(self.hook_manager)
 
     def resume(self, checkpoint, **kwargs):
         check_file(checkpoint)
@@ -83,5 +91,23 @@ class BaseSolver(metaclass=ABCMeta):
         r"""evaluate(self) aims to define each evaluation operation"""
         self.clear()
         # evaluation
+
+    # TODO: support the hook
+    def register_hook(self):
+        self.hook_manager.register_hook_from_cfg(dict(name="OptimizerHook"))
+        self.hook_manager.register_hook_from_cfg(dict(name="EmptyCacheHook"))
+        self.hook_manager.register_hook_from_cfg(dict(name="IterTimerHook"))
+        self.hook_manager.register_hook_from_cfg(dict(name="CheckpointHook"))
+
+    # def call_hook(self, fn_name):
+    #     r"""Call all hooks.
+
+    #     Args:
+    #         fn_name (str): The function name in each hook to be called, such as
+    #             "before_epoch".
+    #     """
+    #     for hook in self._hooks:
+    #         getattr(hook, fn_name)(self)
+
 
 

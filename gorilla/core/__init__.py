@@ -17,11 +17,15 @@ from .launch import launch
 
 from .registry import Registry, build_from_cfg, auto_registry
 
+HOOKS = Registry("HOOKS")
 MODELS = Registry("models")
 MODULES = Registry("modules")
 DATASETS = Registry("datasets")
 
 from functools import partial
+build_hook = partial(build_from_cfg, registry=HOOKS)
 build_model = partial(build_from_cfg, registry=MODELS)
+build_module = partial(build_from_cfg, registry=MODULES)
+build_dataset = partial(build_from_cfg, registry=DATASETS)
 
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
