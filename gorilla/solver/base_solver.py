@@ -35,22 +35,15 @@ class BaseSolver(metaclass=ABCMeta):
         self.lr_scheduler = build_lr_scheduler(self.optimizer, cfg.lr_scheduler)
         self.cfg = cfg
         self.logger = logger
-        self.epoch = cfg.get("start_epoch", 1)
-        self.log_buffer = LogBuffer()
-        self.tb_writer = SummaryWriter(log_dir=cfg.log_dir) # tensorboard writer
-        self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
-        self.meta = {}
 
         self.get_ready()
 
     def get_ready(self, **kwargs):
-        # NOTE: import here to avoid import circular init
-        # TODO: fix here
-        from .hook import HookManager
-        self.hook_manager = HookManager()
-        self.hook_manager.concat_solver(self)
-        self.register_hook()
-        # self.logger.info(self.hook_manager)
+        self.epoch = self.cfg.get("start_epoch", 1)
+        self.log_buffer = LogBuffer()
+        self.tb_writer = SummaryWriter(log_dir=self.cfg.log_dir) # tensorboard writer
+        self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
+        self.meta = {}
 
     def resume(self, checkpoint, **kwargs):
         check_file(checkpoint)
@@ -94,10 +87,14 @@ class BaseSolver(metaclass=ABCMeta):
 
     # TODO: support the hook
     def register_hook(self):
+        from .hook import HookManager
+        self.hook_manager = HookManager()
+        self.hook_manager.concat_solver(self)
         self.hook_manager.register_hook_from_cfg(dict(name="OptimizerHook"))
         self.hook_manager.register_hook_from_cfg(dict(name="EmptyCacheHook"))
         self.hook_manager.register_hook_from_cfg(dict(name="IterTimerHook"))
         self.hook_manager.register_hook_from_cfg(dict(name="CheckpointHook"))
+        # self.logger.info(self.hook_manager)
 
     # def call_hook(self, fn_name):
     #     r"""Call all hooks.
