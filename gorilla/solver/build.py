@@ -1,11 +1,10 @@
 # Copyright (c) Gorilla-Lab. and its affiliates.
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Type, Union
+from typing import Callable, Dict
 
 import torch
 
-from . import lr_scheduler as lr_schedulers
-from ..core import is_seq_of
 from ..config import Config
+from ..core import is_seq_of, _build_optimizer, _build_scheduler
 
 # the default optimizer and lr_scheduler config dict
 OPTIM = {"name": "Adam",
@@ -22,7 +21,8 @@ def build_single_optimizer(
     Build a single optimizer from optimizer config, supporting multi parameter
     groups with different setting in an optimizer
     """
-    name = optimizer_cfg.pop("name")
+    # name = optimizer_cfg.pop("name")
+    # get params
     optimizer_cfg["params"] = []
     paramwise_cfg = optimizer_cfg.pop("paramwise_cfg", None)
     if paramwise_cfg is None:
@@ -33,21 +33,12 @@ def build_single_optimizer(
         for key, value in paramwise_cfg.items():
             optimizer_cfg["params"].append({
                 "params":
-                filter(lambda p: p.requires_grad,
-                       getattr(model, key).parameters()),
+                filter(lambda p: p.requires_grad, getattr(model, key).parameters()),
                 "name": key,
                 **value
             })
     
-    try:
-        # a rich pytorch optimizer library
-        # https://github.com/jettify/pytorch-optimizer
-        import torch_optimizer
-        optimizer_caller = getattr(torch_optimizer, name)
-    except:
-        optimizer_caller = getattr(torch.optim, name)
-    
-    return optimizer_caller(**optimizer_cfg)
+    return _build_optimizer(optimizer_cfg)
 
 
 def build_optimizer(model: torch.nn.Module,
@@ -97,20 +88,17 @@ def build_lr_scheduler(
     Returns:
         _LRScheduler: the learning rate scheduler
     """
-    name = lr_scheduler_cfg.pop("name")
     lr_scheduler_cfg["optimizer"] = optimizer
     if isinstance(optimizer, dict):
-        # TODO: 暂不支持对多optimizer建立lr_scheduler，后面再想想怎么做
-        return None
+        # TODO: do not support build multi lr_schedulers for multi optimizer
+        raise NotImplementedError
 
     # specificial for LambdaLR
-    if name == "LambdaLR":
+    if lr_scheduler_cfg.get("name") == "LambdaLR":
         assert lambda_func is not None
         assert isinstance(lambda_func, Callable) or \
             is_seq_of(lambda_func, Callable), "lambda_func is invalid"
         lr_scheduler_cfg["lr_lambda"] = lambda_func
 
-    # get the caller
-    scheduler_caller = getattr(lr_schedulers, name)
-    return scheduler_caller(**lr_scheduler_cfg)
+    return _build_scheduler(lr_scheduler_cfg)
 

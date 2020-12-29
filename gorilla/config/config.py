@@ -1,13 +1,14 @@
 # Copyright (c) Open-MMLab. All rights reserved.
-import ast
-import os.path as osp
 import re
-import platform
-import shutil
+import ast
 import sys
+import yaml
+import shutil
 import tempfile
+import os.path as osp
 from typing import Optional
 from argparse import Action, ArgumentParser, Namespace
+
 from collections import abc
 from importlib import import_module
 from addict import Dict
@@ -359,11 +360,23 @@ class Config(object):
 
         return text
 
-    def __str__(self):
-        return "Config (path: {}): {}".format(self.filename,
-                                              self._cfg_dict.__str__())
+    def _pretty(self, d, depth=0):
+        for key, value in dict(d).items():
+            if key in ["content"]:
+                continue
+            self.content += "{}{}: ".format("    " * depth, key)
+            if isinstance(value, dict):
+                self.content += "\n"
+                self._pretty(value, depth + 1)
+            else:
+                self.content += "{}\n".format(value)
 
-    def __len__(self):
+    def __repr__(self) -> str:
+        self.content = "Config (path: {})\n".format(self.filename)
+        self._pretty(self._cfg_dict)
+        return self.content
+
+    def __len__(self) -> int:
         return len(self._cfg_dict)
 
     def __getattr__(self, name):

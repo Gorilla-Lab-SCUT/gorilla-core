@@ -4,6 +4,9 @@ import warnings
 from functools import partial
 from typing import Optional, Dict, Type
 
+from termcolor import colored
+
+
 class Registry:
     r"""A registry to map strings to classes.
     Args:
@@ -21,8 +24,10 @@ class Registry:
         return self.get(key) is not None
 
     def __repr__(self):
-        format_str = self.__class__.__name__ + \
-                     "(name={}, items={})".format(self._name, self._module_dict)
+        format_str = self.__class__.__name__ + "(name={})\n".format(colored(self._name, "red"))
+        for key, value in self._module_dict.items():
+            format_str += "{}:\n".format(colored(key, "blue"))
+            format_str += "    {}:\n".format(value)
         return format_str
 
     @property

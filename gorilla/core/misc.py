@@ -3,6 +3,7 @@ import functools
 import itertools
 import subprocess
 import warnings
+from copy import deepcopy
 from collections import abc
 from importlib import import_module
 from inspect import getfullargspec
@@ -253,9 +254,25 @@ def multi_apply(func, *args, **kwargs):
     return tuple(map(list, zip(*map_results)))
 
 def is_power2(num: int) -> bool:
+    r"""Author: liang.zhihao
+
+    Args:
+        num (int): input positive number
+
+    Returns:
+        bool: is the power of 2 or not
+    """
     return num != 0 and ((num & (num - 1)) == 0)
 
 def is_multiple(num: (int, float), multiple: (int, float)) -> bool:
-    return num != 0 and num % multiple == 0.
+    r"""Author: liang.zhihao
 
+    Args:
+        num (int, float): input number
+        multiple (int, float): input multiple number
+
+    Returns:
+        bool: can num be multiply by multiple or not
+    """
+    return num != 0. and num % multiple == 0.
 

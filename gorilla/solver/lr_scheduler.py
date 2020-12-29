@@ -1,7 +1,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+# auto registry all inplace lr_scheduler
+from torch.optim.lr_scheduler import *
+from gorilla.core import SCHEDULERS, auto_registry
+auto_registry(SCHEDULERS, globals())
+
 import math
 from bisect import bisect_right
 from typing import List
+
 import torch
 
 # NOTE: PyTorch's LR scheduler interface uses names that assume the LR changes
@@ -12,15 +18,8 @@ import torch
 # FIXME: ideally this would be achieved with a CombinedLRScheduler, separating
 # MultiStepLR with WarmupLR but the current LRScheduler design doesn't allow it.
 
-#### pytorch base lr_scheduler
-try:
-    # torch version < 1.1.0 will cause import error
-    from torch.optim.lr_scheduler import (CyclicLR, OneCycleLR)
-except:
-    pass
-from torch.optim.lr_scheduler import (CosineAnnealingLR, ExponentialLR, MultiStepLR, LambdaLR)
 
-
+@SCHEDULERS.register_module()
 class PolyLR(torch.optim.lr_scheduler._LRScheduler):
     """
     Poly learning rate schedule used to train DeepLab.
@@ -60,6 +59,7 @@ class PolyLR(torch.optim.lr_scheduler._LRScheduler):
         return self.get_lr()
 
 
+@SCHEDULERS.register_module(force=True)
 class StepLR(torch.optim.lr_scheduler._LRScheduler):
     r"""Decays the learning rate of each parameter group by gamma every
     step_size epochs. Notice that such decay can happen simultaneously with
@@ -103,42 +103,7 @@ class StepLR(torch.optim.lr_scheduler._LRScheduler):
                 for base_lr in self.base_lrs]
 
 
-class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
-    def __init__(
-        self,
-        optimizer: torch.optim.Optimizer,
-        milestones: List[int],
-        gamma: float = 0.1,
-        warmup_factor: float = 0.001,
-        warmup_iters: int = 1000,
-        warmup_method: str = "linear",
-        last_epoch: int = -1,
-    ):
-        if not list(milestones) == sorted(milestones):
-            raise ValueError(
-                "Milestones should be a list of" " increasing integers. Got {}", milestones
-            )
-        self.milestones = milestones
-        self.gamma = gamma
-        self.warmup_factor = warmup_factor
-        self.warmup_iters = warmup_iters
-        self.warmup_method = warmup_method
-        super().__init__(optimizer, last_epoch)
-
-    def get_lr(self) -> List[float]:
-        warmup_factor = _get_warmup_factor_at_iter(
-            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
-        )
-        return [
-            base_lr * warmup_factor * self.gamma ** bisect_right(self.milestones, self.last_epoch)
-            for base_lr in self.base_lrs
-        ]
-
-    def _compute_values(self) -> List[float]:
-        # The new interface
-        return self.get_lr()
-
-
+@SCHEDULERS.register_module()
 class InvLR(torch.optim.lr_scheduler._LRScheduler):
     r"""
     Note p as current epoch or iter number according to user setting;
@@ -189,6 +154,44 @@ class InvLR(torch.optim.lr_scheduler._LRScheduler):
             ]
 
 
+@SCHEDULERS.register_module()
+class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
+    def __init__(
+        self,
+        optimizer: torch.optim.Optimizer,
+        milestones: List[int],
+        gamma: float = 0.1,
+        warmup_factor: float = 0.001,
+        warmup_iters: int = 1000,
+        warmup_method: str = "linear",
+        last_epoch: int = -1,
+    ):
+        if not list(milestones) == sorted(milestones):
+            raise ValueError(
+                "Milestones should be a list of" " increasing integers. Got {}", milestones
+            )
+        self.milestones = milestones
+        self.gamma = gamma
+        self.warmup_factor = warmup_factor
+        self.warmup_iters = warmup_iters
+        self.warmup_method = warmup_method
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self) -> List[float]:
+        warmup_factor = _get_warmup_factor_at_iter(
+            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
+        )
+        return [
+            base_lr * warmup_factor * self.gamma ** bisect_right(self.milestones, self.last_epoch)
+            for base_lr in self.base_lrs
+        ]
+
+    def _compute_values(self) -> List[float]:
+        # The new interface
+        return self.get_lr()
+
+
+@SCHEDULERS.register_module()
 class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(
         self,
@@ -227,6 +230,7 @@ class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
         return self.get_lr()
 
 
+@SCHEDULERS.register_module()
 class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
     """
     Poly learning rate schedule used to train DeepLab.

@@ -9,7 +9,7 @@ from torch.nn.modules.module import Module
 
 
 class GraphConvolution(Module):
-    """
+    r"""
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
     def __init__(self, in_features, out_features, bias=True):
@@ -46,7 +46,8 @@ class GraphConvolution(Module):
 class GCN(nn.Sequential):
     def __init__(self,
                  channels: List[int],
-                 dropout: float=0.0):
+                 dropout: float=0.0,
+                 drop_last: bool=True):
         r"""Author: liang.zhihao
         Graph Convolution Block
 
@@ -61,7 +62,16 @@ class GCN(nn.Sequential):
             idx = idx + 1
             self.add_module("gc{}".format(idx), GraphConvolution(in_features, out_features))
             # explict the last layer
-            if idx != self.num_layers:
+            if idx != self.num_layers or not drop_last:
                 self.add_module("ReLU{}".format(idx), nn.ReLU(inplace=True))
                 self.add_module("dropout{}".format(idx), nn.Dropout(dropout))
+
+    def forward(self, x, adj):
+        for module_name in self._modules:
+            if "gc" in module_name:
+                x = self._modules[module_name](x, adj)
+            else:
+                x = self._modules[module_name](x)
+        return x
+
 

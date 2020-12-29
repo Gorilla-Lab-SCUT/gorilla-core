@@ -17,15 +17,21 @@ from .launch import launch
 
 from .registry import Registry, build_from_cfg, auto_registry
 
-HOOKS = Registry("HOOKS")
+HOOKS = Registry("hooks")
 MODELS = Registry("models")
 MODULES = Registry("modules")
 DATASETS = Registry("datasets")
+OPTIMIZERS = Registry("optimizers")
+SCHEDULERS = Registry("schedulers")
 
 from functools import partial
 build_hook = partial(build_from_cfg, registry=HOOKS)
 build_model = partial(build_from_cfg, registry=MODELS)
 build_module = partial(build_from_cfg, registry=MODULES)
 build_dataset = partial(build_from_cfg, registry=DATASETS)
+
+# the inner func for build_optimizer in solver.build
+_build_optimizer = partial(build_from_cfg, registry=OPTIMIZERS)
+_build_scheduler = partial(build_from_cfg, registry=SCHEDULERS)
 
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
