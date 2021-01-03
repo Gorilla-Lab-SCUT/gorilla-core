@@ -62,7 +62,9 @@ def backup(log_dir: str,
         if name in ["data", "log"]:
             warnings.warn("'{}' maybe the unsuitable to backup".format(name))
         if osp.isfile(name):
-            shutil.copy(name, osp.join(backup_dir, name))
+            # just copy the filename
+            dst_name = name.split("/")[-1]
+            shutil.copy(name, osp.join(backup_dir, dst_name))
         if osp.isdir(name):
             # only match '.py' files
             files = glob.iglob(osp.join(name, "**", "*.*"), recursive=True)

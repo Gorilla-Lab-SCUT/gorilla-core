@@ -120,19 +120,20 @@ class Registry:
         return _register
 
 
-def auto_registry(registry: Registry, cls_dict: Dict):
+def auto_registry(registry: Registry, cls_dict: Dict, type=Type):
     r"""Author: liang.zhihao
 
     Args:
         registry (Registry): Registry
         cls_dict (Dict): dict of Class
+        type: typing to filter out
     """
     for key, cls in cls_dict.items():
         # skip the "_" begin
         if key.startswith("_"):
             continue
-        # skip function(just register Class)
-        if not isinstance(cls, Type):
+        # skip function(default register Class)
+        if not isinstance(cls, type):
             continue
         registry._register_module(cls)
 

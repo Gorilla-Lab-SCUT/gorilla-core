@@ -1,14 +1,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # auto registry all inplace lr_scheduler
+import torch
 from torch.optim.lr_scheduler import *
 from gorilla.core import SCHEDULERS, auto_registry
-auto_registry(SCHEDULERS, globals())
+auto_registry(SCHEDULERS, globals(), torch.optim.lr_scheduler._LRScheduler)
 
 import math
 from bisect import bisect_right
 from typing import List
-
-import torch
 
 # NOTE: PyTorch's LR scheduler interface uses names that assume the LR changes
 # only on epoch boundaries. We typically use iteration based schedules instead.

@@ -15,8 +15,10 @@ from .alexnet import AlexNet
 from .resnet import (BasicBlock, Bottleneck, ResNet, conv3x3, resnet18,
                      resnet34, resnet50, resnet101, resnet152, resnet)
 
+# auto registry all defined module
 from ..core import MODULES, auto_registry
-auto_registry(MODULES, globals())
+import torch
+auto_registry(MODULES, globals(), type=torch.nn.Module)
 
 from .layer_builder import NAME_MAP, build_from_package, get_torch_layer_caller
 

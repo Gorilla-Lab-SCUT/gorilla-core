@@ -2,6 +2,7 @@
 import os
 import os.path as osp
 import logging
+from typing import Optional
 from collections import OrderedDict
 
 import torch.distributed as dist
@@ -13,8 +14,9 @@ logger_initialized = {}
 
 
 def collect_logger(root: str="log",
-                   prefix: str=None,
-                   suffix: str=None,
+                   prefix: Optional[str]=None,
+                   suffix: Optional[str]=None,
+                   log_name: Optional[str]=None,
                    **kwargs) -> [str, logging.Logger]:
     r"""Author: liang.zhihao
     A easy combination of get_log_dir and get_logger, use the timestamp
@@ -34,7 +36,10 @@ def collect_logger(root: str="log",
                           **kwargs)
     
     time_stamp = timestamp()
-    log_file = osp.join(log_dir, "{}.log".format(time_stamp))
+    if log_name is None:
+        log_file = osp.join(log_dir, "{}.log".format(time_stamp))
+    else:
+        log_file = osp.join(log_dir, "{}.log".format(log_name))
     logger = get_logger(log_file, timestamp=time_stamp)
 
     return log_dir, logger
