@@ -1,5 +1,6 @@
-import torch
+from typing import Optional
 
+import torch
 
 def dice_loss(input: torch.Tensor,
               target: torch.Tensor,
@@ -29,3 +30,29 @@ def dice_loss(input: torch.Tensor,
         (torch.sum(input * input, dim=1) + torch.sum(target * target, dim=1) + 1e-4 + epsilon)
 
     return loss
+
+
+def dice_loss_multi_calsses(input: torch.Tensor,
+                            target: torch.Tensor,
+                            epsilon: float = 1e-5,
+                            weight: Optional[float]=None) -> torch.Tensor:
+    r"""
+    modify compute_per_channel_dice from https://github.com/wolny/pytorch-3dunet/blob/6e5a24b6438f8c631289c10638a17dea14d42051/unet3d/losses.py
+    """
+    assert input.size() == target.size(), "'input' and 'target' must have the same shape"
+
+    # convert the feature channel(category channel) as first
+    axis_order = (1, 0) + tuple(range(2, input.dim()))
+    input = input.permute(axis_order)
+    target = target.permute(axis_order)
+
+    target = target.float()
+    # Compute per channel Dice Coefficient
+    per_channel_dice = (2 * torch.sum(input * target, dim=1) + epsilon) / \
+                       (torch.sum(input * input, dim=1) + torch.sum(target * target, dim=1) + 1e-4 + epsilon)
+
+    loss = 1. - per_channel_dice
+    
+    return loss
+
+
