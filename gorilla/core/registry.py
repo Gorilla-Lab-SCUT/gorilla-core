@@ -120,7 +120,7 @@ class Registry:
         return _register
 
 
-def auto_registry(registry: Registry, cls_dict: Dict, type=Type):
+def auto_registry(registry: Registry, cls_dict: Dict, type=object):
     r"""Author: liang.zhihao
 
     Args:
@@ -133,7 +133,10 @@ def auto_registry(registry: Registry, cls_dict: Dict, type=Type):
         if key.startswith("_"):
             continue
         # skip function(default register Class)
-        if not isinstance(cls, type):
+        if not isinstance(cls, Type):
+            continue
+        # keep the son class if type is define
+        if not issubclass(cls, type):
             continue
         registry._register_module(cls)
 
