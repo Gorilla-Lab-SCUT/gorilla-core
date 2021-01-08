@@ -35,8 +35,6 @@ class GorillaConv(nn.Sequential):
             norm_cfg. Bias will be set as True if `norm_cfg` is None, otherwise
             False. Default: "auto".
         D: The convolutional dimension. Default: 2
-        conv_cfg (dict): Config dict for convolution layer. Default: None,
-            which means using conv2d.
         norm_cfg (dict): Config dict for normalization layer. Default: None.
         act_cfg (dict): Config dict for activation layer.
             Default: dict(name="ReLU").

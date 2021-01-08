@@ -193,8 +193,13 @@ def track(tasks, bar_width=50, file=sys.stdout):
     else:
         raise TypeError(
             "`tasks` must be an iterable object or a (iterator, int) tuple")
-    prog_bar = ProgressBar(task_num, bar_width, file=file)
-    for task in tasks:
-        yield task
-        prog_bar.update()
-    prog_bar.file.write("\n")
+    try:
+        from rich.progress import track
+        for task in track(tasks):
+            yield task
+    except:
+        prog_bar = ProgressBar(task_num, bar_width, file=file)
+        for task in tasks:
+            yield task
+            prog_bar.update()
+        prog_bar.file.write("\n")

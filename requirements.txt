@@ -9,10 +9,10 @@ yapf
 termcolor
 tabulate
 pynvml
+rich
 
 # scipy
 # open3d==0.8.0.0
-# terminaltables
 # opencv-python
 # scikit-image
 # ipdb

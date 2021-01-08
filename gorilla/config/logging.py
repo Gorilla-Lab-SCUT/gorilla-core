@@ -17,7 +17,7 @@ def collect_logger(root: str="log",
                    prefix: Optional[str]=None,
                    suffix: Optional[str]=None,
                    log_name: Optional[str]=None,
-                   **kwargs) -> [str, logging.Logger]:
+                   **kwargs):
     r"""Author: liang.zhihao
     A easy combination of get_log_dir and get_logger, use the timestamp
     as log file's name
@@ -130,8 +130,14 @@ def get_logger(log_file=None, name="gorilla", log_level=logging.INFO, timestamp=
         if name.startswith(logger_name):
             return logger
 
-    stream_handler = logging.StreamHandler()
-    handlers = [stream_handler]
+    try:
+        # piror rich handler
+        from rich.logging import RichHandler
+        handlers = [RichHandler(rich_tracebacks=True, show_level=False, show_time=False)]
+    except:
+        stream_handler = logging.StreamHandler()
+        handlers = [stream_handler]
+
 
     if dist.is_available() and dist.is_initialized():
         rank = dist.get_rank()
