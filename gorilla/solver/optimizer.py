@@ -1,7 +1,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # auto registry all inplace optimizetr
 from torch.optim import *
-import torch.optim.optimizer as optimizer
+# strange ImportError
+try:
+    import torch.optim.optimizer as optimizer
+except:
+    from torch.optim import optimizer
 
 try:
     # a rich pytorch optimizer library
