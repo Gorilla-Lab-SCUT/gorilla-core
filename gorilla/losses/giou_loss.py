@@ -7,8 +7,7 @@ def giou_loss(
     boxes1: torch.Tensor,
     boxes2: torch.Tensor,
     reduction: str = "none",
-    eps: float = 1e-7,
-) -> torch.Tensor:
+    eps: float = 1e-7) -> torch.Tensor:
     r"""
     Generalized Intersection over Union Loss (Hamid Rezatofighi et. al)
     https://arxiv.org/abs/1902.09630

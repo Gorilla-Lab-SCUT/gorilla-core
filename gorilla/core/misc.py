@@ -8,9 +8,12 @@ from collections import abc
 from importlib import import_module
 from inspect import getfullargspec
 from six.moves import map, zip
+from typing import Dict, List, Callable, Iterable, Optional, Sequence, Union
+
+from torch.autograd import Function
 
 
-def convert_list(input_list, type):
+def convert_list(input_list: List, type: Callable):
     return list(map(type, input_list))
 
 convert_list_str = functools.partial(convert_list, type=str)
@@ -18,7 +21,9 @@ convert_list_int = functools.partial(convert_list, type=int)
 convert_list_float = functools.partial(convert_list, type=float)
 
 
-def iter_cast(inputs, dst_type, return_type=None):
+def iter_cast(inputs: Iterable,
+              dst_type: Callable,
+              return_type: Optional[Callable]=None):
     r"""Cast elements of an iterable object into some type.
 
     Args:
@@ -46,7 +51,9 @@ list_cast = functools.partial(iter_cast, return_type=list)
 tuple_cast = functools.partial(iter_cast, return_type=tuple)
 
 
-def is_seq_of(seq, expected_type, seq_type=None) -> bool:
+def is_seq_of(seq: Sequence,
+              expected_type: Callable,
+              seq_type: Optional[Callable]=None) -> bool:
     r"""Check whether it is a sequence of some type.
 
     Args:
@@ -72,7 +79,7 @@ is_list_of = functools.partial(is_seq_of, expected_type=list)
 is_tuple_of = functools.partial(is_seq_of, expected_type=tuple)
 
 
-def slice_list(in_list, lens) -> list:
+def slice_list(in_list: List, lens: Union[int, List]) -> list:
     r"""Slice a list into several sub lists by a list of given length.
 
     Args:
@@ -101,7 +108,7 @@ def slice_list(in_list, lens) -> list:
     return out_list
 
 
-def concat_list(in_list) -> list:
+def concat_list(in_list: List) -> list:
     r"""Concatenate a list of list into a single list.
 
     Args:
@@ -112,7 +119,9 @@ def concat_list(in_list) -> list:
     return list(itertools.chain(*in_list))
 
 
-def check_prerequisites(prerequisites, checker, msg_tmpl=None):
+def check_prerequisites(prerequisites: Union[str, List[str]],
+                        checker: Callable,
+                        msg_tmpl: Optional[str]=None):
     r"""A decorator factory to check if prerequisites are satisfied.
     Args:
         prerequisites (str of list[str]): Prerequisites to be checked.
@@ -147,7 +156,7 @@ def check_prerequisites(prerequisites, checker, msg_tmpl=None):
     return wrap
 
 
-def _check_py_package(package) -> bool:
+def _check_py_package(package: str) -> bool:
     r"""Check whether package can be import
 
     Args:
@@ -166,7 +175,7 @@ def _check_py_package(package) -> bool:
         return True
 
 
-def _check_executable(cmd) -> bool:
+def _check_executable(cmd: str  ) -> bool:
     r"""Check whether cmd can be executed
 
     Args:
@@ -188,7 +197,7 @@ requires_executable = functools.partial(check_prerequisites,
 
 
 # NOTE: use to maintain
-def deprecated_api_warning(name_dict, cls_name=None):
+def deprecated_api_warning(name_dict: Dict, cls_name: Optional[str]=None):
     r"""A decorator to check if some argments are deprecate and try to replace
     deprecate src_arg_name to dst_arg_name.
 
@@ -231,7 +240,7 @@ def deprecated_api_warning(name_dict, cls_name=None):
     return api_warning_wrapper
 
 
-def multi_apply(func, *args, **kwargs):
+def multi_apply(func: Callable, *args, **kwargs):
     r"""Apply function to a list of arguments.
     Note:
         This function applies the ``func`` to multiple inputs and
@@ -239,7 +248,7 @@ def multi_apply(func, *args, **kwargs):
         list. Each list contains the same type of outputs corresponding
         to different inputs.
     Args:
-        func (Function): A function that will be applied to a list of
+        func (Callable): A function that will be applied to a list of
             arguments
     Returns:
         tuple(list): A tuple containing multiple list, each list contains \

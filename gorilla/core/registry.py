@@ -8,19 +8,18 @@ from termcolor import colored
 
 
 class Registry:
-    r"""A registry to map strings to classes.
-    Args:
-        name (str): Registry name.
-    """
-
-    def __init__(self, name):
+    def __init__(self, name: str):
+        r"""A registry to map strings to classes.
+        Args:
+            name (str): Registry name.
+        """
         self._name = name
         self._module_dict = dict()
 
     def __len__(self):
         return len(self._module_dict)
 
-    def __contains__(self, key):
+    def __contains__(self, key: str):
         return self.get(key) is not None
 
     def __repr__(self):
@@ -38,7 +37,7 @@ class Registry:
     def module_dict(self):
         return self._module_dict
 
-    def get(self, key):
+    def get(self, key: str) -> Type:
         r"""Get the registry record.
         Args:
             key (str): The class name in string format.
@@ -107,7 +106,9 @@ class Registry:
         return _register
 
 
-def auto_registry(registry: Registry, cls_dict: Dict, type=object):
+def auto_registry(registry: Registry,
+                  cls_dict: Dict,
+                  type=object) -> None:
     r"""Author: liang.zhihao
 
     Args:
@@ -128,7 +129,9 @@ def auto_registry(registry: Registry, cls_dict: Dict, type=object):
         registry._register_module(cls)
 
 
-def build_from_cfg(cfg: Dict, registry: Registry, default_args: Optional[Dict]=None):
+def build_from_cfg(cfg: Dict,
+                   registry: Registry,
+                   default_args: Optional[Dict]=None) -> object:
     r"""Build a module from config dict.
     Args:
         cfg (dict): Config dict. It should at least contain the key "name".

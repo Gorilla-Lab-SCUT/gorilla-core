@@ -1,3 +1,4 @@
+from typing import List, Optional, Type
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
@@ -13,7 +14,9 @@ model_urls = {
 }
 
 
-def conv3x3(in_planes, out_planes, stride=1):
+def conv3x3(in_planes: int,
+            out_planes: int,
+            stride: int=1):
     "3x3 convolution with zero-padding"
     return nn.Conv2d(in_planes,
                      out_planes,
@@ -26,7 +29,11 @@ def conv3x3(in_planes, out_planes, stride=1):
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
+    def __init__(self,
+                 inplanes: int,
+                 planes: int,
+                 stride: int=1,
+                 downsample: Optional[nn.Module]=None):
         r"""
         The number of channels in the network:
         input: inplanes --> planes --> planes: output
@@ -59,7 +66,11 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
+    def __init__(self,
+                 inplanes: int,
+                 planes: int,
+                 stride: int=1,
+                 downsample: Optional[nn.Module]=None):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -71,7 +82,7 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
         self.stride = stride
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         residual = self.conv1(x)
         residual = self.relu(self.bn1(residual))
         residual = self.conv2(residual)
@@ -89,7 +100,10 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=1000):
+    def __init__(self,
+                 block: Type,
+                 num_blocks: List[int],
+                 num_classes: int=1000):
         r"""
         Parameters:
         ----------
@@ -122,7 +136,7 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, num_blocks[3],
                                        stride=2)  # [7, 7, 512]
         self.avgpool = nn.AvgPool2d(7)  # [1, 1, 512]
-        #         self.fc = nn.Linear(512 * block.expansion, num_classes) # [1000]
+        # self.fc = nn.Linear(512 * block.expansion, num_classes) # [1000]
 
         # initial weight and bias
         for m in self.modules():
@@ -133,7 +147,11 @@ class ResNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-    def _make_layer(self, block, planes, num_block, stride=1):
+    def _make_layer(self,
+                    block: Type,
+                    planes: int,
+                    num_block: int,
+                    stride: int=1) -> nn.Sequential:
         r"""
         Make a layer that contain some residual blocks.
         Parameters
@@ -173,7 +191,7 @@ class ResNet(nn.Module):
 
         return layer
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv1(x)
         x = self.maxpool(self.relu(self.bn1(x)))
         x = self.layer1(x)

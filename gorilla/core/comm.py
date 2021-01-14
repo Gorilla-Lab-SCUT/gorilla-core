@@ -6,8 +6,10 @@ This is useful when doing distributed training.
 
 import functools
 import logging
-import numpy as np
 import pickle
+from typing import List
+
+import numpy as np
 import torch
 import torch.distributed as dist
 
@@ -91,7 +93,7 @@ def _get_global_gloo_group():
         return dist.group.WORLD
 
 
-def _serialize_to_tensor(data, group):
+def _serialize_to_tensor(data, group) -> torch.Tensor:
     backend = dist.get_backend(group)
     assert backend in ["gloo", "nccl"]
     device = torch.device("cpu" if backend == "gloo" else "cuda")
@@ -108,7 +110,7 @@ def _serialize_to_tensor(data, group):
     return tensor
 
 
-def _pad_to_largest_tensor(tensor, group):
+def _pad_to_largest_tensor(tensor: List[int], group):
     r"""
     Returns:
         list[int]: size of the tensor, on each rank

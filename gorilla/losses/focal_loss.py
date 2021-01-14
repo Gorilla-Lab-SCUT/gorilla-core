@@ -9,8 +9,7 @@ def sigmoid_focal_loss(
     targets: torch.Tensor,
     alpha: float = -1,
     gamma: float = 2,
-    reduction: str = "none",
-) -> torch.Tensor:
+    reduction: str = "none") -> torch.Tensor:
     r"""
     Loss used in RetinaNet for dense detection: https://arxiv.org/abs/1708.02002.
     Args:
@@ -58,8 +57,7 @@ def sigmoid_focal_loss_star(
     targets: torch.Tensor,
     alpha: float = -1,
     gamma: float = 1,
-    reduction: str = "none",
-) -> torch.Tensor:
+    reduction: str = "none") -> torch.Tensor:
     r"""
     FL* described in RetinaNet paper Appendix: https://arxiv.org/abs/1708.02002.
     Args:

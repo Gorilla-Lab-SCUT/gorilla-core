@@ -40,7 +40,9 @@ class ConfigDict(Dict):
         raise ex
 
 
-def add_args(parser, cfg, prefix=""):
+def add_args(parser: ArgumentParser,
+             cfg: Dict,
+             prefix: str="") -> ArgumentParser:
     for k, v in cfg.items():
         if isinstance(v, str):
             parser.add_argument("--" + prefix + k)
@@ -83,7 +85,7 @@ class Config(object):
         "{"item1": [1, 2], "item2": {"a": 0}, "item3": True, "item4": "test"}"
     """
     @staticmethod
-    def _validate_py_syntax(filename):
+    def _validate_py_syntax(filename: str):
         with open(filename) as f:
             content = f.read()
         try:
@@ -92,7 +94,7 @@ class Config(object):
             raise SyntaxError(f"There are syntax errors in config file {filename}: {e}")
 
     @staticmethod
-    def _substitute_predefined_vars(filename, temp_config_name):
+    def _substitute_predefined_vars(filename: str, temp_config_name: str):
         file_dirname = osp.dirname(filename)
         file_basename = osp.basename(filename)
         file_basename_no_extension = osp.splitext(file_basename)[0]
@@ -115,7 +117,7 @@ class Config(object):
             tmp_config_file.write(config_file)
 
     @staticmethod
-    def _file2dict(filename, use_predefined_variables=True):
+    def _file2dict(filename: str, use_predefined_variables: bool=True):
         filename = osp.abspath(osp.expanduser(filename))
         check_file(filename)
         file_extname = osp.splitext(filename)[1]
@@ -209,7 +211,7 @@ class Config(object):
         return b
 
     @staticmethod
-    def fromfile(filename, use_predefined_variables=True):
+    def fromfile(filename: str, use_predefined_variables: bool=True):
         r"""cfg_text is the text content read from 5 files, and cfg_dict is
             a dict resolved by the text content.
         """
@@ -218,7 +220,7 @@ class Config(object):
         return Config(cfg_dict, cfg_text=cfg_text, filename=filename)
 
     @staticmethod
-    def auto_argparser(description=None):
+    def auto_argparser(description: Optional[str]=None):
         r"""Generate argparser from config file automatically (experimental)"""
         partial_parser = ArgumentParser(description=description)
         partial_parser.add_argument("config", help="config file path")
@@ -229,7 +231,10 @@ class Config(object):
         add_args(parser, cfg)
         return parser, cfg
 
-    def __init__(self, cfg_dict=None, cfg_text=None, filename=None):
+    def __init__(self,
+                 cfg_dict: Optional[Dict]=None,
+                 cfg_text: Optional[str]=None,
+                 filename: Optional[str]=None):
         if cfg_dict is None:
             cfg_dict = dict()
         elif not isinstance(cfg_dict, dict):
@@ -252,19 +257,19 @@ class Config(object):
 
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         return self._filename
 
     @property
-    def text(self):
+    def text(self) -> str:
         return self._text
 
     @property
-    def pretty_text(self):
+    def pretty_text(self) -> str:
 
         indent = 4
 
-        def _indent(s_, num_spaces):
+        def _indent(s_:str, num_spaces: int) -> str:
             s = s_.split("\n")
             if len(s) == 1:
                 return s_
@@ -356,7 +361,7 @@ class Config(object):
 
         return text
 
-    def _pretty(self, d, depth=0):
+    def _pretty(self, d: Dict, depth: int=0) -> None:
         for key, value in dict(d).items():
             if key in ["content"]:
                 continue
@@ -375,18 +380,18 @@ class Config(object):
     def __len__(self) -> int:
         return len(self._cfg_dict)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
         return getattr(self._cfg_dict, name)
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str):
         return self._cfg_dict.__getitem__(name)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Dict):
         if isinstance(value, dict):
             value = ConfigDict(value)
         self._cfg_dict.__setattr__(name, value)
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name: str, value: Dict):
         if isinstance(value, dict):
             value = ConfigDict(value)
         self._cfg_dict.__setitem__(name, value)
@@ -394,7 +399,7 @@ class Config(object):
     def __iter__(self):
         return iter(self._cfg_dict)
 
-    def dump(self, file=None, **kwargs):
+    def dump(self, file: Optional[str]=None, **kwargs):
         cfg_dict = super(Config, self).__getattribute__("_cfg_dict").to_dict()
         if file.endswith(".py"):
             if file is None:
@@ -410,7 +415,7 @@ class Config(object):
             else:
                 dump(cfg_dict, file, **kwargs)
 
-    def merge_from_dict(self, options):
+    def merge_from_dict(self, options: Dict):
         r"""Merge list into cfg_dict.
         Merge the dict parsed by MultipleKVAction into this cfg.
         Examples:
@@ -470,7 +475,8 @@ class DictAction(Action):
         setattr(namespace, self.dest, options)
 
 
-def merge_cfg_and_args(cfg: Optional[Config]=None, args: Optional[Namespace]=None) -> Config:
+def merge_cfg_and_args(cfg: Optional[Config]=None,
+                       args: Optional[Namespace]=None) -> Config:
     r"""merge args and cfg into a Config by calling 'merge_from_dict' func
 
     Args:

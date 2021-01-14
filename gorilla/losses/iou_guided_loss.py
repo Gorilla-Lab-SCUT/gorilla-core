@@ -9,8 +9,7 @@ def iou_guided_loss(
         fg_thresh: float=1.0,
         bg_thresh: float=0.0,
         reduction: str="none",
-        use_sigmoid: bool=True,
-) -> torch.Tensor:
+        use_sigmoid: bool=True) -> torch.Tensor:
     r"""
     IoU-guided NMS Loss
     https://arxiv.org/abs/1807.11590

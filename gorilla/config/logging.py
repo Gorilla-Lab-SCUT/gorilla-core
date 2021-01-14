@@ -99,7 +99,10 @@ def get_log_dir(root: str="log",
     return log_dir
 
 
-def get_logger(log_file=None, name="gorilla", log_level=logging.INFO, timestamp=None):
+def get_logger(log_file: str=None,
+               name: str="gorilla",
+               log_level: int=logging.INFO,
+               timestamp: Optional[str]=None) -> logging.Logger:
     r"""Initialize and get a logger by name.
         If the logger has not been initialized, this method will initialize the
         logger by adding one or two handlers, otherwise the initialized logger will
@@ -168,7 +171,9 @@ def get_logger(log_file=None, name="gorilla", log_level=logging.INFO, timestamp=
     return logger
 
 
-def print_log(msg, logger=None, level=logging.INFO):
+def print_log(msg: str,
+              logger: Optional[logging.Logger]=None,
+              level: int=logging.INFO):
     r"""Print a log message.
 
     Args:

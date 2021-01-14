@@ -12,7 +12,10 @@ class GraphConvolution(Module):
     r"""
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
-    def __init__(self, in_features, out_features, bias=True):
+    def __init__(self,
+                 in_features: int,
+                 out_features: int,
+                 bias: bool=True):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -29,7 +32,9 @@ class GraphConvolution(Module):
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
 
-    def forward(self, input, adj):
+    def forward(self,
+                input: torch.Tensor,
+                adj: torch.Tensor) -> torch.Tensor:
         # normalize adj
         support = torch.mm(input, self.weight)
         output = torch.spmm(adj, support)
@@ -67,7 +72,9 @@ class GCN(nn.Sequential):
                 self.add_module(f"ReLU{idx}", nn.ReLU(inplace=True))
                 self.add_module(f"dropout{idx}", nn.Dropout(dropout))
 
-    def forward(self, x, adj):
+    def forward(self,
+                x: torch.Tensor,
+                adj: torch.Tensor) -> torch.Tensor:
         for module_name in self._modules:
             if "gc" in module_name:
                 x = self._modules[module_name](x, adj)

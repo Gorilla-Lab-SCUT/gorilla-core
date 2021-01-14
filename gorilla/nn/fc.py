@@ -126,8 +126,7 @@ class MultiFC(nn.Sequential):
             dropout: Optional[Union[List[float], float]]=None,
             init: Union[str, Callable]="kaiming",
             order: List[str]=["FC", "norm", "act", "dropout"],
-            drop_last: bool=True
-    ):
+            drop_last: bool=True):
         r"""Author: liang.zhihao
         Build the multi FC layer easily
 
@@ -188,8 +187,7 @@ class DenseFC(nn.Module):
             nodes: List[int],
             arc_tale: List[List[int]],
             arc_tm_shape: List[List[int]],
-            init: Union[str, Callable]="geometric"
-    ):
+            init: Union[str, Callable]="geometric"):
         r"""Author: lei.jiabao, liang.zhihao
         initialization for MLP of arbitrary architecture (specialized for cuam library)
 
@@ -296,7 +294,9 @@ class DenseFC(nn.Module):
 
         self.outputs_list = []
 
-    def forward(self, x, requires_outputs_list=False):
+    def forward(self,
+                x: torch.Tensor,
+                requires_outputs_list: bool=False) -> torch.Tensor:
         if requires_outputs_list:
             self.outputs_list.clear()
 
@@ -327,7 +327,7 @@ class DenseFC(nn.Module):
 
         return x
 
-    def get_info(self):
+    def get_info(self) -> Dict:
 
         weights = []
         for i in range(self.num_of_linears):

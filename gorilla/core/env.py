@@ -1,12 +1,14 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import os
 import os.path as osp
+import logging
 import sys
 import re
 import random
 import subprocess
 import importlib
 from collections import defaultdict
+from typing import Optional
 
 import torch
 import torchvision
@@ -55,7 +57,7 @@ def detect_compute_compatibility(CUDA_HOME, so_file):
         return so_file
 
 
-def collect_env_info():
+def collect_env_info() -> str:
     has_gpu = torch.cuda.is_available()  # true for both CUDA & ROCM
     torch_version = torch.__version__
 
@@ -141,7 +143,10 @@ def collect_env_info():
     return env_str
 
 
-def set_random_seed(seed, deterministic=False, use_rank_shift=False, logger=None):
+def set_random_seed(seed: int,
+                    deterministic: bool=False,
+                    use_rank_shift: bool=False,
+                    logger: Optional[logging.Logger]=None) -> None:
     r"""Set random seed.
     Args:
         seed (int): Seed to be used.

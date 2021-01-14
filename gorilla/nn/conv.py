@@ -1,6 +1,6 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 from copy import deepcopy
-import warnings
+from typing import Dict, List, Optional
 
 import torch
 import torch.nn as nn
@@ -53,21 +53,21 @@ class GorillaConv(nn.Sequential):
             Default: ("conv", "norm", "act").
     """
     def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 stride=1,
-                 padding=0,
-                 dilation=1,
-                 groups=1,
-                 bias=True,
-                 name="",
-                 D=2,
-                 norm_cfg=dict(name="BN2d"),
-                 act_cfg=dict(name="ReLU", inplace=True),
-                 with_spectral_norm=False,
-                 padding_mode="zeros",
-                 order=["conv", "norm", "act"]):
+                 in_channels: int,
+                 out_channels: int,
+                 kernel_size: int,
+                 stride: int=1,
+                 padding: int=0,
+                 dilation: int=1,
+                 groups: int=1,
+                 bias: bool=True,
+                 name: str="",
+                 D: int=2,
+                 norm_cfg: Optional[Dict]=dict(name="BN2d"),
+                 act_cfg: Optional[Dict]=dict(name="ReLU", inplace=True),
+                 with_spectral_norm: bool=False,
+                 padding_mode: List="zeros",
+                 order: List[str]=["conv", "norm", "act"]):
         super().__init__()
         assert D in [1, 2, 3]
         assert norm_cfg is None or isinstance(norm_cfg, dict)

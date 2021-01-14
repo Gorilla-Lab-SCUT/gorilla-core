@@ -13,7 +13,9 @@ class LabelSmoothCELoss(nn.Module):
         super(LabelSmoothCELoss, self).__init__()
         self.epsilon = epsilon
 
-    def forward(self, logits, targets):
+    def forward(self,
+                logits: torch.Tensor,
+                targets: torch.Tensor) -> torch.Tensor:
         """
         Args:
             logits: A float tensor of shape: (minibatch, C).
@@ -26,7 +28,9 @@ class LabelSmoothCELoss(nn.Module):
         return loss
 
 
-def label_smooth_ce_loss(logits, targets, epsilon):
+def label_smooth_ce_loss(logits: torch.Tensor,
+                         targets: torch.Tensor,
+                         epsilon: float) -> torch.Tensor:
     r"""
     Cross-entrophy loss with label smooth.
 
