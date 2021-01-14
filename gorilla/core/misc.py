@@ -90,8 +90,8 @@ def slice_list(in_list, lens) -> list:
         ) % lens == 0, "the len of `in_list` must be divisible by `lens`"
         lens = [lens] * int(len(in_list) / lens)
     elif sum(lens) != len(in_list):
-        raise ValueError("sum of lens and list length does not "
-                         "match: {} != {}".format(sum(lens), len(in_list)))
+        raise ValueError(f"sum of lens and list length does not "
+                         f"match: {sum(lens)} != {len(in_list)}")
 
     out_list = []
     idx = 0
@@ -175,7 +175,7 @@ def _check_executable(cmd) -> bool:
     Returns:
         bool: The `cmd` can be executed or not
     """
-    if subprocess.call("which {}".format(cmd), shell=True) != 0:
+    if subprocess.call(f"which {cmd}", shell=True) != 0:
         return False
     else:
         return True
@@ -207,23 +207,19 @@ def deprecated_api_warning(name_dict, cls_name=None):
             # get name of the function
             func_name = old_func.__name__
             if cls_name is not None:
-                func_name = "{}.{}".format(cls_name, func_name)
+                func_name = f"{cls_name}.{func_name}"
             if args:
                 arg_names = args_info.args[:len(args)]
                 for src_arg_name, dst_arg_name in name_dict.items():
                     if src_arg_name in arg_names:
-                        warnings.warn("'{}' is deprecated in "
-                                      "`{}`, please use `{}` "
-                                      "instead".format(src_arg_name, func_name,
-                                                       dst_arg_name))
+                        warnings.warn(f"'{src_arg_name}' is deprecated in `{func_name}`, "
+                                      f"please use `{dst_arg_name}` instead")
                         arg_names[arg_names.index(src_arg_name)] = dst_arg_name
             if kwargs:
                 for src_arg_name, dst_arg_name in name_dict.items():
                     if src_arg_name in kwargs:
-                        warnings.warn("`{}` is deprecated in "
-                                      "`{}`, please use `{}` "
-                                      "instead".format(src_arg_name, func_name,
-                                                       dst_arg_name))
+                        warnings.warn(f"`{src_arg_name}` is deprecated in `{func_name}`, "
+                                      f"please use `{dst_arg_name}` ")
                         kwargs[dst_arg_name] = kwargs.pop(src_arg_name)
 
             # apply converted arguments to the decorated method

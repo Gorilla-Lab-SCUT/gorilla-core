@@ -32,8 +32,7 @@ class ConfigDict(Dict):
         try:
             value = super(ConfigDict, self).__getattr__(name)
         except KeyError:
-            ex = AttributeError("`{}` object has no attribute `{}`".format(
-                self.__class__.__name__, name))
+            ex = AttributeError(f"`{self.__class__.__name__}` object has no attribute `{name}`")
         except Exception as e:
             ex = e
         else:
@@ -56,7 +55,7 @@ def add_args(parser, cfg, prefix=""):
         elif isinstance(v, abc.Iterable):
             parser.add_argument("--" + prefix + k, type=type(v[0]), nargs="+")
         else:
-            print("cannot parse key {} of type {}".format(prefix + k, type(v)))
+            print(f"cannot parse key {prefix + k} of type {type(v)}")
     return parser
 
 
@@ -90,9 +89,7 @@ class Config(object):
         try:
             ast.parse(content)
         except SyntaxError as e:
-            raise SyntaxError(
-                "There are syntax errors in config file {}: {}".format(
-                    filename, e))
+            raise SyntaxError(f"There are syntax errors in config file {filename}: {e}")
 
     @staticmethod
     def _substitute_predefined_vars(filename, temp_config_name):
@@ -203,11 +200,9 @@ class Config(object):
             if isinstance(v, dict) and k in b and not v.pop(DELETE_KEY, False):
                 if not isinstance(b[k], dict):
                     raise TypeError(
-                        "{}={} in child config cannot inherit from base because {} "
-                        "is a dict in the child config but is of, "
-                        "type {} in base config. You may set `{}=True` "
-                        "to ignore the base config".format(
-                            k, v, k, type(b[k]), DELETE_KEY))
+                        f"{k}={v} in child config cannot inherit from base because {k} "
+                        f"is a dict in the child config but is of, type {type(b[k])} "
+                        f"in base config. You may set `{DELETE_KEY}=True` to ignore the base config")
                 b[k] = Config._merge_a_into_b(v, b[k])
             else:
                 b[k] = v
@@ -238,11 +233,11 @@ class Config(object):
         if cfg_dict is None:
             cfg_dict = dict()
         elif not isinstance(cfg_dict, dict):
-            raise TypeError("cfg_dict must be a dict, "
-                            "but got {}".format(type(cfg_dict)))
+            raise TypeError(f"cfg_dict must be a dict, "
+                            f"but got {type(cfg_dict)}")
         for key in cfg_dict:
             if key in RESERVED_KEYS:
-                raise KeyError("{} is reserved for config file".format(key))
+                raise KeyError(f"{key} is reserved for config file")
 
         super(Config, self).__setattr__("_cfg_dict", ConfigDict(cfg_dict))
         super(Config, self).__setattr__("_filename", filename)
@@ -254,6 +249,7 @@ class Config(object):
         else:
             text = ""
         super(Config, self).__setattr__("_text", text)
+
 
     @property
     def filename(self):
@@ -280,15 +276,15 @@ class Config(object):
 
         def _format_basic_types(k, v, use_mapping=False):
             if isinstance(v, str):
-                v_str = "'{}'".format(v)
+                v_str = f"'{v}'"
             else:
                 v_str = str(v)
 
             if use_mapping:
-                k_str = "'{}'".format(k) if isinstance(k, str) else str(k)
-                attr_str = "{}: {}".format(k_str, v_str)
+                k_str = f"'{k}'" if isinstance(k, str) else str(k)
+                attr_str = f"{k_str}: {v_str}"
             else:
-                attr_str = "{}={}".format(k, v_str)
+                attr_str = f"{k}={v_str}"
             attr_str = _indent(attr_str, indent)
 
             return attr_str
@@ -298,13 +294,13 @@ class Config(object):
             if all(isinstance(_, dict) for _ in v):
                 v_str = "[\n"
                 v_str += "\n".join(
-                    "dict({}),".format(_indent(_format_dict(v_), indent))
+                    f"dict({_indent(_format_dict(v_), indent)}),"
                     for v_ in v).rstrip(",")
                 if use_mapping:
-                    k_str = "'{}'".format(k) if isinstance(k, str) else str(k)
-                    attr_str = "{}: {}".format(k_str, v_str)
+                    k_str = f"'{k}'" if isinstance(k, str) else str(k)
+                    attr_str = f"{k_str}: {v_str}"
                 else:
-                    attr_str = "{}={}".format(k, v_str)
+                    attr_str = f"{k}={v_str}"
                 attr_str = _indent(attr_str, indent) + "]"
             else:
                 attr_str = _format_basic_types(k, v, use_mapping)
@@ -330,11 +326,11 @@ class Config(object):
                 if isinstance(v, dict):
                     v_str = "\n" + _format_dict(v)
                     if use_mapping:
-                        k_str = "'{}'".format(k) if isinstance(k,
+                        k_str = f"'{k}'" if isinstance(k,
                                                                str) else str(k)
-                        attr_str = "{}: dict({}".format(k_str, v_str)
+                        attr_str = f"{k_str}: dict({v_str}"
                     else:
-                        attr_str = "{}=dict({}".format(k, v_str)
+                        attr_str = f"{k}=dict({v_str}"
                     attr_str = _indent(attr_str, indent) + ")" + end
                 elif isinstance(v, list):
                     attr_str = _format_list(k, v, use_mapping) + end
@@ -364,15 +360,15 @@ class Config(object):
         for key, value in dict(d).items():
             if key in ["content"]:
                 continue
-            self.content += "{}{}: ".format("    " * depth, key)
+            self.content += f"{'    ' * depth}{key}: "
             if isinstance(value, dict):
                 self.content += "\n"
                 self._pretty(value, depth + 1)
             else:
-                self.content += "{}\n".format(value)
+                self.content += f"{value}\n"
 
     def __repr__(self) -> str:
-        self.content = "Config (path: {})\n".format(self.filename)
+        self.content = f"Config (path: {self.filename})\n"
         self._pretty(self._cfg_dict)
         return self.content
 
@@ -489,11 +485,11 @@ def merge_cfg_and_args(cfg: Optional[Config]=None, args: Optional[Namespace]=Non
     if cfg is None:
         cfg = Config()
     else:
-        assert isinstance(cfg, Config), "'cfg' must be None or gorilla.Config, but got {}".format(type(cfg))
+        assert isinstance(cfg, Config), f"'cfg' must be None or gorilla.Config, but got {type(cfg)}"
     if args is None:
         args = Namespace()
     else:
-        assert isinstance(args, Namespace), "'args' must be None or argsparse.Namespace, but got {}".format(type(args))
+        assert isinstance(args, Namespace), f"'args' must be None or argsparse.Namespace, but got {type(args)}"
 
     # convert namespace into dict
     args_dict = vars(args)

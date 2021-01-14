@@ -32,19 +32,19 @@ def backup(log_dir: str,
 
     os.makedirs(backup_dir, exist_ok=True)
     # log gorilla version
-    logger.info("gorilla-core version is {}".format(__version__))
+    logger.info(f"gorilla-core version is {__version__}")
     try:
         from gorilla2d import __version__ as g2_ver
-        logger.info("gorilla2d version is {}".format(g2_ver))
+        logger.info(f"gorilla2d version is {g2_ver}")
     except:
         pass
     try:
         from gorilla3d import __version__ as g3_ver
-        logger.info("gorilla3d version is {}".format(g3_ver))
+        logger.info(f"gorilla3d version is {g3_ver}")
     except:
         pass
 
-    logger.info("backup files at {}".format(backup_dir))
+    logger.info(f"backup files at {backup_dir}")
     if not isinstance(backup_list, list):
         backup_list = [backup_list]
     if not isinstance(contain_suffix, list):
@@ -55,12 +55,12 @@ def backup(log_dir: str,
         miss_flag = (not osp.exists(name))
         if miss_flag:
             if strict:
-                raise FileExistsError("{} not exist".format(name))
-            warnings.warn("{} not exist".format(name))
+                raise FileExistsError(f"{name} not exist")
+            warnings.warn(f"{name} not exist")
 
         # dangerous dir warning
         if name in ["data", "log"]:
-            warnings.warn("'{}' maybe the unsuitable to backup".format(name))
+            warnings.warn(f"'{name}' maybe the unsuitable to backup")
         if osp.isfile(name):
             # just copy the filename
             dst_name = name.split("/")[-1]

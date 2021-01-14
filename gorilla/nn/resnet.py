@@ -315,7 +315,7 @@ def resnet152(args, **kwargs):
 
 
 def resnet(args, **kwargs):
-    print("==> Creating model '{}'".format(args.arch))
+    print(f"==> Creating model '{args.arch}'")
     if args.arch == "resnet18":
         return resnet18(args)
     elif args.arch == "resnet34":
@@ -327,4 +327,4 @@ def resnet(args, **kwargs):
     elif args.arch == "resnet152":
         return resnet152(args)
     else:
-        raise ValueError("Unrecognized model architecture {}".format(args.arch))
+        raise ValueError(f"Unrecognized model architecture {args.arch}")

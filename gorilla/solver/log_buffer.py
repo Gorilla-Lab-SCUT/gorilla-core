@@ -38,9 +38,9 @@ class LogBuffer:
                 var = float(var)
                 self._val_history[key].update(var)
             else:
-                raise TypeError("var must be a Sequence with length of 2, "
-                                "int, float, ndarray or Tensor scalar, "
-                                "but got {}".format(type(var)))
+                raise TypeError(f"var must be a Sequence with length of 2, "
+                                f"int, float, ndarray or Tensor scalar, "
+                                f"but got {type(var)}")
 
     def average(self, n=0):
         r"""Average latest n values or all values."""

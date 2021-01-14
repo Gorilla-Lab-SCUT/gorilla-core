@@ -15,8 +15,8 @@ def type_assert(arg):
                 isinstance(arg, tuple) or \
                 isinstance(arg, np.ndarray) or \
                 isinstance(arg, torch.Tensor)
-    assert type_flag, ("args type {} not in [`list`, `tuple`, "
-                       "`np.ndarray`, `torch.Tensor`]".format(type(arg[0])))
+    assert type_flag, (f"args type {type(arg[0])} not in "
+                       f"[`list`, `tuple`, `np.ndarray`, `torch.Tensor`]")
 
 
 def convert_into_torch_tensor(array) -> torch.Tensor:

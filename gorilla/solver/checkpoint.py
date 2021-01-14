@@ -78,9 +78,9 @@ def load_state_dict(module, state_dict, strict=False, logger=None):
     ]
 
     if unexpected_keys:
-        err_msg.append("unexpected key in source state_dict: {}\n".format(", ".join(unexpected_keys)))
+        err_msg.append(f"unexpected key in source state_dict: {', '.join(unexpected_keys)}\n")
     if missing_keys:
-        err_msg.append("missing keys in source state_dict: {}\n".format(", ".join(missing_keys)))
+        err_msg.append(f"missing keys in source state_dict: {', '.join(missing_keys)}\n")
 
     rank, _ = get_dist_info()
     if len(err_msg) > 0 and rank == 0:
@@ -115,7 +115,7 @@ def load_checkpoint(model,
     # OrderedDict is a subclass of dict
     if not isinstance(checkpoint, dict):
         raise RuntimeError(
-            "No state_dict found in checkpoint file {}".format(filename))
+            f"No state_dict found in checkpoint file {filename}")
     # get model state_dict from checkpoint
     if "model" in checkpoint:
         state_dict = checkpoint["model"]
@@ -163,7 +163,7 @@ def resume(model,
                     checkpoint["optimizer"][k])
         else:
             raise TypeError(
-                "Optimizer should be dict or torch.optim.Optimizer but got {}".format(type(optimizer)))
+                f"Optimizer should be dict or torch.optim.Optimizer but got {type(optimizer)}")
 
     if "scheduler" in checkpoint and resume_scheduler:
         if scheduler is None:
@@ -176,7 +176,7 @@ def resume(model,
                     checkpoint["scheduler"][k])
         else:
             raise TypeError(
-                "scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {}".format(type(scheduler)))
+                f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}")
 
     if "meta" in checkpoint:
         return checkpoint["meta"]
@@ -198,7 +198,7 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
     if meta is None:
         meta = {}
     elif not isinstance(meta, dict):
-        raise TypeError("meta must be a dict or None, but got {}".format(type(meta)))
+        raise TypeError(f"meta must be a dict or None, but got {type(meta)}")
     meta.update(time=time.asctime())
 
     os.makedirs(osp.dirname(filename), exist_ok=True)
@@ -219,7 +219,7 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
                 checkpoint["optimizer"][name] = optim.state_dict()
         else:
             raise TypeError(
-                "Optimizer should be dict or torch.optim.Optimizer but got {}".format(type(optimizer)))
+                f"Optimizer should be dict or torch.optim.Optimizer but got {type(optimizer)}")
 
     # save lr_scheduler state dict in the checkpoint
     if scheduler is not None:
@@ -231,7 +231,7 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
                 checkpoint["scheduler"][name] = sche.state_dict()
         else:
             raise TypeError(
-                "scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {}".format(type(scheduler)))
+                f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}")
         
     # immediately flush buffer
     with open(filename, "wb") as f:
@@ -258,7 +258,7 @@ def get_torchvision_models():
     for _, name, ispkg in pkgutil.walk_packages(torchvision.models.__path__):
         if ispkg:
             continue
-        _zoo = import_module("torchvision.models.{}".format(name))
+        _zoo = import_module(f"torchvision.models.{name}")
         if hasattr(_zoo, "model_urls"):
             _urls = getattr(_zoo, "model_urls")
             model_urls.update(_urls)
@@ -289,7 +289,7 @@ def _load_checkpoint(filename, map_location=None):
         checkpoint = load_url_dist(filename)
     else:
         if not osp.isfile(filename):
-            raise IOError("{} is not a checkpoint file".format(filename))
+            raise IOError(f"{filename} is not a checkpoint file")
         checkpoint = torch.load(filename, map_location=map_location)
     return checkpoint
 
@@ -369,7 +369,7 @@ def resume_checkpoint(model, cfg):
     if not osp.isfile(cfg.resume):
         raise ValueError('The file to be resumed is not existed', cfg.resume)
 
-    print("==> loading checkpoints '{}'".format(cfg.resume))
+    print(f"==> loading checkpoints '{cfg.resume}'")
     state = torch.load(cfg.resume)
 
     if cfg.method == "DANN":
@@ -377,7 +377,7 @@ def resume_checkpoint(model, cfg):
         model.G_y.load_state_dict(state["G_y"])
         model.G_d.load_state_dict(state["G_d"])
     else:
-        raise NotImplementedError("method: {}".format(cfg.method))
+        raise NotImplementedError(f"method: {cfg.method}")
 
     return model
 

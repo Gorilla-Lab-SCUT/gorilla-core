@@ -64,7 +64,7 @@ def is_main_process() -> bool:
     return get_rank() == 0
 
 
-def synchronize():
+def synchronize() -> None:
     r"""
     Helper function to synchronize (barrier) among all processes when
     using distributed training

@@ -10,7 +10,7 @@ class GradClipper:
         name = grad_clip_cfg.pop("name")
         assert name in ["norm", "value"]
         self.grad_clip_cfg = grad_clip_cfg
-        self.clipper = getattr(clip_grad, "clip_grad_{}_".format(name))
+        self.clipper = getattr(clip_grad, f"clip_grad_{name}_")
 
     def clip_grads(self, params):
         params = list(

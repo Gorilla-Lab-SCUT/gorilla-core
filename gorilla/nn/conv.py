@@ -90,7 +90,7 @@ class GorillaConv(nn.Sequential):
         # reset padding to 0 for conv module
         conv_padding = padding
         # build convolutional layer
-        conv_caller = get_torch_layer_caller("Conv{}d".format(D))
+        conv_caller = get_torch_layer_caller(f"Conv{D}d")
         conv = conv_caller(in_channels=in_channels,
                            out_channels=out_channels,
                            kernel_size=kernel_size,

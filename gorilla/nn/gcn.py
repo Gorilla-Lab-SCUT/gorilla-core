@@ -61,11 +61,11 @@ class GCN(nn.Sequential):
         self.num_layers = len(channels) - 1
         for idx, (in_features, out_features) in enumerate(zip(channels[:-1], channels[1:])):
             idx = idx + 1
-            self.add_module("gc{}".format(idx), GraphConvolution(in_features, out_features))
+            self.add_module(f"gc{idx}", GraphConvolution(in_features, out_features))
             # explict the last layer
             if idx != self.num_layers or not drop_last:
-                self.add_module("ReLU{}".format(idx), nn.ReLU(inplace=True))
-                self.add_module("dropout{}".format(idx), nn.Dropout(dropout))
+                self.add_module(f"ReLU{idx}", nn.ReLU(inplace=True))
+                self.add_module(f"dropout{idx}", nn.Dropout(dropout))
 
     def forward(self, x, adj):
         for module_name in self._modules:

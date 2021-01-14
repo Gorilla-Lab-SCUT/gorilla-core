@@ -44,7 +44,7 @@ class CheckpointHook(Hook):
     @master_only
     def after_epoch(self, solver):
         r"""save checkpoint after each epoch"""
-        solver.logger.info("Saving checkpoint at {} epochs".format(solver.epoch + 1))
+        solver.logger.info(f"Saving checkpoint at {solver.epoch + 1} epochs")
         if not self.out_dir:
             self.out_dir = solver.work_dir
         solver.save_checkpoint(
@@ -55,8 +55,7 @@ class CheckpointHook(Hook):
             filename_tmpl = self.args.get("filename_tmpl", "epoch_{}.pth")
             current_epoch = solver.epoch + 1
             for epoch in range(current_epoch - self.max_keep_ckpts, 0, -1):
-                ckpt_path = osp.join(self.out_dir,
-                                         filename_tmpl.format(epoch))
+                ckpt_path = osp.join(self.out_dir, filename_tmpl.format(epoch))
                 if osp.exists(ckpt_path):
                     os.remove(ckpt_path)
                 else:
@@ -68,7 +67,7 @@ class CheckpointHook(Hook):
         if self.by_epoch or not self.every_n_iters(solver, self.interval):
             return
 
-        solver.logger.info("Saving checkpoint at {} iterations".format(solver.iter + 1))
+        solver.logger.info(f"Saving checkpoint at {solver.iter + 1} iterations")
         if not self.out_dir:
             self.out_dir = solver.work_dir
         solver.save_checkpoint(
@@ -81,8 +80,7 @@ class CheckpointHook(Hook):
             for _iter in range(
                     current_iter - self.max_keep_ckpts * self.interval, 0,
                     -self.interval):
-                ckpt_path = osp.join(self.out_dir,
-                                         filename_tmpl.format(_iter))
+                ckpt_path = osp.join(self.out_dir, filename_tmpl.format(_iter))
                 if osp.exists(ckpt_path):
                     os.remove(ckpt_path)
                 else:

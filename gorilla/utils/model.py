@@ -35,16 +35,16 @@ check_grad: Check gradient of model parameters (support one or two models simult
 
 """
 # matches bfd8deac from resnet18-bfd8deac.pth
-HASH_REGEX = re.compile(r'-([a-f0-9]*)\.')
+HASH_REGEX = re.compile(r"-([a-f0-9]*)\.")
 
-ENV_TORCH_HOME = 'TORCH_HOME'
-ENV_XDG_CACHE_HOME = 'XDG_CACHE_HOME'
-DEFAULT_CACHE_DIR = '~/.cache'
+ENV_TORCH_HOME = "TORCH_HOME"
+ENV_XDG_CACHE_HOME = "XDG_CACHE_HOME"
+DEFAULT_CACHE_DIR = "~/.cache"
 
 def _get_torch_home():
     torch_home = osp.expanduser(
         os.getenv(ENV_TORCH_HOME,
-                  osp.join(os.getenv(ENV_XDG_CACHE_HOME, DEFAULT_CACHE_DIR), 'torch')))
+                  osp.join(os.getenv(ENV_XDG_CACHE_HOME, DEFAULT_CACHE_DIR), "torch")))
     return torch_home
 
 
@@ -69,16 +69,16 @@ def load_state_dict_from_url(url, model_dir=None, map_location=None, progress=Tr
         progress (bool, optional): whether or not to display a progress bar to stderr
 
     Example:
-        >>> state_dict = torch.hub.load_state_dict_from_url('https://s3.amazonaws.com/pytorch/models/resnet18-5c106cde.pth')
+        >>> state_dict = torch.hub.load_state_dict_from_url("https://s3.amazonaws.com/pytorch/models/resnet18-5c106cde.pth")
 
     """
     # Issue warning to move data if old env is set
-    if os.getenv('TORCH_MODEL_ZOO'):
-        warnings.warn('TORCH_MODEL_ZOO is deprecated, please use env TORCH_HOME instead')
+    if os.getenv("TORCH_MODEL_ZOO"):
+        warnings.warn("TORCH_MODEL_ZOO is deprecated, please use env TORCH_HOME instead")
 
     if model_dir is None:
         torch_home = _get_torch_home()
-        model_dir = osp.join(torch_home, 'checkpoints')
+        model_dir = osp.join(torch_home, "checkpoints")
 
     try:
         os.makedirs(model_dir)
@@ -94,7 +94,7 @@ def load_state_dict_from_url(url, model_dir=None, map_location=None, progress=Tr
     filename = osp.basename(parts.path)
     cached_file = osp.join(model_dir, filename)
     if not osp.exists(cached_file):
-        sys.stderr.write('Downloading: "{}" to {}\n'.format(url, cached_file))
+        sys.stderr.write(f"Downloading: '{url}'' to {cached_file}\n")
         hash_prefix = HASH_REGEX.search(filename).group(1)
         _download_url_to_file(url, cached_file, hash_prefix, progress=progress)
     return torch.load(cached_file, map_location=map_location)
@@ -104,7 +104,7 @@ def _download_url_to_file(url, dst, hash_prefix, progress):
     file_size = None
     u = urlopen(url)
     meta = u.info()
-    if hasattr(meta, 'getheaders'):
+    if hasattr(meta, "getheaders"):
         content_length = meta.getheaders("Content-Length")
     else:
         content_length = meta.get_all("Content-Length")
@@ -121,7 +121,7 @@ def _download_url_to_file(url, dst, hash_prefix, progress):
         if hash_prefix is not None:
             sha256 = hashlib.sha256()
         with tqdm(total=file_size, disable=not progress,
-                  unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+                  unit="B", unit_scale=True, unit_divisor=1024) as pbar:
             while True:
                 buffer = u.read(8192)
                 if len(buffer) == 0:
@@ -135,8 +135,7 @@ def _download_url_to_file(url, dst, hash_prefix, progress):
         if hash_prefix is not None:
             digest = sha256.hexdigest()
             if digest[:len(hash_prefix)] != hash_prefix:
-                raise RuntimeError('invalid hash value (expected "{}", got "{}")'
-                                   .format(hash_prefix, digest))
+                raise RuntimeError(f"invalid hash value (expected '{hash_prefix}', got '{digest}')")
         shutil.move(f.name, dst)
     finally:
         f.close()
@@ -211,7 +210,7 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
             else:
                 classes_idx[class_name] += 1
 
-            m_key = "{}-{} ({})".format(class_name, class_idx+1, module_idx+1)
+            m_key = f"{class_name}-{class_idx + 1} ({module_idx + 1})"
             summary[m_key] = OrderedDict()
             summary[m_key]["input_shape"] = list(input[0].size()) # input is a tuple whose first element is a tensor
             summary[m_key]["output_shape"] = get_sth(output, "size")
@@ -245,7 +244,7 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
     if isinstance(input_size[0], (list, tuple)):
         x = [torch.ones(2, *in_size) for in_size in input_size]
     else:
-        x = torch.ones(2, *input_size) # 1 is batch_size dimension to adapt the model's structure
+        x = torch.ones(2, *input_size) # 1 is batch_size dimension to adapt the model"s structure
 
     if next( model.parameters() ).is_cuda:
         x = x.cuda()
@@ -262,7 +261,7 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
     with torch.no_grad():
         if I.varargs is None and I.varkw is None:
             output = model(x)
-        else: # for gorilla's BaseModel class: self.forward(be_train=True, **kwargs)
+        else: # for gorilla"s BaseModel class: self.forward(be_train=True, **kwargs)
             data = dict(img=x,
                         sample_metas=[])
             output = model.forward_train(data, be_train=True)
@@ -276,9 +275,9 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
     # pprint.pprint(summary)
     def display(name, out, num=""):
         # more exact comparison
-        # tmp = out.view(-1, 1)
-        # print("output {} size: {}, sum: {}".format(i, out.size(), tmp[:10]))
-        print("{}{}: size={}, sum={:.5f}".format(name, num, list(out.size()), out.sum().item()))
+        tmp = out.view(-1, 1)
+        print(f"output {i} size: {out.size()}, sum: {tmp[:10]}")
+        print(f"{name}{num}: size={list(out.size())}, sum={out.sum().item():.5f}")
 
     if isinstance(output, tuple):
         for i, out in enumerate(output):
@@ -361,7 +360,7 @@ def check_grad(model1, model2=""):
             for name, param in model1.named_parameters():
                 display("grad of " + name, param.grad)
         except AttributeError as e:
-            raise AttributeError("{}. Maybe the parameter '{}' in model is not used, please have a check.".format(e, name))
+            raise AttributeError(f"{e}. Maybe the parameter '{name}' in model is not used, please have a check.")
         
         return
 
@@ -385,7 +384,7 @@ def check_grad(model1, model2=""):
         #     simple_mean = simple_sum / simple_count
         #     print("min:", minimum, "max:", maximum, "mean:", simple_mean)
         # except AttributeError as e:
-        #     raise AttributeError("{}. Maybe the parameter '{}' in model is not used, please have a check.".format(e, name))
+        #     raise AttributeError(f"{e}. Maybe the parameter '{name}' in model is not used, please have a check.")
 
         # return simple_mean
 
@@ -409,7 +408,7 @@ def check_grad(model1, model2=""):
 
 
 def check_optimizer(optimizer):
-    r"""Check state of optimizer for reproduce other's work.
+    r"""Check state of optimizer for reproduce other"s work.
     Usage:
         check_optimizer(optimizer)
     """
@@ -419,12 +418,12 @@ def check_optimizer(optimizer):
     print(optimizer)
     for i, (group, param_group) in enumerate(
         zip(optimizer.param_groups, optimizer.state_dict()["param_groups"])):
-        name = group.get("name", "Unnamed {}".format(i))
-        print("{}: {} layers of params".format(name, len(group["params"])))
+        name = group.get("name", f"Unnamed {i}")
+        print(f"{name}: {len(group['params'])} layers of params")
         state = optimizer.state_dict()["state"]
         for num in param_group["params"]:
             for key in keys:
-                display("{} of layer {}".format(key, num), state[num][key])
+                display(f"{key} of layer {num}", state[num][key])
 
 
 def register_hook(model,
@@ -438,7 +437,7 @@ def register_hook(model,
         hook_fn (nn.Module): the hook function need to be register (deprecated)
         trigger (forward_pre | forward | backward (default)): which moment the hook trigger
         allow_base_modules_only (bool): it control whether create summary for those middle modules
-        layer_wise (bool): only for 'forward' trigger, whether do more exact checking
+        layer_wise (bool): only for "forward" trigger, whether do more exact checking
     Example 1:
         hooks = register_hook(model.backbone, "forward", layer_wise=True)
         data = torch.ones(2, 3, 224, 224)
@@ -470,8 +469,8 @@ def register_hook(model,
     classes_idx = {}
     hooks = [] # hooks is used to record added hook for removing them later
     assert trigger in ["forward_pre", "forward", "backward"], \
-        "trigger should be in ['forward_pre', 'forward', 'backward'], but got {}".format(trigger)
-    # register_fn = "register_{}_hook".format(trigger)
+        f"trigger should be in ['forward_pre', 'forward', 'backward'], but got {trigger}"
+    # register_fn = f"register_{trigger}_hook"
 
     def get_sth(output, sth):
         if isinstance(output, tuple): # if the model has more than one output, "output" here will be a tuple
@@ -493,7 +492,7 @@ def register_hook(model,
 
     def forward_hook(module, input, output):
         r"""An example of forward hook_fn, it will be triggered after model.forward(input) operation.
-        Used to check model's input and output.
+        Used to check model"s input and output.
         Args:
             module (nn.Module): a module
             input (torch.Tensor): input of this module
@@ -512,7 +511,7 @@ def register_hook(model,
         else:
             classes_idx[class_name] += 1
 
-        m_key = "{}-{} ({})".format(class_name, class_idx+1, module_idx+1)
+        m_key = f"{class_name}-{class_idx + 1} ({module_idx})"
         summary[m_key] = OrderedDict()
         summary[m_key]["input_shape"] = list(input[0].size()) # input is a tuple whose first element is a tensor
         summary[m_key]["output_shape"] = get_sth(output, "size")
@@ -538,11 +537,11 @@ def register_hook(model,
 
     def backward_hook(module, grad_input, grad_output):
         r"""An example of backward hook_fn, it will be triggered after module.backward() operation.
-        Used to check model's gradient.
+        Used to check model"s gradient.
         Args:
             module (nn.Module): a module
-            grad_input (torch.Tensor): gradient of this module's input
-            grad_output (torch.Tensor): gradient of this module's output
+            grad_input (torch.Tensor): gradient of this module"s input
+            grad_output (torch.Tensor): gradient of this module"s output
         """
         info_dict = {"Sigmoid": ["downstream"],
                      "Linear": ["bias", "downstream", "weight"],
@@ -564,19 +563,19 @@ def register_hook(model,
         else:
             classes_idx[class_name] += 1
         # the order of backward is opposite to the one of forward, so here use a negative order
-        m_key = "{} -{} (-{})".format(class_name, class_idx+1, module_idx+1)
-        print("{}:".format(m_key))
+        m_key = f"{class_name} -{class_idx+1} (-{module_idx+1})"
+        print(f"{m_key}:")
         summary[m_key] = OrderedDict()
 
         if class_name in info_dict:
             for i, gin in enumerate(grad_input):
                 if gin is None: # the beginning network layer has no grad for downstream
-                    print("grad to {}: None".format(info_dict[class_name][i]))
+                    print(f"grad to {info_dict[class_name][i]}: None")
                 else:
-                    display("grad to {}".format(info_dict[class_name][i]), gin)
+                    display(f"grad to {info_dict[class_name][i]}", gin)
         else:
             for i, gin in enumerate(grad_input):
-                display("grad_input {}".format(i + 1), gin)
+                display(f"grad_input {i + 1}", gin)
 
         # it seems that all base module have only one output
         display("grad from upstream", grad_output[0])

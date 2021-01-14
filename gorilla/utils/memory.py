@@ -75,7 +75,7 @@ def retry_if_cuda_oom(func):
 
         # Try on CPU. This slows down the code significantly, therefore print a notice.
         logger = logging.getLogger(__name__)
-        logger.info("Attempting to copy inputs of {} to CPU due to CUDA OOM".format(str(func)))
+        logger.info(f"Attempting to copy inputs of {str(func)} to CPU due to CUDA OOM")
         new_args = (maybe_to_cpu(x) for x in args)
         new_kwargs = {k: maybe_to_cpu(v) for k, v in kwargs.items()}
         return func(*new_args, **new_kwargs)
@@ -161,9 +161,9 @@ def parameter_count_table(model: nn.Module, max_depth: int = 3) -> str:
 
     def format_size(x: int) -> str:
         if x > 1e5:
-            return "{:.1f}M".format(x / 1e6)
+            return f"{x / 1e6:.1f}M"
         if x > 1e2:
-            return "{:.1f}K".format(x / 1e3)
+            return f"{x / 1e3:.1f}K"
         return str(x)
 
     def fill(lvl: int, prefix: str) -> None:

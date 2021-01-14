@@ -37,9 +37,9 @@ def collect_logger(root: str="log",
     
     time_stamp = timestamp()
     if log_name is None:
-        log_file = osp.join(log_dir, "{}.log".format(time_stamp))
+        log_file = osp.join(log_dir, f"{time_stamp}.log")
     else:
-        log_file = osp.join(log_dir, "{}.log".format(log_name))
+        log_file = osp.join(log_dir, f"{log_name}.log")
     logger = get_logger(log_file, timestamp=time_stamp)
 
     return log_dir, logger
@@ -192,6 +192,6 @@ def print_log(msg, logger=None, level=logging.INFO):
         _logger.log(level, msg)
     else:
         raise TypeError(
-            "logger should be either a logging.Logger object, str, "
-            "'silent' or None, but got {}".format(type(logger)))
+            f"logger should be either a logging.Logger object, str, "
+            f"'silent' or None, but got {type(logger)}")
 

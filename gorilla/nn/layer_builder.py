@@ -39,4 +39,4 @@ def build_from_package(type_name, args, pack=nn, **kwargs):
         args = update_args(args, **kwargs)
         return layer(**args)
     except:
-        raise ImportError("Unrecognized `layer_type: {}`".format(layer_type))
+        raise ImportError(f"Unrecognized `layer_type: {layer_type}`")

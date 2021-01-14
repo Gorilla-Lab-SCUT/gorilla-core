@@ -24,8 +24,7 @@ class ProgressBar:
 
     def start(self):
         if self.task_num > 0:
-            self.file.write("[{}] 0/{}, elapsed: 0s, ETA:".format(
-                " " * self.bar_width, self.task_num))
+            self.file.write(f"[{' ' * self.bar_width}] 0/{self.task_num}, elapsed: 0s, ETA:")
         else:
             self.file.write("completed: 0, elapsed: 0s")
         self.file.flush()
@@ -42,8 +41,8 @@ class ProgressBar:
         if self.task_num > 0:
             percentage = self.completed / float(self.task_num)
             eta = int(elapsed * (1 - percentage) / percentage + 0.5)
-            msg = "\r[{{}}] {}/{}, {:.1f} task/s, elapsed: {}s, " \
-                  "ETA: {:5}s".format(self.completed, self.task_num, fps, int(elapsed + 0.5), eta)
+            msg = f"\r[{{}}] {self.completed}/{self.task_num}, {fps:.1f} task/s, " + \
+                  f"elapsed: {int(elapsed + 0.5)}s, ETA: {eta:5}s"
 
             bar_width = min(self.bar_width,
                             int(self.terminal_width - len(msg)) + 2,
@@ -54,8 +53,7 @@ class ProgressBar:
             self.file.write(msg.format(bar_chars))
         else:
             self.file.write(
-                "completed: {}, elapsed: {}s, {:.1f} tasks/s".format(
-                    self.completed, int(elapsed + 0.5), fps))
+                f"completed: {self.completed}, elapsed: {int(elapsed + 0.5)}s, {fps:.1f} tasks/s")
         self.file.flush()
 
 

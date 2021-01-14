@@ -35,7 +35,7 @@ def load(file, file_format=None, **kwargs):
     if file_format is None and isinstance(file, str):
         file_format = file.split(".")[-1]
     if file_format not in file_handlers:
-        raise TypeError("Unsupported format: {}".format(file_format))
+        raise TypeError(f"Unsupported format: {file_format}")
 
     handler = file_handlers[file_format]
     if isinstance(file, str):
@@ -72,7 +72,7 @@ def dump(obj, file=None, file_format=None, **kwargs):
             raise ValueError(
                 "file_format must be specified since file is None")
     if file_format not in file_handlers:
-        raise TypeError("Unsupported format: {}".format(file_format))
+        raise TypeError(f"Unsupported format: {file_format}")
 
     handler = file_handlers[file_format]
     if file is None:
@@ -95,7 +95,7 @@ def _register_handler(handler, file_formats):
     """
     if not isinstance(handler, BaseFileHandler):
         raise TypeError(
-            "handler must be a child of BaseFileHandler, not {}".format(type(handler)))
+            f"handler must be a child of BaseFileHandler, not {type(handler)}")
     if isinstance(file_formats, str):
         file_formats = [file_formats]
     if not is_list_of(file_formats, str):

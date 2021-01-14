@@ -27,7 +27,7 @@ class BaseSolver(metaclass=ABCMeta):
         elif isinstance(model, torch.nn.Module):
             self.model = model
         else:
-            raise TypeError("`model` must be `nn.module` or cfg `dict`, but got `{}`".format(type(model)))
+            raise TypeError(f"`model` must be `nn.module` or cfg `dict`, but got `{type(model)}`")
         
         # initial essential parameters
         self.dataloaders = dataloaders
@@ -52,12 +52,12 @@ class BaseSolver(metaclass=ABCMeta):
                            self.optimizer,
                            self.lr_scheduler,
                            **kwargs)
-        self.logger.info("resume from: {}".format(checkpoint))
+        self.logger.info(f"resume from: {checkpoint}")
         if "epoch" in self.meta:
             self.epoch = self.meta["epoch"] + 1
 
     def write(self, **kwargs):
-        self.logger.info("Epoch: {}".format(self.epoch))
+        self.logger.info(f"Epoch: {self.epoch}")
         self.log_buffer.average()
         for key, avg in self.log_buffer.output.items():
             self.tb_writer.add_scalar(key, avg, self.epoch)

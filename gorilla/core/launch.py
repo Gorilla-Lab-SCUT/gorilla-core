@@ -80,7 +80,7 @@ def _distributed_worker(local_rank, main_func, world_size,
                                 rank=global_rank)
     except Exception as e:
         logger = logging.getLogger(__name__)
-        logger.error("Process group URL: {}".format(dist_url))
+        logger.error(f"Process group URL: {dist_url}")
         raise e
     # synchronize is needed here to prevent a possible timeout after calling init_process_group
     # See: https://github.com/facebookresearch/maskrcnn-benchmark/issues/172

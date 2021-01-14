@@ -106,10 +106,10 @@ def scandir(dir_path, suffix=None, recursive=False):
     if isinstance(dir_path, (str, Path)):
         dir_path = str(dir_path)
     else:
-        raise TypeError("`dir_path` must be a string or Path object, but got {}".format(type(dir_path)))
+        raise TypeError(f"`dir_path` must be a string or Path object, but got {type(dir_path)}")
 
     if (suffix is not None) and not isinstance(suffix, (str, tuple)):
-        raise TypeError("`suffix` must be a string or tuple of strings, but got {}".format(type(suffix)))
+        raise TypeError(f"`suffix` must be a string or tuple of strings, but got {type(suffix)}")
 
     root = dir_path
 

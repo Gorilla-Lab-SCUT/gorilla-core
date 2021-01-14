@@ -24,7 +24,7 @@ def get_free_gpu(mode="memory", memory_need=11000) -> list:
     Returns:
         list: free gpu ids
     """
-    assert mode in ["memory", "process"], "mode must be 'memory' or 'process', but got {}".format(mode)
+    assert mode in ["memory", "process"], f"mode must be 'memory' or 'process', but got {mode}"
     if mode == "memory":
         assert memory_need is not None, "'memory_need' if None, 'memory' mode must give the free memory you want to apply for"
         memory_need = int(memory_need)
@@ -35,7 +35,7 @@ def get_free_gpu(mode="memory", memory_need=11000) -> list:
     for idx, gpu_stat in enumerate(gpu_stats):
         if gpu_check_condition(gpu_stat, mode, memory_need):
             gpu_free_id_list.append(idx)
-            print("gpu[{}]: {}MB".format(idx, gpu_stat.memory_free))
+            print(f"gpu[{idx}]: {gpu_stat.memory_free}MB")
     return gpu_free_id_list
 
 
@@ -72,8 +72,7 @@ def supervise_gpu(num_gpu=1, mode="memory", memory_need=11000) -> list:
     """
     gpu_free_id_list = []
     if num_gpu> NUM_GPUS:
-        warnings.warn("num_gpu: {} > all_num_gpu: {} we surplus "
-                      "this num".format(num_gpu, NUM_GPUS))
+        warnings.warn(f"num_gpu: {num_gpu} > all_num_gpu: {NUM_GPUS} we surplus this num")
         num_gpu %= NUM_GPUS
     while len(gpu_free_id_list) < num_gpu:
         time.sleep(2)
@@ -98,7 +97,7 @@ def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need
     elif gpu_ids is None and num_gpu >= 1: # not specify gpus
         gpu_ids = supervise_gpu(num_gpu, mode, memory_need)
     else:
-        raise ValueError("`num_gpu` is invalid: {}, it must '>=1'".format(num_gpu))
+        raise ValueError(f"`num_gpu` is invalid: {num_gpu}, it must '>=1'")
     
     # just for single machine multi gpu setting, the ngpus_per_node is
     # all gpus in this machine

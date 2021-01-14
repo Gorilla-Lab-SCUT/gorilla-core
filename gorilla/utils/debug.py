@@ -34,50 +34,55 @@ def check(*args, **kwargs):
             ind (int, optional): Indent of printed text
         """
         if isinstance(arg, str):
-            print("{}{}: type={} value={}".format(" "*ind, kw, strip(type(arg)), arg))
+            print(f"{' '*ind}{kw}: type={strip(type(arg))} value={arg}")
         elif isinstance(arg, (list, tuple)):
             other = "..." if len(arg) > dl else ""
-            print("{}{}: type={} value={}{} len={}".format(" "*ind, kw, strip(type(arg)), arg[:dl], other, len(arg)))
+            print(f"{' '*ind}{kw}: type={strip(type(arg))} value={arg[:dl]}{other} len={len(arg)}")
         elif isinstance(arg, set):
-            print("{}{}: type={} len={}".format(" "*ind, kw, strip(type(arg)), len(arg)))
+            print(f"{' '*ind}{kw}: type={strip(type(arg))} len={len(arg)}")
             for i, value in enumerate(arg):
-                go("Unnamed {}".format(i+1), value, dl, ind+4)
+                go(f"Unnamed {i+1}", value, dl, ind+4)
         elif isinstance(arg, dict):
             other = "..." if len(arg.keys()) > dl else ""
-            print("{}{}: type={} key={}{} len={}".format(" "*ind, kw, strip(type(arg)), list(arg.keys())[:dl], other, len(arg)))
+            print(f"{' '*ind}{kw}: type={strip(type(arg))} key={list(arg.keys())[:dl]}{other} len={len(arg)}")
             for key, value in arg.items():
                 go(key, value, dl, ind+4)
         elif isinstance(arg, np.ndarray):
-            print("{}{}: type={} shape={} dtype={}".format(" "*ind, kw, strip(type(arg)), arg.shape, arg.dtype))
+            print(f"{' '*ind}{kw}: type={strip(type(arg))} shape={arg.shape} dtype={arg.dtype}")
         elif isinstance(arg, torch.Tensor):
-            print("{}{}: type={} size={} dtype={}".format(" "*ind, kw, strip(type(arg)), arg.size(), arg.dtype))
+            print(f"{' '*ind}{kw}: type={strip(type(arg))} size={arg.size()} dtype={arg.dtype}")
         elif isinstance(arg, (int, float)):
-            print("{}{}: type={} value={}".format(" "*ind, kw, strip(type(arg)), arg))
+            print(f"{' '*ind}{kw}: type={strip(type(arg))} value={arg}")
         else:
             try:
-                print("{}{}: type={} len={}".format(" "*ind, kw, strip(type(arg)), len(arg)))
+                print(f"{' '*ind}{kw}: type={strip(type(arg))} len={len(arg)}")
             except TypeError:
-                print("{}{}: type={}".format(" "*ind, kw, strip(type(arg))))
+                print(f"{' '*ind}{kw}: type={strip(type(arg))}")
             
     for i, arg in enumerate(args):
-        go("Unnamed {}".format(i+1), arg)
+        go(f"Unnamed {i+1}", arg)
     for kw, arg in kwargs.items():
         go(kw, arg)
 
 def display(name, param):
     r"""This function can be used to debug in data loading pipeline and model forwarding."""
     if isinstance(param, torch.Tensor):
-        print("{} max: {:+.5f} min: {:+.5f} mean: {:+.5f} abs mean: {:+.5f} size:{}".format(
-            name.ljust(45), param.max().item(), param.min().item(),
-            param.mean().item(), param.abs().mean().item(), list(param.size())))
+        print(f"{name.ljust(45)} "
+              f"max: {param.max().item():+.5f} "
+              f"min: {param.min().item():+.5f} "
+              f"mean: {param.mean().item():+.5f} "
+              f"abs mean: {param.abs().mean().item():+.5f} "
+              f"size:{list(param.size())}")
     elif isinstance(param, np.ndarray):
-        print("{} max: {:+.5f} min: {:+.5f} mean: {:+.5f} shape:{}".format(
-            name.ljust(15), param.max().item(), param.min().item(),
-            param.mean().item(), param.shape))
+        print(f"{name.ljust(15)} "
+              f"max: {param.max().item():+.5f} ",
+              f"min: {param.min().item():+.5f} ",
+              f"mean: {param.mean().item():+.5f} ",
+              f"shape: {param.shape}")
     elif isinstance(param, str):
-        print("{}: {}".format(name, param))
+        print(f"{name}: {param}")
     else:
-        raise NotImplementedError("type {}".format(type(param)))
+        raise NotImplementedError(f"type {type(param)}")
 
 
 def check_rand_state():
@@ -85,9 +90,9 @@ def check_rand_state():
     # only print the first n element for brevity
     n = 10
     state = random.getstate()
-    print("random: state: {}, counter: {}".format(state[1][:n], state[1][-1]))
+    print(f"random: state: {state[1][:n]}, counter: {state[1][-1]}")
     state = np.random.get_state()
-    print("numpy: state: {}, counter: {}".format(list(state[1][:n]), state[2]))
+    print(f"numpy: state: {list(state[1][:n])}, counter: {state[2]}")
     state = torch.get_rng_state()
     def uint8_to_uint32(u8list):
         r"""Concat a list of 4 uint8 number to an uint32 number.
@@ -95,9 +100,7 @@ def check_rand_state():
         """
         return (int(u8list[3])<<24) + (int(u8list[2])<<16) + (int(u8list[1])<<8) + int(u8list[0])
     front_state = [uint8_to_uint32(state[24+8*i: 24+8*i+4]) for i in range(n-1)]
-    print("torch: seed: {}, state: {} counter: {} {}".format(
-        uint8_to_uint32(state[:4]),
-        front_state,
-        int(state[8]) + (int(state[9])<<8),
-        int(state[16]) + (int(state[17])<<8)))
+    print(f"torch: seed: {uint8_to_uint32(state[:4])}, "
+          f"state: {front_state} "
+          f"counter: {int(state[8]) + (int(state[9])<<8)} {int(state[16]) + (int(state[17])<<8)}")
 

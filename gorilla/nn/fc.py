@@ -86,7 +86,7 @@ class GorillaFC(nn.Sequential):
         # init FC and norm
         if init is not None:
             if isinstance(init, str):
-                init_func = globals()["{}_init".format(init)]
+                init_func = globals()[f"{init}_init"]
             elif isinstance(init, Callable):
                 init_func = init
             init_func(FC)
@@ -261,11 +261,11 @@ class DenseFC(nn.Module):
             # get the related init function and init
             last = (linear_idx == self.num_of_linears)
             if isinstance(init, str):
-                init_func = globals()["{}_init".format(init)]
+                init_func = globals()[f"{init}_init"]
             elif isinstance(init, Callable):
                 init_func = init
             else:
-                raise TypeError("init must be 'str' or 'Callable', but got {}".format(type(init)))
+                raise TypeError(f"init must be 'str' or 'Callable', but got {type(init)}")
             init_func(linear, last)
             self.linears.append(linear)
 

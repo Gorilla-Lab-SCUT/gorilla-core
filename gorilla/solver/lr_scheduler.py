@@ -302,7 +302,7 @@ def _get_warmup_factor_at_iter(
         alpha = iter / warmup_iters
         return warmup_factor * (1 - alpha) + alpha
     else:
-        raise ValueError("Unknown warmup method: {}".format(method))
+        raise ValueError(f"Unknown warmup method: {method}")
 
 
 def adjust_learning_rate(optimizer, epoch, args, mode="auto", value=0.1, namelist=[]):

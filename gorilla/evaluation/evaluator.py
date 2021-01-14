@@ -90,6 +90,6 @@ class DatasetEvaluators(DatasetEvaluator):
                 for k, v in result.items():
                     assert (
                         k not in results
-                    ), "Different evaluators produce results with the same key {}".format(k)
+                    ), f"Different evaluators produce results with the same key {k}"
                     results[k] = v
         return results

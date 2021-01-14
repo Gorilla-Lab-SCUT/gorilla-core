@@ -14,7 +14,7 @@ except ModuleNotFoundError:
 
 
 def get_requirements(filename="requirements.txt"):
-    assert osp.exists(filename), "{} not exists".format(filename)
+    assert osp.exists(filename), f"{filename} not exists"
     with open(filename, "r") as f:
         content = f.read()
     lines = content.split("\n")

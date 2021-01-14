@@ -353,4 +353,4 @@ def _get_activation_fn(activation):
     if activation == "glu":
         return F.glu
     raise RuntimeError(
-        "activation should be relu/gelu, not {}.".format(activation))
+        f"activation should be relu/gelu, not {activation}.")

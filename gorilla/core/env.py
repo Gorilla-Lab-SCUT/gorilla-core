@@ -39,8 +39,7 @@ def detect_compute_compatibility(CUDA_HOME, so_file):
     try:
         cuobjdump = osp.join(CUDA_HOME, "bin", "cuobjdump")
         if osp.isfile(cuobjdump):
-            output = subprocess.check_output("'{}' --list-elf '{}'".format(
-                cuobjdump, so_file),
+            output = subprocess.check_output(f"'{cuobjdump}' --list-elf 'so_file{so_file}'",
                                              shell=True)
             output = output.decode("utf-8").strip().split("\n")
             arch = []
@@ -98,7 +97,7 @@ def collect_env_info():
         for k in range(torch.cuda.device_count()):
             cap = ".".join(
                 (str(x) for x in torch.cuda.get_device_capability(k)))
-            name = torch.cuda.get_device_name(k) + " (arch={})".format(cap)
+            name = torch.cuda.get_device_name(k) + f" (arch={cap})"
             devices[name].append(str(k))
         for name, devids in devices.items():
             data.append(("GPU " + ",".join(devids), name))
@@ -153,7 +152,7 @@ def set_random_seed(seed, deterministic=False, use_rank_shift=False, logger=None
         rank_shift (bool): Whether to add rank number to the random seed to
             have different random seed in different threads. Default: False.
     """
-    message = "set random seed: {}".format(seed)
+    message = f"set random seed: {seed}"
     if logger is not None:
         logger.info(message)
     else:
