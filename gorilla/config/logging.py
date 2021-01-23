@@ -17,6 +17,7 @@ def collect_logger(root: str="log",
                    prefix: Optional[str]=None,
                    suffix: Optional[str]=None,
                    log_name: Optional[str]=None,
+                   log_file: Optional[str]=None,
                    **kwargs):
     r"""Author: liang.zhihao
     A easy combination of get_log_dir and get_logger, use the timestamp
@@ -26,20 +27,32 @@ def collect_logger(root: str="log",
         root (str, optional): the root directory of logger. Defaults to "log".
         prefix (str, optional): the extra prefix. Defaults to None.
         suffix (str, optional): the extra suffix. Defaults to None.
+        log_name (str, optional):
+            name of log file, if given None, the name of log_file is time_stamp.
+            Defaults to None.
+        log_file (str, optional):
+            the path of log_file, the highest priority, if given, directly init the logger.
+            Defaults to None.
 
     Returns:
         [str, logging.Logger]: the log dir and the logger
     """
-    log_dir = get_log_dir(root,
-                          prefix,
-                          suffix,
-                          **kwargs)
-    
+    # get the timestamp
     time_stamp = timestamp()
-    if log_name is None:
-        log_file = osp.join(log_dir, f"{time_stamp}.log")
+    # get the log_file
+    if log_file is None:
+        log_dir = get_log_dir(root,
+                            prefix,
+                            suffix,
+                            **kwargs)
+        
+        if log_name is None:
+            log_file = osp.join(log_dir, f"{time_stamp}.log")
+        else:
+            log_file = osp.join(log_dir, f"{log_name}.log")
     else:
-        log_file = osp.join(log_dir, f"{log_name}.log")
+        log_dir = osp.dirname(log_file)
+        
     logger = get_logger(log_file, timestamp=time_stamp)
 
     return log_dir, logger
