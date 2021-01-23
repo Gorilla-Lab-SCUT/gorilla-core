@@ -52,7 +52,13 @@ def collect_logger(root: str="log",
             log_file = osp.join(log_dir, f"{log_name}.log")
     else:
         log_dir = osp.dirname(log_file)
-        
+    
+    if not log_dir.startswith("."):
+        log_dir = f"./{log_dir}"
+
+    if not log_file.startswith("."):
+        log_file = f"./{log_file}"
+
     logger = get_logger(log_file, timestamp=time_stamp)
 
     return log_dir, logger
