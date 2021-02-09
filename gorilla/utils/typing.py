@@ -49,19 +49,61 @@ def convert_into_nparray(array, dtype=np.float32) -> np.array:
         array = np.array(array)
     array = array.squeeze().astype(dtype)
     return array
+
+
+def _replace(arg, type="numpy"):
+    assert type in ["numpy", "torch"]
+    # np.ndarray -> torch.Tensor
+    if isinstance(arg, np.ndarray) and type == "torch":
+        arg = torch.from_numpy(arg)
+    # torch.Tensor -> np.ndarray
+    elif isinstance(arg, torch.Tensor) and type == "numpy":
+        if arg.requires_grad:
+            arg = arg.detach()
+        arg = arg.cpu().numpy()
+    # keep origin type
+    else:
+        pass
+    return arg
+
+
+def auto_type(type):
+    r"""Author: Liang.Zhihao
+    automatically convert the 'np.ndarray' and 'torch.Tensor' according to type
+
+    Args:
+        type (str): 'numpy' or 'torch'
     
-
-def assert_and_auto_type(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        type_assert(args[0])
-        be_numpy = True if not args[0].__class__==torch.Tensor else False
-        if be_numpy:
-            return func(*args, **kwargs).cpu().numpy()
-        else:
-            return func(*args, **kwargs)
-
-    return wrapper
+    Example:
+        >>> # numpy auto convert
+        >>> @gorilla.auto_type("numpy")
+        >>> def test(a, b, c):
+        >>>     print(f"a: {type(a)}, b: {type(b)}, c: {type(c)}")
+        >>> test(torch.randn(3), np.ones(3), [1, 1, 1])
+        a: <class 'numpy.ndarray'>, b: <class 'numpy.ndarray'>, c: <class 'list'>
+        >>> # torch auto convert
+        >>> @gorilla.auto_type("torch")
+        >>> def test(a, b, c):
+        >>>     print(f"a: {type(a)}, b: {type(b)}, c: {type(c)}")
+        >>> test(torch.randn(3), np.ones(3), [1, 1, 1])
+        a: <class 'torch.Tensor'>, b: <class 'torch.Tensor'>, c: <class 'list'>
+        >>> # specify arguments
+        >>> test(torch.randn(3), c=np.ones(3), b=[1, 1, 1])
+        a: <class 'torch.Tensor'>, b: <class 'list'>, c: <class 'torch.Tensor'>
+    """
+    assert type in ["numpy", "torch"], f"must be 'numpy' or 'torch', but got {type}"
+    def actual_decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            replace_args = []
+            replace_kwargs = {}
+            for arg in args:
+                replace_args.append(_replace(arg, type))
+            for key, arg in kwargs.items():
+                replace_kwargs[key] = _replace(arg, type)
+            return func(*replace_args, **replace_kwargs)
+        return wrapper
+    return actual_decorator
 
 
 def to_float32(arr: np.ndarray) -> np.ndarray:

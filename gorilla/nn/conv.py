@@ -55,7 +55,7 @@ class GorillaConv(nn.Sequential):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 kernel_size: int,
+                 kernel_size: int=3,
                  stride: int=1,
                  padding: int=0,
                  dilation: int=1,
