@@ -1,6 +1,7 @@
 # Copyright (c) Open-MMLab. All rights reserved.
 import functools
 import itertools
+import operator
 import subprocess
 import warnings
 from copy import deepcopy
@@ -116,7 +117,8 @@ def concat_list(in_list: List) -> list:
     Returns:
         list: The concatenated flat list.
     """
-    return list(itertools.chain(*in_list))
+    # return list(itertools.chain(*in_list))
+    return functools.reduce(operator.iconcat, in_list, [])
 
 
 def check_prerequisites(prerequisites: Union[str, List[str]],
