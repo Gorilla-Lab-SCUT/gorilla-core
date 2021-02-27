@@ -19,6 +19,8 @@ from .checkpoint import (_load_checkpoint, load_checkpoint, load_state_dict,
 
 from .base_solver import BaseSolver
 
+from .data import BackgroundGenerator, DataLoaderX
+
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
 
 # prefer to let hooks and defaults live in separate namespaces (therefore not in __all__)
