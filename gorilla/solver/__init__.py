@@ -10,7 +10,7 @@ from .grad_clipper import (GradClipper, build_grad_clipper)
 from . import lr_scheduler
 from . import optimizer
 
-from .build import (build_lr_scheduler, build_optimizer)
+from .build import (build_lr_scheduler, build_optimizer, build_dataloader)
 
 from .checkpoint import (_load_checkpoint, load_checkpoint, load_state_dict,
                          load_url_dist, resume, save_checkpoint,

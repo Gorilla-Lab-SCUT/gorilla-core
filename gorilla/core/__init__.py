@@ -18,6 +18,7 @@ from .launch import launch
 from .registry import Registry, build_from_cfg, auto_registry
 
 HOOKS = Registry("hooks")
+LOSSES = Registry("losses")
 MODELS = Registry("models")
 MODULES = Registry("modules")
 DATASETS = Registry("datasets")
@@ -25,6 +26,7 @@ OPTIMIZERS = Registry("optimizers")
 SCHEDULERS = Registry("schedulers")
 
 from functools import partial
+build_loss = partial(build_from_cfg, registry=LOSSES)
 build_hook = partial(build_from_cfg, registry=HOOKS)
 build_model = partial(build_from_cfg, registry=MODELS)
 build_module = partial(build_from_cfg, registry=MODULES)

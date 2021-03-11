@@ -4,7 +4,7 @@ from typing import Callable, Dict
 import torch
 
 from ..config import Config
-from ..core import is_seq_of, _build_optimizer, _build_scheduler
+from ..core import is_seq_of, _build_optimizer, _build_scheduler, build_dataset
 
 # the default optimizer and lr_scheduler config dict
 OPTIM = {"name": "Adam",
@@ -102,3 +102,37 @@ def build_lr_scheduler(
 
     return _build_scheduler(lr_scheduler_cfg)
 
+
+# TODO: support distributed and multi dataloader
+def build_dataloader(
+    dataset: [torch.utils.data.Dataset, Dict],
+    dataloader_cfg: Dict,
+    **kwargs) -> torch.utils.data.DataLoader:
+    """Author: liang.zhihao
+    Support callback "collate_fn" defined in dataset
+
+    Args:
+        dataset ([torch.utils.data.Dataset, Dict]): input dataset object of config dict
+        dataloader_cfg (Dict): config dict for building dataloader
+        kwargs: any keyword argument to be used to initialize DataLoader
+
+    Returns:
+        torch.utils.data.DataLoader: output dataloader
+    """
+    if isinstance(dataset, Dict):
+        dataset = build_dataset(dataset)
+    
+    dataloader_cfg.update(kwargs)
+    distribute = distributed_prepare(dataloader_cfg)
+
+    collate_fn = getattr(dataset, "collate_fn", None)
+    dataloader_cfg["collate_fn"] = collate_fn
+    assert hasattr(dataloader_cfg, "batch_size"), "must given batch_size"
+    assert hasattr(dataloader_cfg, "num_workers"), "must given num_workers"
+
+    return torch.utils.data.DataLoader(dataset, **dataloader_cfg)
+
+
+def distributed_prepare(dataloader_cfg):
+    # TODO: implement
+    return None
