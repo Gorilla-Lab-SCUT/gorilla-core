@@ -3,6 +3,7 @@ from typing import Callable, Dict
 
 import torch
 
+from .data import DataLoaderX
 from ..config import Config
 from ..core import is_seq_of, _build_optimizer, _build_scheduler, build_dataset
 
@@ -107,6 +108,7 @@ def build_lr_scheduler(
 def build_dataloader(
     dataset: [torch.utils.data.Dataset, Dict],
     dataloader_cfg: Dict,
+    prefetch: bool=False,
     **kwargs) -> torch.utils.data.DataLoader:
     """Author: liang.zhihao
     Support callback "collate_fn" defined in dataset
@@ -130,7 +132,10 @@ def build_dataloader(
     assert hasattr(dataloader_cfg, "batch_size"), "must given batch_size"
     assert hasattr(dataloader_cfg, "num_workers"), "must given num_workers"
 
-    return torch.utils.data.DataLoader(dataset, **dataloader_cfg)
+    if prefetch:
+        return DataLoaderX(dataset, **dataloader_cfg)
+    else:
+        return torch.utils.data.DataLoader(dataset, **dataloader_cfg)
 
 
 def distributed_prepare(dataloader_cfg):

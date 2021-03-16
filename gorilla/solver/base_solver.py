@@ -37,6 +37,7 @@ class BaseSolver(metaclass=ABCMeta):
         self.logger = logger
 
         self.get_ready()
+        self.callback()
 
     def get_ready(self, **kwargs):
         self.epoch = self.cfg.get("start_epoch", 1)
@@ -44,6 +45,11 @@ class BaseSolver(metaclass=ABCMeta):
         self.tb_writer = SummaryWriter(log_dir=self.cfg.log_dir) # tensorboard writer
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
         self.meta = {}
+
+    def callback(self, **kwargs):
+        """a callback function for self defined
+        """
+        pass
 
     def resume(self, checkpoint, **kwargs):
         check_file(checkpoint)

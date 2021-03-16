@@ -145,7 +145,7 @@ def build_from_cfg(cfg: Dict,
     if "name" not in cfg:
         if default_args is None or "name" not in default_args:
             raise KeyError(
-                f"`cfg` or `default_args` must contain the key 'type', "
+                f"`cfg` or `default_args` must contain the key 'name', "
                 f"but got {cfg}\n{default_args}")
     if not isinstance(registry, Registry):
         raise TypeError(f"registry must be an mmcv.Registry object, "
