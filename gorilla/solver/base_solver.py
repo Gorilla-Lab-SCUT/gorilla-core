@@ -28,6 +28,9 @@ class BaseSolver(metaclass=ABCMeta):
             self.model = model
         else:
             raise TypeError(f"`model` must be `nn.module` or cfg `dict`, but got `{type(model)}`")
+
+        # merge some essentital parameter for each project(like independent criterion)
+        self.__dict__.update(kwargs)
         
         # initial essential parameters
         self.dataloaders = dataloaders

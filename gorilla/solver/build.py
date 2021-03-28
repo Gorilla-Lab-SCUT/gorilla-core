@@ -123,14 +123,14 @@ def build_dataloader(
     """
     if isinstance(dataset, Dict):
         dataset = build_dataset(dataset)
-    
+
     dataloader_cfg.update(kwargs)
     distribute = distributed_prepare(dataloader_cfg)
 
     collate_fn = getattr(dataset, "collate_fn", None)
     dataloader_cfg["collate_fn"] = collate_fn
-    assert hasattr(dataloader_cfg, "batch_size"), "must given batch_size"
-    assert hasattr(dataloader_cfg, "num_workers"), "must given num_workers"
+    assert "batch_size" in dataloader_cfg, "must given batch_size"
+    assert "num_workers" in dataloader_cfg, "must given num_workers"
 
     if prefetch:
         return DataLoaderX(dataset, **dataloader_cfg)

@@ -1,7 +1,7 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 
 import random
-import time
+import functools
 
 import numpy as np
 import torch
@@ -104,3 +104,35 @@ def check_rand_state():
           f"state: {front_state} "
           f"counter: {int(state[8]) + (int(state[9])<<8)} {int(state[16]) + (int(state[17])<<8)}")
 
+
+def debugtor():
+    """Author: liang.zhihao
+    decorator of try and except, excuting the set_trace while error
+    
+    Example:
+        >>> @gorilla.debugtor()
+        >>> def a(b):
+        >>>     a = 1
+        >>>     c = a + b # the given a str type `b` will cause bug
+        >>>     return c
+        >>> c = a(1) # ok
+        >>> c = a("1")
+            ...
+                        from ipdb import set_trace; set_trace()
+        -->             return func(*args, **kwargs) # `s` to step in
+                    return wrapper
+        ipdb> s
+        --> @gorilla.debugtor()
+            def a(b):
+            ...
+    """
+    def actual_decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except:
+                from ipdb import set_trace; set_trace()
+                return func(*args, **kwargs) # `s` to step in
+        return wrapper
+    return actual_decorator

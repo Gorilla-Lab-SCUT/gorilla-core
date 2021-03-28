@@ -13,7 +13,7 @@ from .timer import (Timer, check_time, timestamp)
 
 from .model import (check_model, check_grad, check_params, check_optimizer, register_hook)
 
-from .debug import (check, display, check_rand_state)
+from .debug import (check, display, check_rand_state, debugtor)
 
 from .memory import retry_if_cuda_oom, parameter_count, parameter_count_table
 
