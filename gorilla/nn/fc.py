@@ -72,11 +72,12 @@ class GorillaFC(nn.Sequential):
         # build normalization layers
         norm = None
         if with_norm:
-            if self.order.index("norm") > self.order.index("FC"):
-                num_features = FC.out_features
-            else:
-                num_features = FC.in_features
-            self.norm_cfg.update(num_features=num_features)
+            if "BN" in self.norm_cfg.get("name"):
+                if self.order.index("norm") > self.order.index("FC"):
+                    num_features = FC.out_features
+                else:
+                    num_features = FC.in_features
+                self.norm_cfg.update(num_features=num_features)
             norm_caller = get_torch_layer_caller(self.norm_cfg.pop("name"))
             norm = norm_caller(**self.norm_cfg)
         else:
