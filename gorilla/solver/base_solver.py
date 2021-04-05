@@ -66,7 +66,6 @@ class BaseSolver(metaclass=ABCMeta):
             self.epoch = self.meta["epoch"] + 1
 
     def write(self, **kwargs):
-        self.logger.info(f"Epoch: {self.epoch}")
         self.log_buffer.average()
         for key, avg in self.log_buffer.output.items():
             self.tb_writer.add_scalar(key, avg, self.epoch)

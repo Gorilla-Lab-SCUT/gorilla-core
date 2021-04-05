@@ -244,7 +244,7 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
     if isinstance(input_size[0], (list, tuple)):
         x = [torch.ones(2, *in_size) for in_size in input_size]
     else:
-        x = torch.ones(2, *input_size) # 1 is batch_size dimension to adapt the model"s structure
+        x = torch.ones(2, *input_size) # 1 is batch_size dimension to adapt the model's structure
 
     if next( model.parameters() ).is_cuda:
         x = x.cuda()
@@ -261,7 +261,7 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
     with torch.no_grad():
         if I.varargs is None and I.varkw is None:
             output = model(x)
-        else: # for gorilla"s BaseModel class: self.forward(be_train=True, **kwargs)
+        else: # for gorilla's BaseModel class: self.forward(be_train=True, **kwargs)
             data = dict(img=x,
                         sample_metas=[])
             output = model.forward_train(data, be_train=True)
@@ -275,8 +275,8 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
     # pprint.pprint(summary)
     def display(name, out, num=""):
         # more exact comparison
-        tmp = out.view(-1, 1)
-        print(f"output {i} size: {out.size()}, sum: {tmp[:10]}")
+        # tmp = out.view(-1, 1)
+        # print(f"output {i} size: {out.size()}, sum: {tmp[:10]}")
         print(f"{name}{num}: size={list(out.size())}, sum={out.sum().item():.5f}")
 
     if isinstance(output, tuple):
@@ -408,7 +408,7 @@ def check_grad(model1, model2=""):
 
 
 def check_optimizer(optimizer):
-    r"""Check state of optimizer for reproduce other"s work.
+    r"""Check state of optimizer for reproduce other's work.
     Usage:
         check_optimizer(optimizer)
     """
@@ -437,7 +437,7 @@ def register_hook(model,
         hook_fn (nn.Module): the hook function need to be register (deprecated)
         trigger (forward_pre | forward | backward (default)): which moment the hook trigger
         allow_base_modules_only (bool): it control whether create summary for those middle modules
-        layer_wise (bool): only for "forward" trigger, whether do more exact checking
+        layer_wise (bool): only for 'forward' trigger, whether do more exact checking
     Example 1:
         hooks = register_hook(model.backbone, "forward", layer_wise=True)
         data = torch.ones(2, 3, 224, 224)
@@ -492,7 +492,7 @@ def register_hook(model,
 
     def forward_hook(module, input, output):
         r"""An example of forward hook_fn, it will be triggered after model.forward(input) operation.
-        Used to check model"s input and output.
+        Used to check model's input and output.
         Args:
             module (nn.Module): a module
             input (torch.Tensor): input of this module
@@ -537,11 +537,11 @@ def register_hook(model,
 
     def backward_hook(module, grad_input, grad_output):
         r"""An example of backward hook_fn, it will be triggered after module.backward() operation.
-        Used to check model"s gradient.
+        Used to check model's gradient.
         Args:
             module (nn.Module): a module
-            grad_input (torch.Tensor): gradient of this module"s input
-            grad_output (torch.Tensor): gradient of this module"s output
+            grad_input (torch.Tensor): gradient of this module's input
+            grad_output (torch.Tensor): gradient of this module's output
         """
         info_dict = {"Sigmoid": ["downstream"],
                      "Linear": ["bias", "downstream", "weight"],
