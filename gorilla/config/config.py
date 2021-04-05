@@ -431,6 +431,8 @@ class Config(object):
         """
         option_cfg_dict = {}
         for full_key, v in options.items():
+            if v is None:
+                continue
             d = option_cfg_dict
             key_list = full_key.split(".")
             for subkey in key_list[:-1]:

@@ -144,7 +144,7 @@ def collect_env_info() -> str:
 
 
 def set_random_seed(seed: int,
-                    deterministic: bool=False,
+                    deterministic: bool=True,
                     use_rank_shift: bool=False,
                     logger: Optional[logging.Logger]=None) -> None:
     r"""Set random seed.
@@ -153,7 +153,7 @@ def set_random_seed(seed: int,
         deterministic (bool): Whether to set the deterministic option for
             CUDNN backend, i.e., set `torch.backends.cudnn.deterministic`
             to True and `torch.backends.cudnn.benchmark` to False.
-            Default: False.
+            Default: True.
         rank_shift (bool): Whether to add rank number to the random seed to
             have different random seed in different threads. Default: False.
     """
@@ -168,12 +168,10 @@ def set_random_seed(seed: int,
         seed += rank
     random.seed(seed)
     np.random.seed(seed)
-    # torch.manual_seed(seed)
-    torch.set_rng_state(torch.manual_seed(seed).get_state())
+    torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
     if deterministic:
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
-
