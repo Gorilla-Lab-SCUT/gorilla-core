@@ -381,7 +381,7 @@ def adjust_learning_rate(optimizer, epoch, args, mode="auto", value=0.1, namelis
         select_groups = optimizer.param_groups
     else:
         for param_group in optimizer.param_groups:
-            if param_group["name"] in namelist:
+            if param_group["type"] in namelist:
                 select_groups.append(param_group)
 
     for param_group in select_groups:
@@ -390,7 +390,7 @@ def adjust_learning_rate(optimizer, epoch, args, mode="auto", value=0.1, namelis
             lr = args.base_lr / ((1 + 10 * p) ** 0.75)
             lr_pretrain = lr * value
             for param_group in optimizer.param_groups:
-                if param_group["name"] == "pre-trained":
+                if param_group["type"] == "pre-trained":
                     param_group["lr"] = lr_pretrain
                 else:
                     param_group["lr"] = lr

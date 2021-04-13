@@ -46,8 +46,8 @@ class GorillaFC(nn.Sequential):
                  out_features: int,
                  bias: bool=True,
                  name: str="",
-                 norm_cfg: Optional[Dict]=dict(name="BN1d"),
-                 act_cfg: Optional[Dict]=dict(name="ReLU", inplace=True),
+                 norm_cfg: Optional[Dict]=dict(type="BN1d"),
+                 act_cfg: Optional[Dict]=dict(type="ReLU", inplace=True),
                  dropout: Optional[float]=None,
                  init: Union[str, Callable]="kaiming",
                  order: List[str]=["FC", "norm", "act", "dropout"]):
@@ -72,13 +72,13 @@ class GorillaFC(nn.Sequential):
         # build normalization layers
         norm = None
         if with_norm:
-            if "BN" in self.norm_cfg.get("name"):
+            if "BN" in self.norm_cfg.get("type"):
                 if self.order.index("norm") > self.order.index("FC"):
                     num_features = FC.out_features
                 else:
                     num_features = FC.in_features
                 self.norm_cfg.update(num_features=num_features)
-            norm_caller = get_torch_layer_caller(self.norm_cfg.pop("name"))
+            norm_caller = get_torch_layer_caller(self.norm_cfg.pop("type"))
             norm = norm_caller(**self.norm_cfg)
         else:
             if "norm" in self.order:
@@ -98,7 +98,7 @@ class GorillaFC(nn.Sequential):
         with_act = (self.act_cfg is not None)
         act = None
         if with_act:
-            act_caller = get_torch_layer_caller(self.act_cfg.pop("name"))
+            act_caller = get_torch_layer_caller(self.act_cfg.pop("type"))
             act = act_caller(**self.act_cfg)
         else:
             if "act" in self.order:
@@ -122,8 +122,8 @@ class MultiFC(nn.Sequential):
             nodes: List[int],
             bias: Union[List[bool], bool]=True,
             name: Union[List[str], str]="",
-            norm_cfg: Optional[Union[List[Dict], Dict]]=dict(name="BN1d"),
-            act_cfg: Optional[Union[List[Dict], Dict]]=dict(name="ReLU", inplace=True),
+            norm_cfg: Optional[Union[List[Dict], Dict]]=dict(type="BN1d"),
+            act_cfg: Optional[Union[List[Dict], Dict]]=dict(type="ReLU", inplace=True),
             dropout: Optional[Union[List[float], float]]=None,
             init: Union[str, Callable]="kaiming",
             order: List[str]=["FC", "norm", "act", "dropout"],
@@ -135,8 +135,8 @@ class MultiFC(nn.Sequential):
             nodes (List[int]): The num of nodes of each layer (including input layer and output layer).
             bias (Union[List[bool], bool], optional): With bias or not. Defaults to True. Refer to GoirllaFC.
             name (Union[List[str], str], optional): Name of each FC. Defaults to "". Refer to GoirllaFC.
-            norm_cfg (Optional[Union[List[Dict], Dict]], optional): Norm cfg of each FC. Defaults to dict(name="BN1d"). Refer to GoirllaFC.
-            act_cfg (Optional[Union[List[Dict], Dict]], optional): Activation cfg of each FC. Defaults to dict(name="ReLU", inplace=True). Refer to GoirllaFC.
+            norm_cfg (Optional[Union[List[Dict], Dict]], optional): Norm cfg of each FC. Defaults to dict(type="BN1d"). Refer to GoirllaFC.
+            act_cfg (Optional[Union[List[Dict], Dict]], optional): Activation cfg of each FC. Defaults to dict(type="ReLU", inplace=True). Refer to GoirllaFC.
             dropout (Optional[Union[List[float], float]], optional): Dropout ratio of each FC. Defaults to None. Refer to GoirllaFC.
             init (Union[str, Callable], optional): Init func or init_func name. Defaults to "kaiming".
             order (List[str], optional): FC layer order. Defaults to ["FC", "norm", "act", "dropout"].

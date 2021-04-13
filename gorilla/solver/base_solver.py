@@ -98,10 +98,10 @@ class BaseSolver(metaclass=ABCMeta):
         from .hook import HookManager
         self.hook_manager = HookManager()
         self.hook_manager.concat_solver(self)
-        self.hook_manager.register_hook_from_cfg(dict(name="OptimizerHook"))
-        self.hook_manager.register_hook_from_cfg(dict(name="EmptyCacheHook"))
-        self.hook_manager.register_hook_from_cfg(dict(name="IterTimerHook"))
-        self.hook_manager.register_hook_from_cfg(dict(name="CheckpointHook"))
+        self.hook_manager.register_hook_from_cfg(dict(type="OptimizerHook"))
+        self.hook_manager.register_hook_from_cfg(dict(type="EmptyCacheHook"))
+        self.hook_manager.register_hook_from_cfg(dict(type="IterTimerHook"))
+        self.hook_manager.register_hook_from_cfg(dict(type="CheckpointHook"))
         # self.logger.info(self.hook_manager)
 
     # def call_hook(self, fn_name):

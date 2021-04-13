@@ -8,10 +8,10 @@ from ..config import Config
 from ..core import is_seq_of, _build_optimizer, _build_scheduler, build_dataset
 
 # the default optimizer and lr_scheduler config dict
-OPTIM = {"name": "Adam",
+OPTIM = {"type": "Adam",
          "lr": 0.001}
 
-SCHEDULER = {"name": "StepLR",
+SCHEDULER = {"type": "StepLR",
              "step_size": 10000}
 
 
@@ -22,7 +22,7 @@ def build_single_optimizer(
     Build a single optimizer from optimizer config, supporting multi parameter
     groups with different setting in an optimizer
     """
-    # name = optimizer_cfg.pop("name")
+    # type = optimizer_cfg.pop("type")
     # get params
     optimizer_cfg["params"] = []
     paramwise_cfg = optimizer_cfg.pop("paramwise_cfg", None)
@@ -35,7 +35,7 @@ def build_single_optimizer(
             optimizer_cfg["params"].append({
                 "params":
                 filter(lambda p: p.requires_grad, getattr(model, key).parameters()),
-                "name": key,
+                "type": key,
                 **value
             })
     
@@ -72,7 +72,7 @@ def build_lr_scheduler(
     Build a LR scheduler from config.
 
     Note:
-        "name" must be in lr_scheduler_cfg
+        "type" must be in lr_scheduler_cfg
 
     Args:
         optimizer (torch.optim.Optimizer): Input Optimizer
@@ -95,7 +95,7 @@ def build_lr_scheduler(
         raise NotImplementedError
 
     # specificial for LambdaLR
-    if lr_scheduler_cfg.get("name") == "LambdaLR":
+    if lr_scheduler_cfg.get("type") == "LambdaLR":
         assert lambda_func is not None
         assert isinstance(lambda_func, Callable) or \
             is_seq_of(lambda_func, Callable), "lambda_func is invalid"

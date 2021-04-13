@@ -305,18 +305,18 @@ Config (path: b.json): {
 
 同时，该 `Config` 在初始化`dict`（加载文件暂时未实现）会自动地根据 `.` 进行层级划分
 ```python
->>> options = {"model.backbone.name": "ResNet",
+>>> options = {"model.backbone.type": "ResNet",
 >>>            "model.backbone.depth": 50}
->>> cfg = gorilla.Config({"model": {"backbone": {"name": "VGG"}}})
+>>> cfg = gorilla.Config({"model": {"backbone": {"type": "VGG"}}})
 >>> cfg.merge_from_dict(options)
 >>> print(cfg)
 Config (path: None): {
     "model":{
         "backbone": {
-            "name": "ResNet",
+            "type": "ResNet",
             "depth": 50}}}
 ```
-但是在加载的时候`Config(dict)`和`Config.fromfile(filename)`并不会自动进行层级划分，需要注意。另外就是上面例子中提到的 `merge_from_dict` 成员函数，它可以根据融合对象对已有的配置进行融合覆盖，上面的例子就表明了，`name` 这个成员原本为 `VGG` 被 `ResNet` 覆盖了。
+但是在加载的时候`Config(dict)`和`Config.fromfile(filename)`并不会自动进行层级划分，需要注意。另外就是上面例子中提到的 `merge_from_dict` 成员函数，它可以根据融合对象对已有的配置进行融合覆盖，上面的例子就表明了，`type` 这个成员原本为 `VGG` 被 `ResNet` 覆盖了。
 
 另外就是许多同学非常喜欢使用 `argparse` 管理超参数，为了方面管理我们希望实现 `cfg` 和 `args` 的统一，经过我们的思考，我们提供了 `merge_cfg_and_args` 函数，实现融合：
 ```python
@@ -510,7 +510,7 @@ def build_lr_scheduler(
 >>> import gorilla
 >>> model = gorilla.VGG(16)
 >>> # 构建optimizer
->>> optimizer_cfg = {"name": "Adam", "lr": 0.002}
+>>> optimizer_cfg = {"type": "Adam", "lr": 0.002}
 >>> optimizer = gorilla.build_optimizer(model, optimizer_cfg)
 >>> optimizer
 Adam (
@@ -522,7 +522,7 @@ Parameter Group 0
     weight_decay: 0
 )
 >>> # 构建lr_scheduler
->>> scheduler_cfg = {"name": "MultiStepLR", "milestones": [30, 80], "gamma": 0.1}
+>>> scheduler_cfg = {"type": "MultiStepLR", "milestones": [30, 80], "gamma": 0.1}
 >>> scheduler = gorilla.build_lr_scheduler(optimizer, scheduler_cfg)
 >>> scheduler
 <torch.optim.lr_scheduler.MultiStepLR at 0x7f7da41f99e8>
@@ -535,7 +535,7 @@ scheduler.step()
 ```
 `build_optimizer`既支持构建一个包含多组参数的`Optimizer`：
 ```python
->>> optimizer_cfg = {"name": "SGD", "lr": 0.01, "paramwise_cfg": {"moduleA": {"lr_mult": 0.1}, "moduleB": {"lr_mult": 1.0}}}
+>>> optimizer_cfg = {"type": "SGD", "lr": 0.01, "paramwise_cfg": {"moduleA": {"lr_mult": 0.1}, "moduleB": {"lr_mult": 1.0}}}
 >>> optimizer = gorilla.build_optimizer(model, optimizer_cfg)
 >>> optimizer
 SGD (
@@ -544,7 +544,7 @@ Parameter Group 0
     lr: 0.01
     lr_mult: 0.1
     momentum: 0
-    name: moduleA
+    type: moduleA
     nesterov: False
     weight_decay: 0
 
@@ -553,7 +553,7 @@ Parameter Group 1
     lr: 0.01
     lr_mult: 1.0
     momentum: 0
-    name: moduleB
+    type: moduleB
     nesterov: False
     weight_decay: 0
 )
@@ -561,8 +561,8 @@ Parameter Group 1
 也支持构建多个`Optimizer`：
 ```python
 >>> optimizer_cfg = {"multi_optimizer": True, 
-                     "optimizerA": {"name": "SGD", "lr": 0.01, "paramwise_cfg": {"moduleA": "lr_mult": 0.1, "moduleB": "lr_mult": 1.0}}
-                     "optimizerB": {"name": "SGD", "lr": 0.01, "paramwise_cfg": {"moduleC": {}}} }
+                     "optimizerA": {"type": "SGD", "lr": 0.01, "paramwise_cfg": {"moduleA": "lr_mult": 0.1, "moduleB": "lr_mult": 1.0}}
+                     "optimizerB": {"type": "SGD", "lr": 0.01, "paramwise_cfg": {"moduleC": {}}} }
 >>> optimizer = gorilla.build_optimizer(model, optimizer_cfg)
 >>> optimizer
 {'optimizerA': SGD (
@@ -580,7 +580,7 @@ Parameter Group 1
     lr: 0.01
     lr_mult: 1.0
     momentum: 0
-    name: moduleB
+    type: moduleB
     nesterov: False
     weight_decay: 0
 ), 'optimizerB': SGD (
@@ -588,7 +588,7 @@ Parameter Group 0
     dampening: 0
     lr: 0.01
     momentum: 0
-    name: moduleC
+    type: moduleC
     nesterov: False
     weight_decay: 0
 )
@@ -601,8 +601,8 @@ Parameter Group 0
 ```python
 >>> import gorilla
 >>> # 两者得到的 clipper 是一样的
->>> clipper = gorilla.GradClipper({"name": "norm", "max_norm": 20})
->>> clipper = gorilla.build_grad_clipper({"name": "norm", "max_norm": 20})
+>>> clipper = gorilla.GradClipper({"type": "norm", "max_norm": 20})
+>>> clipper = gorilla.build_grad_clipper({"type": "norm", "max_norm": 20})
 >>> ...
 >>> loss.backward()
 >>> grad_norm = clipper.clip(model.parameters())
@@ -795,21 +795,21 @@ GorillaConv(
   (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1))
 )
 # 带上bn（给定norm_cfg）
->>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"name": "BN2d"})
+>>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"type": "BN2d"})
 GorillaConv(
   (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1), bias=False)
   (norm): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
   (act): ReLU(inplace=True)
 )
 # activation在bn之前（调整order）
->>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"name": "BN2d"},order=["conv", "act", "norm"])
+>>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"type": "BN2d"},order=["conv", "act", "norm"])
 GorillaConv(
   (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1), bias=False)
   (act): ReLU(inplace=True)
   (norm): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
 )
 # bn在conv之前（调整order，注意bn会自动获取特征维度）
->>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"name": "BN2d"},order=["norm", "conv", "act"])
+>>> gorilla.GorillaConv(8, 16, 3, norm_cfg={"type": "BN2d"},order=["norm", "conv", "act"])
 GorillaConv(
   (norm): BatchNorm2d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
   (conv): Conv2d(8, 16, kernel_size=(3, 3), stride=(1, 1), bias=False)

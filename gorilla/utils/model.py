@@ -418,8 +418,8 @@ def check_optimizer(optimizer):
     print(optimizer)
     for i, (group, param_group) in enumerate(
         zip(optimizer.param_groups, optimizer.state_dict()["param_groups"])):
-        name = group.get("name", f"Unnamed {i}")
-        print(f"{name}: {len(group['params'])} layers of params")
+        type_name = group.get("type", f"Unnamed {i}")
+        print(f"{type_name}: {len(group['params'])} layers of params")
         state = optimizer.state_dict()["state"]
         for num in param_group["params"]:
             for key in keys:

@@ -37,7 +37,7 @@ class GorillaConv(nn.Sequential):
         D: The convolutional dimension. Default: 2
         norm_cfg (dict): Config dict for normalization layer. Default: None.
         act_cfg (dict): Config dict for activation layer.
-            Default: dict(name="ReLU").
+            Default: dict(type="ReLU").
         inplace (bool): Whether to use inplace mode for activation.
             Default: True.
         with_spectral_norm (bool): Whether use spectral norm in conv module.
@@ -63,8 +63,8 @@ class GorillaConv(nn.Sequential):
                  bias: bool=True,
                  name: str="",
                  D: int=2,
-                 norm_cfg: Optional[Dict]=dict(name="BN2d"),
-                 act_cfg: Optional[Dict]=dict(name="ReLU", inplace=True),
+                 norm_cfg: Optional[Dict]=dict(type="BN2d"),
+                 act_cfg: Optional[Dict]=dict(type="ReLU", inplace=True),
                  with_spectral_norm: bool=False,
                  padding_mode: List="zeros",
                  order: List[str]=["conv", "norm", "act"]):
@@ -112,7 +112,7 @@ class GorillaConv(nn.Sequential):
             else:
                 num_features = conv.in_channels
             self.norm_cfg.update(num_features=num_features)
-            norm_caller = get_torch_layer_caller(self.norm_cfg.pop("name"))
+            norm_caller = get_torch_layer_caller(self.norm_cfg.pop("type"))
             norm = norm_caller(**self.norm_cfg)
         else:
             if "norm" in self.order:
@@ -125,7 +125,7 @@ class GorillaConv(nn.Sequential):
         with_act = (self.act_cfg is not None)
         act = None
         if with_act:
-            act_caller = get_torch_layer_caller(self.act_cfg.pop("name"))
+            act_caller = get_torch_layer_caller(self.act_cfg.pop("type"))
             act = act_caller(**self.act_cfg)
         else:
             if "act" in self.order:
@@ -147,7 +147,7 @@ class GorillaConv(nn.Sequential):
         #    their own `reset_parameters` methods.
         if not hasattr(conv, "init_weights"):
             a, nonlinearity = 0, "relu"
-            if self.act_cfg is not None and self.act_cfg["name"] == "LeakyReLU":
+            if self.act_cfg is not None and self.act_cfg["type"] == "LeakyReLU":
                 a = self.act_cfg.get("negative_slope", 0.01)
                 nonlinearity = "leaky_relu"
             kaiming_init(conv, a=a, nonlinearity=nonlinearity)

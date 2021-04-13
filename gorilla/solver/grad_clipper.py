@@ -7,10 +7,10 @@ from ..config import Config
 
 class GradClipper:
     def __init__(self, grad_clip_cfg: [Dict, Config]):
-        name = grad_clip_cfg.pop("name")
-        assert name in ["norm", "value"]
+        clip_type = grad_clip_cfg.pop("type")
+        assert clip_type in ["norm", "value"]
         self.grad_clip_cfg = grad_clip_cfg
-        self.clipper = getattr(clip_grad, f"clip_grad_{name}_")
+        self.clipper = getattr(clip_grad, f"clip_grad_{clip_type}_")
 
     def clip_grads(self, params):
         params = list(
@@ -20,7 +20,7 @@ class GradClipper:
 
 
 def build_grad_clipper(grad_clip_cfg):
-    assert "name" in grad_clip_cfg
+    assert "type" in grad_clip_cfg
     return GradClipper(grad_clip_cfg)
 
 
