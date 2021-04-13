@@ -1,15 +1,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # gorilla-core
+A lightly library for computer vision research.
 
-created by [GorillaLab](empty)
+created by [GorillaLab]([empty](https://github.com/Gorilla-Lab-SCUT))
 
 ## Introduction
 A toolbox for learning task for Gorilla-Lab
 
 ## Documents
-- [API](docs/API_manual.md)
-- [transfer](docs/transfer_manual.md)
+- [API](docs/API_manual.md)(Chinese)
 
 
 ## Installation
@@ -34,8 +34,8 @@ python setup.py install(develop)
 - [x] add utils
 - [x] fix build
 - [x] init BaseSovler
+- [x] support registry
 - [ ] hook design
-- [ ] support registry
 - [ ] To be continue
 
 # Changelog
