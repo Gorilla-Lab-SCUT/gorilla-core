@@ -48,6 +48,12 @@ class LogBuffer:
         for key in self._val_history:
             self._output[key] = self._val_history[key].average(n)
 
+    def summation(self, n=0):
+        r"""Average latest n values or all values."""
+        assert n >= 0
+        for key in self._val_history:
+            self._output[key] = self._val_history[key].summation(n)
+
     def get(self, name):
         r"""Get the values of name"""
         return self._val_history.get(name, None)
@@ -58,6 +64,13 @@ class LogBuffer:
         for key in self._val_history:
             avg_dict[key] = self._val_history[key].avg
         return avg_dict
+
+    @property
+    def sum(self):
+        sum_dict = {}
+        for key in self._val_history:
+            sum_dict[key] = self._val_history[key].sum
+        return sum_dict
         
     @property
     def latest(self):
@@ -81,6 +94,7 @@ class HistoryBuffer:
         self._nums: List[float] = []
         self._count: int = 0
         self._global_avg: float = 0
+        self._global_sum: float = 0
 
     def update(self, value: float, num: Optional[float] = None) -> None:
         r"""
@@ -94,8 +108,8 @@ class HistoryBuffer:
         self._nums.append(num)
 
         self._count += 1
-        self._sum = sum(map(lambda x: x[0] * x[1], zip(self._values, self._nums)))
-        self._global_avg = self._sum / sum(self._nums)
+        self._global_sum = sum(map(lambda x: x[0] * x[1], zip(self._values, self._nums)))
+        self._global_avg = self._global_sum / sum(self._nums)
 
     def median(self, window_size: int) -> float:
         r"""
@@ -103,13 +117,19 @@ class HistoryBuffer:
         """
         return np.median(self._values[-window_size:])
 
+    def summation(self, window_size: int) -> float:
+        r"""
+        Return the summation of the latest `window_size` values in the buffer.
+        """
+        _sum = sum(map(lambda x: x[0] * x[1], zip(self._values[-window_size:],
+                                                  self._nums[-window_size:])))
+        return _sum
+
     def average(self, window_size: int) -> float:
         r"""
         Return the mean of the latest `window_size` values in the buffer.
         """
-        _sum = sum(map(lambda x: x[0] * x[1], zip(self._values[-window_size:],
-                                                  self._nums[-window_size:])))
-        return _sum / sum(self._nums[-window_size:])
+        return self.summation(window_size) / sum(self._nums[-window_size:])
 
     @property
     def latest(self) -> float:
@@ -125,6 +145,14 @@ class HistoryBuffer:
         includes those getting removed due to limited buffer storage.
         """
         return self._global_avg
+
+    @property
+    def sum(self) -> float:
+        r"""
+        Return the summation of all the elements in the buffer. Note that this
+        includes those getting removed due to limited buffer storage.
+        """
+        return self._global_sum
 
     @property
     def values(self) -> List[float]:

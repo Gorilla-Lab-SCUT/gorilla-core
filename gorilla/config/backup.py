@@ -9,7 +9,7 @@ from typing import List
 
 from ..version import __version__
 
-def backup(log_dir: str,
+def backup(backup_dir: str,
            backup_list: [List[str], str],
            logger: logging.Logger=None,
            contain_suffix :List=["*.py"], 
@@ -18,14 +18,12 @@ def backup(log_dir: str,
     The backup helper function
 
     Args:
-        log_dir (str): the bakcup directory({log_dir}/backup)
+        backup_dir (str): the bakcup directory
         backup_list (str or List of str): the backup members
         logger (logging.Logger, optional): logger. Defaults to None.
         strict (bool, optional): tolerate backup members missing or not.
             Defaults to False.
     """
-
-    backup_dir = osp.join(log_dir, "backup")
     # if exist, remove the backup dir to avoid copytree exist error
     if osp.exists(backup_dir):
         shutil.rmtree(backup_dir)

@@ -29,6 +29,10 @@ class BaseSolver(metaclass=ABCMeta):
         else:
             raise TypeError(f"`model` must be `nn.module` or cfg `dict`, but got `{type(model)}`")
 
+        # get the epoch or iteration mode
+        self.mode = cfg.get("mode", "epoch")
+        assert self.mode in ["epoch", "iter"]
+
         # merge some essentital parameter for each project(like independent criterion)
         self.__dict__.update(kwargs)
         
@@ -66,9 +70,13 @@ class BaseSolver(metaclass=ABCMeta):
             self.epoch = self.meta["epoch"] + 1
 
     def write(self, **kwargs):
+        if self.mode == "epoch":
+            times = self.epoch
+        elif self.mode == "iter":
+            times = self.iter
         self.log_buffer.average()
         for key, avg in self.log_buffer.output.items():
-            self.tb_writer.add_scalar(key, avg, self.epoch)
+            self.tb_writer.add_scalar(key, avg, times)
 
     def clear(self, **kwargs):
         r"""clear log buffer

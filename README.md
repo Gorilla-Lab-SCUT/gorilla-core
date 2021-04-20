@@ -28,6 +28,7 @@ python setup.py install(develop)
 - [open-mmlab/mmcv](https://github.com/open-mmlab/mmcv)
 - [open-mmlab/mmdetection](https://github.com/open-mmlab/mmdetection)
 - [facebookresearch/detectron2](https://github.com/facebookresearch/detectron2)
+- [rwightman/pytorch-image-models](https://github.com/rwightman/pytorch-image-models)
 
 
 # TODO
@@ -36,6 +37,7 @@ python setup.py install(develop)
 - [x] init BaseSovler
 - [x] support registry
 - [ ] hook design
+- [ ] merging some timm components
 - [ ] To be continue
 
 # Changelog
