@@ -1,6 +1,5 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 import threading
-import sys
 import queue as Queue
 
 from torch.utils.data import DataLoader

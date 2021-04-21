@@ -5,7 +5,6 @@ build
 *egg*
 dist
 work_dirs
-data
 test
 
 # file

@@ -3,8 +3,7 @@ from typing import Callable, Dict
 
 import torch
 
-from .data import DataLoaderX
-from ..data import DistributedSampler
+from ..data import DistributedSampler, DataLoaderX
 from ..config import Config
 from ..core import (is_seq_of, _build_optimizer, _build_scheduler, build_dataset,
                     get_rank, get_world_size)
@@ -148,9 +147,9 @@ def build_dataloader(
     #     # For simulate large batch training
     #     sampler = DistributedSampler(dataset=dataset, shuffle=shuffle)
     #     dataloader_cfg.sampler = sampler # update into parameters for dataloader config
-        
 
-    if prefetch:
+
+    if prefetch and get_world_size() == 1:
         return DataLoaderX(dataset, **dataloader_cfg)
     else:
         return torch.utils.data.DataLoader(dataset, **dataloader_cfg)
