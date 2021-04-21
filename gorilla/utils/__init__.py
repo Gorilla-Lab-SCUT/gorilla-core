@@ -9,7 +9,7 @@ from .path import (is_filepath, check_file, check_dir, fopen, symlink,
 from .processbar import (ProgressBar, track_progress, init_pool,
                          track_parallel_progress, track)
 
-from .timer import (Timer, check_time, timestamp)
+from .timer import (Timer, check_time, timestamp, convert_seconds)
 
 from .model import (check_model, check_grad, check_params, check_optimizer, register_hook)
 

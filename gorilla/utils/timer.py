@@ -2,6 +2,19 @@
 import re
 import time
 
+def convert_seconds(seconds: int) -> str:
+    """Author: liang.zhihao
+    convert seconds into "{hours}:{minutes}:{seconds}"
+    mainly use tp calculate remain time
+
+    Args:
+        second (int): count of seconds
+
+    Returns:
+        str: "{hours}:{minutes}:{seconds}"
+    """
+    return time.strftime("%H:%M:%S", time.gmtime(seconds))
+
 def timestamp() -> str:
     r"""Author: liang.zhihao
     Get time stamp

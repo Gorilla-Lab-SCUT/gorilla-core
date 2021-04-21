@@ -1,5 +1,5 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence
 from collections import defaultdict
 
 import torch
@@ -12,6 +12,10 @@ class TensorBoardWriter:
         self.writer = SummaryWriter(logdir, **kwargs)
         self.buffer = LogBuffer()
 
+    def clear(self):
+        """clear the buffer"""
+        self.buffer.clear()
+
     def update(self, content: Dict, global_step: Optional[int]=None):
         """"update the buffer according to given directory"""
         self.buffer.update(content)
@@ -19,19 +23,15 @@ class TensorBoardWriter:
         if global_step is not None:
             self.write(global_step)
 
-    def clear(self):
-        """clear the buffer"""
-        self.buffer.clear()
-
     def write(self, global_step: int):
         """write according to buffer"""
         self.buffer.average()
         scalar_type = (int, float, torch.Tensor, np.ndarray)
         for key, value in self.buffer.output.items():
             if isinstance(value, scalar_type):
-                self.writer.add_scalar(key, value, global_step)
+                self.add_scalar(key, value, global_step)
             elif isinstance(value, dict):
-                self.writer.add_scalars(key, value, global_step)
+                self.add_scalars(key, value, global_step)
             else:
                 raise TypeError(f"The type of scalar must be "
                                 f"`int`, `float`, `ndarray` or "
@@ -164,7 +164,7 @@ class HistoryBuffer:
         self._global_sum: float = 0
 
     def update(self,
-               value: Union[float, Dict],
+               value: float,
                num: Optional[float] = None) -> None:
         r"""
         Add a new scalar value and the number of counter. If the length
@@ -241,10 +241,10 @@ class HistoryBuffer:
         return self._nums
 
     def __str__(self) -> str:
-        msg = "\n".join([f"    values: {self._values}",
+        msg = "\n".join([f"    values: {self.values}",
                          f"    nums:   {self.nums}",
                          f"    count:  {self._count}",
-                         f"    avg:    {self._global_avg}",
-                         f"    sum:    {self._global_sum}\n"])
+                         f"    avg:    {self.avg}",
+                         f"    sum:    {self.sum}\n"])
 
         return msg

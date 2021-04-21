@@ -325,16 +325,117 @@ def merge_cfg_and_args(cfg: Optional[Config]=None, args: Optional[ArgumentParser
 输入分别为 `cfg` 和 `args` 融合得到新的 `cfg`，由于 `args` 中的参数优先度往往比 `cfg` 中的参数高，所以我们利用了上面所说的 `merge_from_dict` 函数实现了两者的融合，对于相同的参数，则利用 `args` 中的参数进行覆盖。
 
 ### **日志管理**
-python的logging库已经非常完善和易用了，但是具体的 `logger` 也需要进行非常多的设置，我们在这里提供了函数：
+Python 的 logging 库已经非常完善和易用了，但是具体的 `logger` 也需要进行非常多的设置，我们在这里提供了函数：
 ```python
 def get_logger(log_file=None, name="gorilla", log_level=logging.INFO, timestamp=None):
 ```
-在实际使用中仅需要给定 `log_file` 即可初始化获得相应的 `logger`。 
+在实际使用中仅需要给定 `log_file` 即可初始化获得相应的 `logger`。
+
+此外针对 Tensorboard 的 `SummaryWriter`， 我们也进行了非常轻量化的包装 `TensorBoardWriter`:
+`TensorBoardWriter` 的初始化通 `SummaryWriter` 一致，也是给定 `logdir` 即可实现初始化，以及支持同样的 `add_scalar/add_scalars`：
+```python
+logdir = "./log/dir"
+# 同样的初始化步骤
+writer1 = SummaryWriter(logdir)
+writer2 = TensorBoardWriter(logdir)
+# 同样的写入 API
+data = {"loss": 0.1, "lr": 0.001}
+step = 1
+for k, v in data.items():
+    writer1.add_scalar(k, v, step)
+    writer2.add_scalar(k, v, step)
+```
+在保证原本 API 不变的基础上我们增加了 `update` 和 `write` 的 API 来更方便的实现上述功能：
+```python
+logdir = "./log/dir"
+writer = TensorBoardWriter(logdir)
+data = {"loss": 0.1, "lr": 0.001}
+step = 1
+# solution1
+for k, v in data.items():
+    writer.add_scalar(k, v, step)
+# solution2
+writer.update(data)
+writer.write(step)
+# solution3
+writer.update(data, step)
+```
+此外 `TensorBoardWriter` 内置的 buffer 支持统计功能，可以实现对一个 epoch 中的 loss 进行记录，最后将均值写入：
+```python
+logdir = "./log/dir"
+writer = TensorBoardWriter(logdir)
+data1 = {"loss": 0.1, "lr": 0.001}
+writer.update(data1)
+data2 = {"loss": 0.05, "lr": 0.002}
+writer.update(data2)
+step = 1
+
+writer.write(step)
+# 写入效果等价于：（写入记录数值的均值）
+# writer.add_scalar("loss", 0.075, 1)
+# writer.add_scalar("lr", 0.0015, 1)
+```
+以上功能的实现依赖于 `TensorBoardWriter` 中的 `LogBuffer` 成员。
+
+为了更好得介绍 `LogBuffer` 函数，我们先了解一下 `HistoryBuffer`。
+
+`HistoryBuffer` 可以视作实现了 `clear/avg/sum` 功能的 `List`，其中的 `update` 接口等同于 `List` 的 `append`，另外 `HistoryBuffer.update` 还支持权值的输入，API 如下：
+
+```python
+def update(self, value: float, num: Optional[float] = None) -> None:
+```
+输入值以及该值的数量（相当于比重，默认为`1`），然后输入的值和数量分别存在 `list` 中，后续在算 `avg` 时会根据数量进行加权得到。
+```python
+>>> import gorilla
+>>> buffer = gorilla.HistoryBuffer()
+>>> buffer.update(10)
+>>> buffer.update(12)
+>>> buffer.update(14, 2) # 输入权值-2，默认为 1
+>>> buffer.update(15)
+>>> buffer.avg
+13.0 # (10 + 12 + 14 + 15) / (1 + 1 + 2 + 1)
+>>> buffer.values
+[10, 12, 14, 15]
+>>> buffer.nums
+[1, 1, 2, 1]
+>>> buffer.latest
+15
+>>> buffer.average(3)
+13.75 # (12 + 14 + 15) / (1 + 2 + 1) # 求values后三个的均值
+>>> buffer.median(3) # 求values后三个的中位数
+14.0
+```
+以上我们了解了 `HistoryBuffer` 的功能。
+在此基础上我们提供了 `LogBuffer` 类结合 `HistoryBuffer` 实现多个变量的列表管理。`LogBuffer` 可以看作是值成员为 `HistoryBuffer` 的字典，`LogBuffer` 的 `update` 于 `HistoryBuffer` 的 `update` 相对应，输入对象为字典。
+```python
+>>> import gorilla
+>>> buffer = gorilla.LogBuffer()
+>>> buffer.update({"a": 10, "b": [10, 2]})
+>>> buffer.update({"a": 12, "b": [12, 3]})
+>>> buffer.update({"a": 14, "b": [13, 4]})
+>>> buffer.avg  # 调用HistoryBuffer的avg计算全局均值
+{'a': 12.0, 'b': 12.0}
+>>> buffer.latest # 最新输入的值
+{'a': 14.0, 'b': 13.0}
+>>> buffer.average(2) # 调用HistoryBuffer的avgerate计算后个输入均值
+>>> buffer.output
+{'a': 13.0, 'b': 12.571428571428571}
+>>> buffer.get("b")
+<gorilla.solver.log_buffer.HistoryBuffer at 0x7f8cbf4f59b0>
+>>> buffer.get("b").values
+[10.0, 12.0, 13.0]
+>>> buffer.get("b").nums
+[2, 3, 4]
+>>> buffer.clear()
+>>> buffer.get("b")
+None
+```
+
 
 ### **备份管理**
 当代码版本更迭过多时，往往会遗忘结果所对应的代码版本，因为会有备份代码的需求。在此我们也提供了相应的辅助函数：
 ```python
-def backup(log_dir: str,
+def backup(backup_dir: str,
            backup_list: [List[str], str],
            logger: logging.Logger=None,
            contain_suffix :List=["*.py"], 
@@ -357,7 +458,7 @@ def backup(log_dir: str,
 ├── log
 │   └── temp
 └── temp.py
->>> gorilla.backup("log/temp", ["temp.py", "dir"], logger)
+>>> gorilla.backup("log/temp/backup", ["temp.py", "dir"], logger)
 >>> os.system("tree log/temp")
 log/temp
 └── backup
@@ -665,60 +766,6 @@ def resume(model,
     return checkpoint["meta"]
 ```
 `resume`函数会返回我们之前保存的`meta`信息，然后我们就可以在`solver`自己的`resume`函数中把我们需要的`meta`信息恢复出来。
-
-
-- **日志变量存储器**
-
-如何保存日志有时候需要写些循环和赋值运算操作，在这里我们提供了两个类方便变量的存储。
-一个是针对单个变量的 `HistoryBuffer`，无需参数直接初始化即可。当需要更新的时候调用 `update` 函数：
-```python
-def update(self, value: float, num: Optional[float] = None) -> None:
-```
-输入值以及该值的数量（相当于比重，默认为`1`），然后输入的值和数量分别存在 `list` 中，后续在算 `avg` 时会根据数量进行加权得到。
-```python
->>> import gorilla
->>> buffer = gorilla.HistoryBuffer()
->>> buffer.update(10)
->>> buffer.update(12)
->>> buffer.update(14, 2)
->>> buffer.update(15)
->>> buffer.avg
-13.0 # (10 + 12 + 14 + 15) / (1 + 1 + 2 + 1)
->>> buffer.values
-[10, 12, 14, 15]
->>> buffer.nums
-[1, 1, 2, 1]
->>> buffer.latest
-15
->>> buffer.average(3)
-13.75 # (12 + 14 + 15) / (1 + 2 + 1) # 求values后三个的均值
->>> buffer.average(3) # 求values后三个的中位数
-14.0
-```
-在此基础上我们提供了 `LogBuffer` 类结合 `HistoryBuffer` 实现多个变量的列表管理。`LogBuffer` 可以看作是值成员为 `HistoryBuffer` 的字典，`LogBuffer` 的 `update` 为字典。
-```python
->>> import gorilla
->>> buffer = gorilla.LogBuffer()
->>> buffer.update({"a": 10, "b": [10, 2]})
->>> buffer.update({"a": 12, "b": [12, 3]})
->>> buffer.update({"a": 14, "b": [13, 4]})
->>> buffer.avg  # 调用HistoryBuffer的avg计算全局均值
-{'a': 12.0, 'b': 12.0}
->>> buffer.latest # 最新输入的值
-{'a': 14.0, 'b': 13.0}
->>> buffer.average(2) # 调用HistoryBuffer的avgerate计算后个输入均值
->>> buffer.output
-{'a': 13.0, 'b': 12.571428571428571}
->>> buffer.get("b")
-<gorilla.solver.log_buffer.HistoryBuffer at 0x7f8cbf4f59b0>
->>> buffer.get("b").values
-[10.0, 12.0, 13.0]
->>> buffer.get("b").nums
-[2, 3, 4]
->>> buffer.clear()
->>> buffer.get("b")
-None
-```
 
 ## losses
 losses 模块目前仅提供了定义在 `detectron2` 中的三个损失函数：
