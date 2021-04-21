@@ -108,7 +108,8 @@ class Registry:
 
 def auto_registry(registry: Registry,
                   cls_dict: Dict,
-                  type=object) -> None:
+                  type=object,
+                  force: bool=False) -> None:
     r"""Author: liang.zhihao
 
     Args:
@@ -126,7 +127,7 @@ def auto_registry(registry: Registry,
         # keep the son class if type is define
         if not issubclass(cls, type):
             continue
-        registry._register_module(cls)
+        registry._register_module(cls, force=force)
 
 
 def build_from_cfg(cfg: Dict,
