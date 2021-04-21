@@ -12,11 +12,12 @@ class TensorBoardWriter:
         self.writer = SummaryWriter(logdir, **kwargs)
         self.buffer = LogBuffer()
 
-    def update(self, content: Dict, write: bool=False):
+    def update(self, content: Dict, global_step: Optional[int]=None):
         """"update the buffer according to given directory"""
         self.buffer.update(content)
         # write immediately
-        if write: self.write()
+        if global_step is not None:
+            self.write(global_step)
 
     def clear(self):
         """clear the buffer"""
