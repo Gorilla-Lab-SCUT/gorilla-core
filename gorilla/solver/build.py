@@ -4,8 +4,10 @@ from typing import Callable, Dict
 import torch
 
 from .data import DataLoaderX
+from ..data import DistributedSampler
 from ..config import Config
-from ..core import is_seq_of, _build_optimizer, _build_scheduler, build_dataset
+from ..core import (is_seq_of, _build_optimizer, _build_scheduler, build_dataset,
+                    get_rank, get_world_size)
 
 # the default optimizer and lr_scheduler config dict
 OPTIM = {"type": "Adam",
@@ -125,12 +127,28 @@ def build_dataloader(
         dataset = build_dataset(dataset)
 
     dataloader_cfg.update(kwargs)
-    distribute = distributed_prepare(dataloader_cfg)
 
     collate_fn = getattr(dataset, "collate_fn", None)
     dataloader_cfg["collate_fn"] = collate_fn
     assert "batch_size" in dataloader_cfg, "must given batch_size"
     assert "num_workers" in dataloader_cfg, "must given num_workers"
+
+    # process distributed
+    if get_world_size() > 1:
+        shuffle = dataloader_cfg.get("shuffle", False)
+        dataloader_cfg.pop("shuffle")
+        # For simulate large batch training
+        sampler = DistributedSampler(dataset=dataset, shuffle=shuffle)
+        dataloader_cfg.sampler = sampler # update into parameters for dataloader config
+
+    # if dataloader_cfg.get("distributed", False):
+    #     dataloader_cfg.pop("distributed")
+    #     shuffle = dataloader_cfg.get("shuffle", False)
+    #     dataloader_cfg.pop("shuffle")
+    #     # For simulate large batch training
+    #     sampler = DistributedSampler(dataset=dataset, shuffle=shuffle)
+    #     dataloader_cfg.sampler = sampler # update into parameters for dataloader config
+        
 
     if prefetch:
         return DataLoaderX(dataset, **dataloader_cfg)

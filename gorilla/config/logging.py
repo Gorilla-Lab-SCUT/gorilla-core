@@ -160,7 +160,6 @@ def get_logger(log_file: str=None,
         stream_handler = logging.StreamHandler()
         handlers = [stream_handler]
 
-
     if dist.is_available() and dist.is_initialized():
         rank = dist.get_rank()
     else:

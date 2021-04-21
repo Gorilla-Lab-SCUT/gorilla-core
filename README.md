@@ -36,6 +36,7 @@ python setup.py install(develop)
 - [x] fix build
 - [x] init BaseSovler
 - [x] support registry
+- [x] distributed
 - [ ] hook design
 - [ ] merging some timm components
 - [ ] To be continue

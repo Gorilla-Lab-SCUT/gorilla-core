@@ -60,8 +60,12 @@ def launch(main_func,
         mp.spawn(
             _distributed_worker,
             nprocs=num_gpus_per_machine,
-            args=(main_func, world_size, num_gpus_per_machine, machine_rank,
-                  dist_url, args),
+            args=(main_func,
+                  world_size,
+                  num_gpus_per_machine,
+                  machine_rank,
+                  dist_url,
+                  args),
             daemon=False,
         )
     else:

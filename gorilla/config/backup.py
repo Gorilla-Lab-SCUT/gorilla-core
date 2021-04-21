@@ -5,13 +5,15 @@ import glob
 import shutil
 import warnings
 import logging
-from typing import List
+from typing import List, Optional
+
+import torch.distributed as dist
 
 from ..version import __version__
 
 def backup(backup_dir: str,
            backup_list: [List[str], str],
-           logger: logging.Logger=None,
+           logger: Optional[logging.Logger]=None,
            contain_suffix :List=["*.py"], 
            strict: bool=False) -> None:
     r"""Author: liang.zhihao
@@ -20,29 +22,40 @@ def backup(backup_dir: str,
     Args:
         backup_dir (str): the bakcup directory
         backup_list (str or List of str): the backup members
-        logger (logging.Logger, optional): logger. Defaults to None.
+        logger (logging.Logger, Optional): logger. Defaults to None.
         strict (bool, optional): tolerate backup members missing or not.
             Defaults to False.
     """
+    info = logger.info if logger is not None else print
+
+    # process distributed situation
+    if dist.is_available() and dist.is_initialized():
+        rank = dist.get_rank()
+    else:
+        rank = 0
+    
+    # just execution for the main rank process(avoid distrbuted error)
+    if rank > 0: return
+
     # if exist, remove the backup dir to avoid copytree exist error
     if osp.exists(backup_dir):
         shutil.rmtree(backup_dir)
 
     os.makedirs(backup_dir, exist_ok=True)
     # log gorilla version
-    logger.info(f"gorilla-core version is {__version__}")
+    info(f"gorilla-core version is {__version__}")
     try:
         from gorilla2d import __version__ as g2_ver
-        logger.info(f"gorilla2d version is {g2_ver}")
+        info(f"gorilla2d version is {g2_ver}")
     except:
         pass
     try:
         from gorilla3d import __version__ as g3_ver
-        logger.info(f"gorilla3d version is {g3_ver}")
+        info(f"gorilla3d version is {g3_ver}")
     except:
         pass
 
-    logger.info(f"backup files at {backup_dir}")
+    info(f"backup files at {backup_dir}")
     if not isinstance(backup_list, list):
         backup_list = [backup_list]
     if not isinstance(contain_suffix, list):

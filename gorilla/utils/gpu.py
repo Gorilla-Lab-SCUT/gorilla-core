@@ -80,6 +80,7 @@ def supervise_gpu(num_gpu=1, mode="memory", memory_need=11000) -> list:
     used_gpu_id_list = gpu_free_id_list[:num_gpu]
     return used_gpu_id_list
 
+
 def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need=11000):
     r"""Set cuda visible devices automatically
 
@@ -102,6 +103,7 @@ def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need
     # just for single machine multi gpu setting, the ngpus_per_node is
     # all gpus in this machine
     gpu_ids = ",".join(convert_list_str(gpu_ids))
+    print(f"set CUDA_VISIBLE_DEVICES as {gpu_ids}")
     # return  gpu_ids
     os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = gpu_ids

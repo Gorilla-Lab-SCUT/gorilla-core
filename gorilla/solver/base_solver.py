@@ -83,19 +83,16 @@ class BaseSolver(metaclass=ABCMeta):
         """
         self.log_buffer.clear()
 
-    @abstractmethod
     def solve(self, **kwargs):
         r"""solve(self) aims to define each epoch training operation"""
         self.clear()
         # the whole training processing
 
-    @abstractmethod
     def train(self, **kwargs):
         r"""train(self) aims to define each step training operation"""
         self.clear()
         # epoch training
 
-    @abstractmethod
     def evaluate(self, **kwargs):
         r"""evaluate(self) aims to define each evaluation operation"""
         self.clear()
