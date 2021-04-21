@@ -1,6 +1,6 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 
-from .log_buffer import (LogBuffer, HistoryBuffer)
+from .log_buffer import (LogBuffer, HistoryBuffer, TensorBoardWriter)
 
 from .grad_clipper import (GradClipper, build_grad_clipper)
 

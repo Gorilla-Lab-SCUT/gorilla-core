@@ -1,9 +1,66 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Union
 from collections import defaultdict
 
 import torch
 import numpy as np
+from tensorboardX import SummaryWriter
+
+class TensorBoardWriter:
+    def __init__(self, logdir: str, **kwargs):
+        self.logdir = logdir
+        self.writer = SummaryWriter(logdir, **kwargs)
+        self.buffer = LogBuffer()
+
+    def update(self, content: Dict, write: bool=False):
+        """"update the buffer according to given directory"""
+        self.buffer.update(content)
+        # write immediately
+        if write: self.write()
+
+    def clear(self):
+        """clear the buffer"""
+        self.buffer.clear()
+
+    def write(self, global_step: int):
+        """write according to buffer"""
+        self.buffer.average()
+        scalar_type = (int, float, torch.Tensor, np.ndarray)
+        for key, value in self.buffer.output.items():
+            if isinstance(value, scalar_type):
+                self.writer.add_scalar(key, value, global_step)
+            elif isinstance(value, dict):
+                self.writer.add_scalars(key, value, global_step)
+            else:
+                raise TypeError(f"The type of scalar must be "
+                                f"`int`, `float`, `ndarray` or "
+                                f"`Tensor`, ` or `dict` "
+                                f"but got {type(value)}")
+        self.clear()
+
+    # NOTE: the add_scalar and add_scalars is the wrapper of tensorboard
+    #       we support the origin API for using
+    def add_scalar(self,
+                  tag,
+                  scalar_value,
+                  global_step,
+                  **kwargs):
+        r"""the wrapper API of SummaryWriter.add_scalar"""
+        self.writer.add_scalar(tag, scalar_value, global_step, **kwargs)
+
+    def add_scalars(self,
+                    tag,
+                    scalar_value,
+                    global_step,
+                    **kwargs):
+        r"""the wrapper API of SummaryWriter.add_scalars"""
+        self.writer.add_scalars(tag, scalar_value, global_step, **kwargs)
+
+    def __str__(self) -> str:
+        msg = f"writer's logdir: {self.logdir}\n"
+        msg += f"current buffer: \n{str(self.buffer)}"
+
+        return msg
 
 
 class LogBuffer:
@@ -26,9 +83,9 @@ class LogBuffer:
     def clear_output(self):
         self._output.clear()
 
-    def update(self, vars):
-        assert isinstance(vars, dict)
-        for key, var in vars.items():
+    def update(self, content: Dict):
+        assert isinstance(content, dict)
+        for key, var in content.items():
             scalar_type = (int, float, torch.Tensor, np.ndarray)
             if isinstance(var, Sequence) and len(var) == 2:
                 var = list(var) # change tuple
@@ -79,6 +136,15 @@ class LogBuffer:
             latest_dict[key] = self._val_history[key].latest
         return latest_dict
 
+    def __str__(self) -> str:
+        msg = ""
+
+        for key, value in self._val_history.items():
+            msg += f"{key}:\n"
+            msg += str(value)
+
+        return msg
+
 
 class HistoryBuffer:
     r"""
@@ -96,7 +162,9 @@ class HistoryBuffer:
         self._global_avg: float = 0
         self._global_sum: float = 0
 
-    def update(self, value: float, num: Optional[float] = None) -> None:
+    def update(self,
+               value: Union[float, Dict],
+               num: Optional[float] = None) -> None:
         r"""
         Add a new scalar value and the number of counter. If the length
         of the buffer exceeds self._max_length, the oldest element will be
@@ -110,6 +178,7 @@ class HistoryBuffer:
         self._count += 1
         self._global_sum = sum(map(lambda x: x[0] * x[1], zip(self._values, self._nums)))
         self._global_avg = self._global_sum / sum(self._nums)
+
 
     def median(self, window_size: int) -> float:
         r"""
@@ -170,3 +239,11 @@ class HistoryBuffer:
         """
         return self._nums
 
+    def __str__(self) -> str:
+        msg = "\n".join([f"    values: {self._values}",
+                         f"    nums:   {self.nums}",
+                         f"    count:  {self._count}",
+                         f"    avg:    {self._global_avg}",
+                         f"    sum:    {self._global_sum}\n"])
+
+        return msg
