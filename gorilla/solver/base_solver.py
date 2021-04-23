@@ -4,9 +4,8 @@ import random
 from abc import ABCMeta, abstractmethod
 
 import torch
-from tensorboardX import SummaryWriter
 
-from .log_buffer import LogBuffer
+from .log_buffer import LogBuffer, TensorBoardWriter
 from .build import build_optimizer, build_lr_scheduler
 from .checkpoint import resume
 from ..utils import check_file
@@ -48,8 +47,8 @@ class BaseSolver(metaclass=ABCMeta):
 
     def get_ready(self, **kwargs):
         self.epoch = self.cfg.get("start_epoch", 1)
-        self.log_buffer = LogBuffer()
-        self.tb_writer = SummaryWriter(log_dir=self.cfg.log_dir) # tensorboard writer
+        self.tb_writer = TensorBoardWriter(self.cfg.log_dir) # tensorboard writer
+        self.log_buffer = self.tb_writer.buffer # to fix old API
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
         self.meta = {}
 
@@ -74,9 +73,10 @@ class BaseSolver(metaclass=ABCMeta):
             times = self.epoch
         elif self.mode == "iter":
             times = self.iter
-        self.log_buffer.average()
-        for key, avg in self.log_buffer.output.items():
-            self.tb_writer.add_scalar(key, avg, times)
+        self.tb_writer.write()
+        # self.log_buffer.average()
+        # for key, avg in self.log_buffer.output.items():
+        #     self.tb_writer.add_scalar(key, avg, times)
 
     def clear(self, **kwargs):
         r"""clear log buffer
