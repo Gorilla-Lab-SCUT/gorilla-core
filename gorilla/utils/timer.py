@@ -13,7 +13,7 @@ def convert_seconds(seconds: int) -> str:
     Returns:
         str: "{hours}:{minutes}:{seconds}"
     """
-    return time.strftime("%H:%M:%S", time.gmtime(seconds))
+    return time.strftime("%d days %H:%M:%S", time.gmtime(seconds))
 
 def timestamp() -> str:
     r"""Author: liang.zhihao
