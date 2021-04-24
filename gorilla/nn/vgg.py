@@ -122,7 +122,7 @@ class VGG(nn.Module):
 
     def init_weights(self, pretrained=None):
         if isinstance(pretrained, str):
-            logger = logging.getLogger()
+            logger = logging.getLogger(__name__)
         elif pretrained is None:
             for m in self.modules():
                 if isinstance(m, nn.Conv2d):

@@ -1,4 +1,5 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
+import logging
 import os
 import random
 from abc import ABCMeta, abstractmethod
@@ -17,7 +18,6 @@ class BaseSolver(metaclass=ABCMeta):
                  model,
                  dataloaders,
                  cfg,
-                 logger=None,
                  **kwargs):
         # TODO: the model builder is ugly and need to 
         # integrate into solver elegant
@@ -40,7 +40,7 @@ class BaseSolver(metaclass=ABCMeta):
         self.optimizer = build_optimizer(model, cfg.optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, cfg.lr_scheduler)
         self.cfg = cfg
-        self.logger = logger
+        self.logger = logging.getLogger(__name__)
 
         self.get_ready()
         self.callback()
@@ -64,7 +64,6 @@ class BaseSolver(metaclass=ABCMeta):
                            self.optimizer,
                            self.lr_scheduler,
                            **kwargs)
-        self.logger.info(f"resume from: {checkpoint}")
         if "epoch" in self.meta:
             self.epoch = self.meta["epoch"] + 1
 
@@ -73,7 +72,7 @@ class BaseSolver(metaclass=ABCMeta):
             times = self.epoch
         elif self.mode == "iter":
             times = self.iter
-        self.tb_writer.write()
+        self.tb_writer.write(self.epoch)
         # self.log_buffer.average()
         # for key, avg in self.log_buffer.output.items():
         #     self.tb_writer.add_scalar(key, avg, times)

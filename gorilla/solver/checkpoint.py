@@ -1,14 +1,13 @@
 # Copyright (c) Open-MMLab. All rights reserved.
 import os
 import os.path as osp
-import glob
-import pkgutil
 import time
+import logging
+import pkgutil
 import warnings
-from typing import Callable, Dict, Optional, Union
-from logging import Logger
 from collections import OrderedDict
 from importlib import import_module
+from typing import Callable, Dict, Optional, Union
 
 import numpy as np
 import torch
@@ -37,8 +36,7 @@ def is_module_wrapper(module: nn.Module):
 
 def load_state_dict(module: nn.Module,
                     state_dict: Dict,
-                    strict: bool=False,
-                    logger: Optional[Logger]=None):
+                    strict: bool=False,):
     """Load state_dict to a module.
     This method is modified from :meth:`torch.nn.Module.load_state_dict`.
     Default value for ``strict`` is set to ``False`` and the message for
@@ -49,13 +47,12 @@ def load_state_dict(module: nn.Module,
         strict (bool): whether to strictly enforce that the keys
             in :attr:`state_dict` match the keys returned by this module"s
             :meth:`~torch.nn.Module.state_dict` function. Default: ``False``.
-        logger (:obj:`logging.Logger`, optional): Logger to log the error
-            message. If not specified, print function will be used.
     """
     unexpected_keys = []
     all_missing_keys = []
     err_msg = []
 
+    logger = logging.getLogger(__name__)
     metadata = getattr(state_dict, "_metadata", None)
     state_dict = state_dict.copy()
     if metadata is not None:
@@ -105,8 +102,7 @@ def load_state_dict(module: nn.Module,
 def load_checkpoint(model: nn.Module,
                     filename: str,
                     map_location: Optional[Union[str, Callable]]=None,
-                    strict: bool=True,
-                    logger: Optional[Logger]=None):
+                    strict: bool=True):
     r"""Load checkpoint from a file or URI.
     Args:
         model (Module): Module to load checkpoint.
@@ -114,7 +110,6 @@ def load_checkpoint(model: nn.Module,
         map_location (func): Same as :func:`torch.load`.
         strict (bool): Whether to allow different params for the model and
             checkpoint.
-        logger (:mod:`logging.Logger` or None): The logger for error message.
     Returns:
         dict or OrderedDict: The loaded checkpoint.
     """
@@ -132,7 +127,7 @@ def load_checkpoint(model: nn.Module,
     if list(state_dict.keys())[0].startswith("module."):
         state_dict = {k[7:]: v for k, v in checkpoint["model"].items()}
     # load state_dict
-    load_state_dict(model, state_dict, strict, logger)
+    load_state_dict(model, state_dict, strict)
     return checkpoint
 
 
@@ -144,14 +139,9 @@ def resume(model: nn.Module,
            resume_scheduler: bool=True,
            map_location: Optional[Union[str, Callable]]="default",
            strict: bool=True,
-           logger: Optional[Logger]=None,
            **kwargs):
-    def info(msg):
-        if isinstance(logger, Logger):
-            logger.info(msg)
-        else:
-            print(msg)
 
+    logger = logging.getLogger(__name__)
     if map_location == "default":
         if torch.cuda.is_available():
             device_id = torch.cuda.current_device()
@@ -162,10 +152,10 @@ def resume(model: nn.Module,
                 map_location=lambda storage, loc: storage.cuda(device_id),
                 **kwargs)
         else:
-            checkpoint = load_checkpoint(model, filename, strict=strict, logger=logger, **kwargs)
+            checkpoint = load_checkpoint(model, filename, strict=strict, **kwargs)
     else:
-        checkpoint = load_checkpoint(model, filename, strict=strict, map_location=map_location, logger=logger, **kwargs)
-    info(f"Loading checkpoint from {filename}")
+        checkpoint = load_checkpoint(model, filename, strict=strict, map_location=map_location, **kwargs)
+    logger.info(f"Loading checkpoint from {filename}")
 
     if "optimizer" in checkpoint and resume_optimizer:
         if optimizer is None:
@@ -179,7 +169,7 @@ def resume(model: nn.Module,
         else:
             raise TypeError(
                 f"Optimizer should be dict or torch.optim.Optimizer but got {type(optimizer)}")
-        info(f"Loading optimizer from {filename}")
+        logger.info(f"Loading optimizer from {filename}")
 
     if "scheduler" in checkpoint and resume_scheduler:
         if scheduler is None:
@@ -193,12 +183,11 @@ def resume(model: nn.Module,
         else:
             raise TypeError(
                 f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}")
-        info(f"Loading scheduler from {filename}")
+        logger.info(f"Loading scheduler from {filename}")
 
-    if "meta" in checkpoint:
-        return checkpoint["meta"]
-    else:
-        return {}
+    meta = checkpoint.get("meta", {})
+
+    return meta
 
 
 def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):

@@ -146,7 +146,7 @@ def collect_env_info() -> str:
 def set_random_seed(seed: int,
                     deterministic: bool=True,
                     use_rank_shift: bool=False,
-                    logger: Optional[logging.Logger]=None) -> None:
+                    **kwargs) -> None:
     r"""Set random seed.
     Args:
         seed (int): Seed to be used.
@@ -157,11 +157,8 @@ def set_random_seed(seed: int,
         rank_shift (bool): Whether to add rank number to the random seed to
             have different random seed in different threads. Default: False.
     """
-    message = f"set random seed: {seed}"
-    if logger is not None:
-        logger.info(message)
-    else:
-        print(message)
+    logger = logging.getLogger(__name__)
+    logger.info(f"set random seed: {seed}")
         
     if use_rank_shift:
         rank, _ = get_dist_info()

@@ -2,7 +2,7 @@
 from .config import (add_args, Config, ConfigDict, DictAction,
                      merge_cfg_and_args)
 
-from .logging import (get_logger, print_log, get_log_dir, collect_logger)
+from .logging import (get_logger, print_log, get_log_dir, collect_logger, derive_logger)
 
 from .backup import backup
 

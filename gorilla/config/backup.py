@@ -13,20 +13,19 @@ from ..version import __version__
 
 def backup(backup_dir: str,
            backup_list: [List[str], str],
-           logger: Optional[logging.Logger]=None,
            contain_suffix :List=["*.py"], 
-           strict: bool=False) -> None:
+           strict: bool=False,
+           **kwargs) -> None:
     r"""Author: liang.zhihao
     The backup helper function
 
     Args:
         backup_dir (str): the bakcup directory
         backup_list (str or List of str): the backup members
-        logger (logging.Logger, Optional): logger. Defaults to None.
         strict (bool, optional): tolerate backup members missing or not.
             Defaults to False.
     """
-    info = logger.info if logger is not None else print
+    logger = logging.getLogger(__name__)
 
     # process distributed situation
     if dist.is_available() and dist.is_initialized():
@@ -43,19 +42,19 @@ def backup(backup_dir: str,
 
     os.makedirs(backup_dir, exist_ok=True)
     # log gorilla version
-    info(f"gorilla-core version is {__version__}")
+    logger.info(f"gorilla-core version is {__version__}")
     try:
         from gorilla2d import __version__ as g2_ver
-        info(f"gorilla2d version is {g2_ver}")
+        logger.info(f"gorilla2d version is {g2_ver}")
     except:
         pass
     try:
         from gorilla3d import __version__ as g3_ver
-        info(f"gorilla3d version is {g3_ver}")
+        logger.info(f"gorilla3d version is {g3_ver}")
     except:
         pass
 
-    info(f"backup files at {backup_dir}")
+    logger.info(f"backup files at {backup_dir}")
     if not isinstance(backup_list, list):
         backup_list = [backup_list]
     if not isinstance(contain_suffix, list):

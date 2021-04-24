@@ -10,14 +10,13 @@ import torch.distributed as dist
 from ..utils import timestamp
 from ..core import convert_list_str
 
-logger_initialized = {}
-
 
 def collect_logger(root: str="log",
                    prefix: Optional[str]=None,
                    suffix: Optional[str]=None,
                    log_name: Optional[str]=None,
                    log_file: Optional[str]=None,
+                   show_name: bool=True,
                    **kwargs):
     r"""Author: liang.zhihao
     A easy combination of get_log_dir and get_logger, use the timestamp
@@ -33,6 +32,9 @@ def collect_logger(root: str="log",
         log_file (str, optional):
             the path of log_file, the highest priority, if given, directly init the logger.
             Defaults to None.
+        show_name: (bool, optional):
+            show the name of logger prefix.
+            Defaults to True.
 
     Returns:
         [str, logging.Logger]: the log dir and the logger
@@ -59,7 +61,7 @@ def collect_logger(root: str="log",
     if not log_file.startswith("."):
         log_file = f"./{log_file}"
 
-    logger = get_logger(log_file, timestamp=time_stamp)
+    logger = get_logger(log_file, timestamp=time_stamp, show_name=show_name)
 
     return log_dir, logger
 
@@ -121,7 +123,10 @@ def get_log_dir(root: str="log",
 def get_logger(log_file: str=None,
                name: str="gorilla",
                log_level: int=logging.INFO,
-               timestamp: Optional[str]=None) -> logging.Logger:
+               timestamp: Optional[str]=None,
+               abbrev_name: Optional[str]=None,
+               show_name: bool=True,
+               color: bool=True) -> logging.Logger:
     r"""Initialize and get a logger by name.
         If the logger has not been initialized, this method will initialize the
         logger by adding one or two handlers, otherwise the initialized logger will
@@ -138,27 +143,25 @@ def get_logger(log_file: str=None,
             "Error" thus be silent most of the time.
         timestamp (str, optional): The timestamp of logger.
             Defaults to None
+        abbrev_name (str): an abbreviation of the module, to avoid long names in logs.
+            Set to "" to not log the root module in logs.
+            By default, will be "gorilla" and leave other
+            modules unchanged.
     Returns:
         logging.Logger: The expected logger.
     """
     logger = logging.getLogger(name)
     logger.timestamp = timestamp
-    if name in logger_initialized:
-        return logger
-    # handle hierarchical names
-    # e.g., logger "a" is initialized, then logger "a.b" will skip the
-    # initialization since it is a child of "a".
-    for logger_name in logger_initialized:
-        if name.startswith(logger_name):
-            return logger
 
     try:
         # piror rich handler
         from rich.logging import RichHandler
         handlers = [RichHandler(rich_tracebacks=True, show_level=False, show_time=False)]
+        colored = lambda x, y: x # NOTE: fix the conflict between rich and colored
     except:
         stream_handler = logging.StreamHandler()
         handlers = [stream_handler]
+        from termcolor import colored
 
     if dist.is_available() and dist.is_initialized():
         rank = dist.get_rank()
@@ -172,8 +175,31 @@ def get_logger(log_file: str=None,
         file_handler = logging.FileHandler(log_file, "w")
         handlers.append(file_handler)
 
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    # # mmcv style
+    # formatter = logging.Formatter(
+    #     "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        
+    # detectron2 style
+    if abbrev_name is None:
+        abbrev_name = name
+    if color:
+        if show_name:
+            prefix = colored("[%(asctime)s %(name)s]", "green") + " %(levelname)s: %(message)s"
+        else:
+            prefix = colored("[%(asctime)s]", "green") + " %(levelname)s: %(message)s"
+        formatter = _ColorfulFormatter(
+            prefix,
+            datefmt="%m/%d %H:%M:%S",
+            root_name=name,
+            abbrev_name=abbrev_name,
+        )
+    else:
+        if show_name:
+            prefix = "[%(asctime)s %(name)s] %(levelname)s: %(message)s"
+        else:
+            prefix = "[%(asctime)s] %(levelname)s: %(message)s"
+        formatter = logging.Formatter(prefix, datefmt="%m/%d %H:%M:%S")
+
     for handler in handlers:
         handler.setFormatter(formatter)
         handler.setLevel(log_level)
@@ -184,7 +210,29 @@ def get_logger(log_file: str=None,
     else:
         logger.setLevel(logging.ERROR)
 
-    logger_initialized[name] = True
+    return logger
+
+def derive_logger(name: str,
+                  parent: str="gorilla") -> logging.Logger:
+    r"""
+    drive a logger, whose parent is decided by the `parent` name
+    in order to intialize logger by `__name__` more convenient
+    (process the message by parent's handlers)
+
+    Args:
+        name (str): the name of initialized logger
+        parent (str, optional): the name of parent logger. Defaults to "gorilla".
+
+    Raises:
+        KeyError: parent logger does not exist
+
+    Returns:
+        logging.Logger: initilalized logger
+    """
+    if parent not in logging.Logger.manager.loggerDict.keys():
+        raise KeyError(f"the parent logger-{parent} are not initialized")
+    logger = logging.getLogger(name)
+    logger.parent = logging.getLogger(parent)
 
     return logger
 
@@ -217,4 +265,24 @@ def print_log(msg: str,
         raise TypeError(
             f"logger should be either a logging.Logger object, str, "
             f"'silent' or None, but got {type(logger)}")
+
+# modify from detectron2 https://github.com/facebookresearch/detectron2/blob/master/detectron2/utils/logger.py
+class _ColorfulFormatter(logging.Formatter):
+    def __init__(self, *args, **kwargs):
+        self._root_name = kwargs.pop("root_name") + "."
+        self._abbrev_name = kwargs.pop("abbrev_name", "")
+        if len(self._abbrev_name):
+            self._abbrev_name = self._abbrev_name + "."
+        super(_ColorfulFormatter, self).__init__(*args, **kwargs)
+
+    def formatMessage(self, record):
+        record.name = record.name.replace(self._root_name, self._abbrev_name)
+        log = super(_ColorfulFormatter, self).formatMessage(record)
+        if record.levelno == logging.WARNING:
+            prefix = colored("WARNING", "red", attrs=["blink"])
+        elif record.levelno == logging.ERROR or record.levelno == logging.CRITICAL:
+            prefix = colored("ERROR", "red", attrs=["blink", "underline"])
+        else:
+            return log
+        return prefix + " " + log
 

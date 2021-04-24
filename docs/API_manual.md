@@ -437,7 +437,6 @@ None
 ```python
 def backup(backup_dir: str,
            backup_list: [List[str], str],
-           logger: logging.Logger=None,
            contain_suffix :List=["*.py"], 
            strict: bool=False) -> None:
 ```
@@ -445,7 +444,6 @@ def backup(backup_dir: str,
 ```python
 >>> import os
 >>> import gorilla
->>> logger = gorilla.get_logger() # 初始化 logger
 >>> os.system("tree") # 目录结构
 .
 ├── dir
@@ -458,7 +456,7 @@ def backup(backup_dir: str,
 ├── log
 │   └── temp
 └── temp.py
->>> gorilla.backup("log/temp/backup", ["temp.py", "dir"], logger)
+>>> gorilla.backup("log/temp/backup", ["temp.py", "dir"])
 >>> os.system("tree log/temp")
 log/temp
 └── backup
@@ -748,8 +746,7 @@ checkpoint = {
 def load_checkpoint(model,
                     filename,
                     map_location=None,
-                    strict=True,
-                    logger=None):
+                    strict=True):
 ```
 支持从 `url` 下载所需的权重。在支持直接导入模型参数的基础上（既`checkpoint`本身就是`state_dict`），也为了支持上述的 `checkpoint` 键值索引也进行了相应的判断和处理。
 
