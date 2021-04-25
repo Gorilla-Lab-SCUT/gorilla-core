@@ -10,9 +10,10 @@ from importlib import import_module
 from typing import Callable, Dict, Optional, Union
 
 import numpy as np
+import torchvision
 import torch
 import torch.nn as nn
-import torchvision
+import torch.distributed as dist
 from torch.optim import Optimizer
 from torch.utils import model_zoo
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -201,6 +202,15 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
         optimizer (:obj:`Optimizer`, optional): Optimizer to be saved.
         meta (dict, optional): Metadata to be saved in checkpoint.
     """
+    # process distributed situation
+    if dist.is_available() and dist.is_initialized():
+        rank = dist.get_rank()
+    else:
+        rank = 0
+    
+    # just execution for the main rank process(avoid distrbuted error)
+    if rank > 0: return
+    
     if meta is None:
         meta = {}
     elif not isinstance(meta, dict):
