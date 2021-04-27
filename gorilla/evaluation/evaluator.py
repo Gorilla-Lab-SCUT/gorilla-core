@@ -19,6 +19,9 @@ class DatasetEvaluator:
     This class will accumulate information of the inputs/outputs (by :meth:`process`),
     and produce evaluation results in the end (by :meth:`evaluate`).
     """
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
     def reset(self):
         r"""
         Preparation for a new round of evaluation.

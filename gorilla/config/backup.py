@@ -80,7 +80,8 @@ def backup(backup_dir: str,
             files = glob.iglob(osp.join(name, "**", "*.*"), recursive=True)
             ignore_suffix = set(map(lambda x: "*." + x.split("/")[-1].split(".")[-1], files))
             for suffix in contain_suffix:
-                ignore_suffix.remove(suffix)
+                if suffix in ignore_suffix:
+                    ignore_suffix.remove(suffix)
             # copy dir
             shutil.copytree(name, osp.join(backup_dir, name), ignore=shutil.ignore_patterns(*ignore_suffix))
 
