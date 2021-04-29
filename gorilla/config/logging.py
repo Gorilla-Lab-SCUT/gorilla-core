@@ -2,10 +2,11 @@
 import os
 import os.path as osp
 import logging
-from typing import Optional
+from typing import Dict, Iterable, Optional
 from collections import OrderedDict
 
 import torch.distributed as dist
+from tabulate import tabulate
 
 from ..utils import timestamp
 from ..core import convert_list_str
@@ -212,6 +213,7 @@ def get_logger(log_file: str=None,
 
     return logger
 
+
 def derive_logger(name: str,
                   parent: str="gorilla") -> logging.Logger:
     r"""
@@ -286,3 +288,50 @@ class _ColorfulFormatter(logging.Formatter):
             return log
         return prefix + " " + log
 
+
+# modify from https://github.com/Megvii-BaseDetection/cvpods/blob/master/cvpods/utils/dump/logger.py
+def create_small_table(small_dict: Dict,
+                       tablefmt: str="pipe",
+                       **kwargs):
+    """
+    Create a small table using the keys of small_dict as headers. This is only
+    suitable for small dictionaries.
+    Args:
+        small_dict (dict): a result dictionary of only a few items.
+    Returns:
+        str: the table as a string.
+    """
+    keys, values = tuple(zip(*small_dict.items()))
+    table = tabulate(
+        [values],
+        headers=keys,
+        tablefmt=tablefmt,
+        floatfmt=".3f",
+        stralign="center",
+        numalign="center",
+        **kwargs
+    )
+    return table
+
+def table(data: Iterable,
+          headers: Iterable,
+          tablefmt: str="pipe",
+          **kwargs):
+    r"""
+    a lite wrapper of tabulate, given the default tablefmt/floatfmt/stralign/numalign
+    """
+    if not isinstance(data, Iterable):
+        data = [data]
+    if not isinstance(headers, Iterable):
+        headers = [headers]
+
+    table = tabulate(
+        data,
+        headers=headers,
+        tablefmt=tablefmt,
+        floatfmt=".3f",
+        stralign="center",
+        numalign="center",
+        **kwargs
+    )
+    return table
