@@ -9,8 +9,11 @@ from typing import List, Optional
 
 import torch.distributed as dist
 
+from ..core import master_only
 from ..version import __version__
 
+
+@master_only
 def backup(backup_dir: str,
            backup_list: [List[str], str],
            contain_suffix :List=["*.py"], 
@@ -26,15 +29,6 @@ def backup(backup_dir: str,
             Defaults to False.
     """
     logger = logging.getLogger(__name__)
-
-    # process distributed situation
-    if dist.is_available() and dist.is_initialized():
-        rank = dist.get_rank()
-    else:
-        rank = 0
-    
-    # just execution for the main rank process(avoid distrbuted error)
-    if rank > 0: return
 
     # if exist, remove the backup dir to avoid copytree exist error
     if osp.exists(backup_dir):

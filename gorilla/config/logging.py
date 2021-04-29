@@ -1,4 +1,5 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
+import functools
 import os
 import os.path as osp
 import logging
@@ -121,6 +122,7 @@ def get_log_dir(root: str="log",
     return log_dir
 
 
+@functools.lru_cache()  # so that calling setup_logger multiple times won't add many handlers
 def get_logger(log_file: str=None,
                name: str="gorilla",
                log_level: int=logging.INFO,

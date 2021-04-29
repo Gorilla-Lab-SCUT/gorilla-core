@@ -1,10 +1,14 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
-from typing import Dict, List, Optional, Sequence
 from collections import defaultdict
+from typing import Dict, List, Optional, Sequence
 
 import torch
+import torch.distributed as dist
 import numpy as np
 from tensorboardX import SummaryWriter
+
+from ..core import master_only
+
 
 class TensorBoardWriter:
     def __init__(self, logdir: str, **kwargs):
@@ -16,6 +20,7 @@ class TensorBoardWriter:
         """clear the buffer"""
         self.buffer.clear()
 
+    @master_only
     def update(self, content: Dict, global_step: Optional[int]=None):
         """"update the buffer according to given directory"""
         self.buffer.update(content)
@@ -23,6 +28,7 @@ class TensorBoardWriter:
         if global_step is not None:
             self.write(global_step)
 
+    @master_only
     def write(self, global_step: int):
         """write according to buffer"""
         self.buffer.average()
@@ -41,6 +47,7 @@ class TensorBoardWriter:
 
     # NOTE: the add_scalar and add_scalars is the wrapper of tensorboard
     #       we support the origin API for using
+    @master_only
     def add_scalar(self,
                   tag,
                   scalar_value,
@@ -49,6 +56,7 @@ class TensorBoardWriter:
         r"""the wrapper API of SummaryWriter.add_scalar"""
         self.writer.add_scalar(tag, scalar_value, global_step, **kwargs)
 
+    @master_only
     def add_scalars(self,
                     tag,
                     scalar_value,
@@ -179,7 +187,6 @@ class HistoryBuffer:
         self._count += 1
         self._global_sum = sum(map(lambda x: x[0] * x[1], zip(self._values, self._nums)))
         self._global_avg = self._global_sum / sum(self._nums)
-
 
     def median(self, window_size: int) -> float:
         r"""

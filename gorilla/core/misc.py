@@ -4,14 +4,11 @@ import itertools
 import operator
 import subprocess
 import warnings
-from copy import deepcopy
 from collections import abc
 from importlib import import_module
 from inspect import getfullargspec
 from six.moves import map, zip
 from typing import Dict, List, Callable, Iterable, Optional, Sequence, Union
-
-from torch.autograd import Function
 
 
 def convert_list(input_list: List, type: Callable):
@@ -271,7 +268,7 @@ def is_power2(num: int) -> bool:
     """
     return num != 0 and ((num & (num - 1)) == 0)
 
-def is_multiple(num: (int, float), multiple: (int, float)) -> bool:
+def is_multiple(num: Union[int, float], multiple: Union[int, float]) -> bool:
     r"""Author: liang.zhihao
 
     Args:

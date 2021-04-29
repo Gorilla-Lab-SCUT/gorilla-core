@@ -15,7 +15,7 @@ import torchvision
 import numpy as np
 from tabulate import tabulate
 
-from .dist import get_dist_info
+from .comm import get_dist_info
 
 __all__ = ["collect_env_info"]
 

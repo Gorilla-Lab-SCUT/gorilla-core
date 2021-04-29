@@ -19,7 +19,7 @@ from torch.utils import model_zoo
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 from torch.optim.lr_scheduler import _LRScheduler
 
-from ..core import get_dist_info
+from ..core import get_dist_info, master_only
 
 
 def is_module_wrapper(module: nn.Module):
@@ -35,6 +35,7 @@ def is_module_wrapper(module: nn.Module):
     return isinstance(module, module_wrappers)
 
 
+@master_only
 def load_state_dict(module: nn.Module,
                     state_dict: Dict,
                     strict: bool=False,):
@@ -87,8 +88,7 @@ def load_state_dict(module: nn.Module,
     if missing_keys:
         err_msg.append(f"missing keys in source state_dict: {', '.join(missing_keys)}\n")
 
-    rank, _ = get_dist_info()
-    if len(err_msg) > 0 and rank == 0:
+    if len(err_msg) > 0:
         err_msg.insert(
             0, "The model and loaded state dict do not match exactly\n")
         err_msg = "\n".join(err_msg)
@@ -192,7 +192,7 @@ def resume(model: nn.Module,
 
     return meta
 
-
+@master_only
 def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
     r"""Save checkpoint to file.
     The checkpoint will have 3 fields:
@@ -204,15 +204,6 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
         optimizer (:obj:`Optimizer`, optional): Optimizer to be saved.
         meta (dict, optional): Metadata to be saved in checkpoint.
     """
-    # process distributed situation
-    if dist.is_available() and dist.is_initialized():
-        rank = dist.get_rank()
-    else:
-        rank = 0
-    
-    # just execution for the main rank process(avoid distrbuted error)
-    if rank > 0: return
-    
     if meta is None:
         meta = {}
     elif not isinstance(meta, dict):
