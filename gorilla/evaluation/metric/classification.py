@@ -1,5 +1,5 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
-
+import torch
 
 def accuracy(output, label, topk=(1,), mode="percentage"):
     r"""
