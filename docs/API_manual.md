@@ -603,7 +603,7 @@ def build_lr_scheduler(
         lr_scheduler_cfg: [Config, Dict],
         lambda_func=None) -> torch.optim.lr_scheduler._LRScheduler:
 ```
-其中的 `optimizer_cfg` 和 `lr_scheduler_cfg` 分别是传给 `Optimizer` 和 `xxxLR` 的键值对，至于要调用哪个 `Optimizer` 和 `xxxLR`，则在 `cfg` 里面定义好 `name` 即可
+其中的 `optimizer_cfg` 和 `lr_scheduler_cfg` 分别是传给 `Optimizer` 和 `xxxLR` 的键值对，至于要调用哪个 `Optimizer` 和 `xxxLR`，则在 `cfg` 里面定义好 `type` 即可
 
 ```python
 >>> import gorilla
@@ -670,7 +670,7 @@ Parameter Group 0
     lr: 0.01
     lr_mult: 0.1
     momentum: 0
-    name: moduleA
+    type: moduleA
     nesterov: False
     weight_decay: 0
 
@@ -813,7 +813,7 @@ class GorillaConv(nn.Sequential):
                  name="",
                  D=2,
                  norm_cfg=None,
-                 act_cfg=dict(name="ReLU", inplace=True),
+                 act_cfg=dict(type="ReLU", inplace=True),
                  with_spectral_norm=False,
                  padding_mode="zeros",
                  order=["conv", "norm", "act"]):
@@ -868,8 +868,8 @@ class GorillaFC(nn.Sequential):
                  out_features,
                  bias=True,
                  name="",
-                 norm_cfg=dict(name="BN1d"),
-                 act_cfg=dict(name="ReLU", inplace=True),
+                 norm_cfg=dict(type="BN1d"),
+                 act_cfg=dict(type="ReLU", inplace=True),
                  dropout=None,
                  order=["FC", "norm", "act", "dropout"]):
 ```

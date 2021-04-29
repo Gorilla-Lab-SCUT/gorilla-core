@@ -198,6 +198,7 @@ class InvLR(torch.optim.lr_scheduler._LRScheduler):
             ]
 
 # modify from https://github.com/PRBonn/lidar-bonnetal/blob/master/train/common/warmupLR.py
+# NOTE: maybe not work, need to fix
 @SCHEDULERS.register_module()
 class WarmupCyclicLR(torch.optim.lr_scheduler._LRScheduler):
   r""" Warmup learning rate scheduler.
@@ -208,14 +209,13 @@ class WarmupCyclicLR(torch.optim.lr_scheduler._LRScheduler):
 
   def __init__(self,
                optimizer: torch.optim.Optimizer,
-               base_lr: float,
                max_lr: float,
+               base_lr: float=0.0,
                warmup_iters: int=1000,
                momentum: float=0.9,
-               decay: float=0.99):
+               decay: float=0.99,
+               last_epoch: int = -1):
     # cyclic params
-    self.optimizer = optimizer
-    self.base_lr = base_lr
     self.max_lr = max_lr
     self.warmup_iters = warmup_iters
     self.momentum = momentum
@@ -226,19 +226,20 @@ class WarmupCyclicLR(torch.optim.lr_scheduler._LRScheduler):
       self.warmup_iters = 1
 
     # cyclic lr
-    self.initial_scheduler = torch.optim.lr_scheduler.CyclicLR(self.optimizer,
-                                                               base_lr=self.base_lr,
-                                                               max_lr=self.max_lr,
-                                                               step_size_up=self.warmup_iters,
-                                                               step_size_down=self.warmup_iters,
-                                                               cycle_momentum=False,
-                                                               base_momentum=self.momentum,
-                                                               max_momentum=self.momentum)
+    self.initial_scheduler = torch.optim.lr_scheduler.CyclicLR(
+        optimizer,
+        base_lr=base_lr,
+        max_lr=self.max_lr,
+        step_size_up=self.warmup_iters,
+        step_size_down=self.warmup_iters,
+        cycle_momentum=False,
+        base_momentum=self.momentum,
+        max_momentum=self.momentum)
 
     # our params
     self.last_epoch = -1  # fix for pytorch 1.1 and below
     self.finished = False  # am i done
-    super().__init__(optimizer)
+    super().__init__(optimizer, self.last_epoch)
 
   def get_lr(self):
     return [self.max_lr * (self.decay ** self.last_epoch) for lr in self.base_lrs]
@@ -248,7 +249,7 @@ class WarmupCyclicLR(torch.optim.lr_scheduler._LRScheduler):
       if not self.finished:
         self.base_lrs = [self.max_lr for lr in self.base_lrs]
         self.finished = True
-      return super(WarmupCyclicLR, self).step(epoch)
+      return super().step(epoch)
     else:
       return self.initial_scheduler.step(epoch)
 
