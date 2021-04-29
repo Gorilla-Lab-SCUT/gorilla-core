@@ -291,7 +291,7 @@ class _ColorfulFormatter(logging.Formatter):
 
 # modify from https://github.com/Megvii-BaseDetection/cvpods/blob/master/cvpods/utils/dump/logger.py
 def create_small_table(small_dict: Dict,
-                       tablefmt: str="pipe",
+                       tablefmt: str="psql",
                        **kwargs):
     """
     Create a small table using the keys of small_dict as headers. This is only
@@ -315,7 +315,9 @@ def create_small_table(small_dict: Dict,
 
 def table(data: Iterable,
           headers: Iterable,
-          tablefmt: str="pipe",
+          tablefmt: str="psql",
+          stralign: str="center",
+          numalign="center",
           **kwargs):
     r"""
     a lite wrapper of tabulate, given the default tablefmt/floatfmt/stralign/numalign
@@ -330,8 +332,8 @@ def table(data: Iterable,
         headers=headers,
         tablefmt=tablefmt,
         floatfmt=".3f",
-        stralign="center",
-        numalign="center",
+        stralign=stralign,
+        numalign=numalign,
         **kwargs
     )
     return table
