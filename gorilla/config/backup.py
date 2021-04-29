@@ -20,7 +20,7 @@ def backup(backup_dir: str,
     The backup helper function
 
     Args:
-        backup_dir (str): the bakcup directory
+        backup_dir (str): the backup directory
         backup_list (str or List of str): the backup members
         strict (bool, optional): tolerate backup members missing or not.
             Defaults to False.
