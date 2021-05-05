@@ -1,7 +1,6 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
+import sys
 import inspect
-import warnings
-from functools import partial
 from typing import Optional, Dict, Type
 
 from termcolor import colored
@@ -174,4 +173,33 @@ def build_from_cfg(cfg: Dict,
             f"type must be a str or valid type, but got {type(obj_type)}")
 
     return obj_cls(**args)
+
+
+def obj_from_dict(info, parent=None, default_args=None):
+    """Initialize an object from dict.
+
+    The dict must contain the key "type", which indicates the object type
+
+    Args:
+        info (dict): Object types and arguments
+        parent (:class:`modules`):
+        default_args (dict, optional):
+    """
+    assert isinstance(info, dict) and "type" in info
+    assert isinstance(default_args, dict) or default_args is None
+    args = info.copy()
+    obj_type = args.pop("type")
+    if isinstance(obj_type, str):
+        if parent is not None:
+            obj_type = getattr(parent, obj_type)
+        else:
+            obj_type = sys.modules[obj_type]
+    elif not isinstance(obj_type, type):
+        raise TypeError(
+            "type must be a str or valid type, but got {}".format(type(obj_type))
+        )
+    if default_args is not None:
+        for name, value in default_args.items():
+            args.setdefault(name, value)
+    return obj_type(**args)
 
