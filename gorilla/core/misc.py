@@ -73,8 +73,8 @@ def is_seq_of(seq: Sequence,
     return True
 
 
-is_list_of = functools.partial(is_seq_of, expected_type=list)
-is_tuple_of = functools.partial(is_seq_of, expected_type=tuple)
+is_list_of = functools.partial(is_seq_of, seq_type=list)
+is_tuple_of = functools.partial(is_seq_of, seq_type=tuple)
 
 
 def slice_list(in_list: List, lens: Union[int, List]) -> list:
