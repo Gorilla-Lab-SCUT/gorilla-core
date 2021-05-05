@@ -31,7 +31,6 @@ build_loss = partial(build_from_cfg, registry=LOSSES)
 build_hook = partial(build_from_cfg, registry=HOOKS)
 build_model = partial(build_from_cfg, registry=MODELS)
 build_module = partial(build_from_cfg, registry=MODULES)
-build_dataset = partial(build_from_cfg, registry=DATASETS)
 build_pipeline = partial(build_from_cfg, registry=PIPELINES)
 
 # the inner func for build_optimizer in solver.build

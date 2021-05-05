@@ -262,3 +262,4 @@ class HistoryBuffer:
                          f"    sum:    {self.sum}\n"])
 
         return msg
+

@@ -5,8 +5,9 @@ import torch
 
 from ..data import DistributedSampler, DataLoaderX
 from ..config import Config
-from ..core import (is_seq_of, _build_optimizer, _build_scheduler, build_dataset,
-                    get_rank, get_world_size)
+from ..core import (is_seq_of, _build_optimizer, _build_scheduler,
+                    get_rank, get_world_size, build_from_cfg, DATASETS)
+from ..data import ConcatDataset, RepeatDataset
 
 # the default optimizer and lr_scheduler config dict
 OPTIM = {"type": "Adam",
@@ -105,7 +106,22 @@ def build_lr_scheduler(
     return _build_scheduler(lr_scheduler_cfg)
 
 
-# TODO: support distributed and multi dataloader
+# NOTE: fix for mmcv
+def build_dataset(cfg, default_args=None):
+    if isinstance(cfg, (list, tuple)):
+        dataset = ConcatDataset([build_dataset(c, default_args) for c in cfg])
+    elif cfg["type"] == "RepeatDataset":
+        dataset = RepeatDataset(
+            build_dataset(cfg["dataset"], default_args), cfg["times"]
+        )
+    # elif isinstance(cfg['ann_file'], (list, tuple)):
+    #     dataset = _concat_dataset(cfg, default_args)
+    else:
+        dataset = build_from_cfg(cfg, DATASETS, default_args)
+
+    return dataset
+
+
 def build_dataloader(
     dataset: [torch.utils.data.Dataset, Dict],
     dataloader_cfg: Dict,
