@@ -30,6 +30,12 @@ def default_argument_parser():
                         type=int,
                         default=0,
                         help="the rank of this machine (unique per machine)")
+    parser.add_argument("--local_rank", type=int, default=0)
+    parser.add_argument(
+        "--autoscale-lr",
+        action="store_true",
+        help="automatically scale lr with the number of gpus",
+    )
 
     # PyTorch still may leave orphan processes in multi-gpu training.
     # Therefore we use a deterministic way to obtain port,
