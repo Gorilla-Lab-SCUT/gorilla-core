@@ -15,6 +15,7 @@ class TensorBoardWriter:
         self.logdir = logdir
         self.writer = SummaryWriter(logdir, **kwargs)
         self.buffer = LogBuffer()
+        self.step = 0
 
     def clear(self):
         """clear the buffer"""
@@ -29,10 +30,16 @@ class TensorBoardWriter:
             self.write(global_step)
 
     @master_only
-    def write(self, global_step: int):
+    def write(self, global_step: Optional[int]=None):
         """write according to buffer"""
         self.buffer.average()
         scalar_type = (int, float, torch.Tensor, np.ndarray)
+        # using the integrate step
+        if global_step is None:
+            self.step += 1
+            global_step = self.step
+        else:
+            self.step = global_step
         for key, value in self.buffer.output.items():
             if isinstance(value, scalar_type):
                 self.add_scalar(key, value, global_step)

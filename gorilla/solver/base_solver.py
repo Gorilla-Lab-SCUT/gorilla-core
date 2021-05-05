@@ -66,6 +66,8 @@ class BaseSolver(metaclass=ABCMeta):
                            **kwargs)
         if "epoch" in self.meta:
             self.epoch = self.meta["epoch"] + 1
+        if "iter" in self.meta:
+            self.iter = self.meta["iter"] + 1
 
     def write(self, **kwargs):
         if self.mode == "epoch":
