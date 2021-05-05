@@ -15,13 +15,14 @@ from .launch import launch
 
 from .setup import default_argument_parser
 
-from .registry import Registry, build_from_cfg, auto_registry
+from .registry import Registry, build_from_cfg, auto_registry, obj_from_dict
 
 HOOKS = Registry("hooks")
 LOSSES = Registry("losses")
 MODELS = Registry("models")
 MODULES = Registry("modules")
 DATASETS = Registry("datasets")
+PIPELINES = Registry("pipelines")
 OPTIMIZERS = Registry("optimizers")
 SCHEDULERS = Registry("schedulers")
 
@@ -31,6 +32,7 @@ build_hook = partial(build_from_cfg, registry=HOOKS)
 build_model = partial(build_from_cfg, registry=MODELS)
 build_module = partial(build_from_cfg, registry=MODULES)
 build_dataset = partial(build_from_cfg, registry=DATASETS)
+build_pipeline = partial(build_from_cfg, registry=PIPELINES)
 
 # the inner func for build_optimizer in solver.build
 _build_optimizer = partial(build_from_cfg, registry=OPTIMIZERS)
