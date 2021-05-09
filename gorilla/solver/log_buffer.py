@@ -105,7 +105,12 @@ class LogBuffer:
             scalar_type = (int, float, torch.Tensor, np.ndarray)
             if isinstance(var, Sequence) and len(var) == 2:
                 var = list(var) # change tuple
-                var[0] = float(var[0])
+                if isinstance(var[0], scalar_type):
+                    var[0] = float(var[0])
+                elif isinstance(var[0], Sequence):
+                    var[0] = np.sum(np.array(var[0]))
+                else:
+                    raise TypeError(f"get invalid type of var '{type(var[0])}'")
                 self._val_history[key].update(*var)
             elif isinstance(var, scalar_type):
                 var = float(var)

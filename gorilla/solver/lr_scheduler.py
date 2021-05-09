@@ -1,5 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # auto registry all inplace lr_scheduler
+from functools import partial
+
+import numpy as np
 import torch
 from torch.optim.lr_scheduler import *
 from gorilla.core import SCHEDULERS, auto_registry
@@ -20,7 +23,7 @@ from typing import List
 
 @SCHEDULERS.register_module()
 class PolyLR(torch.optim.lr_scheduler._LRScheduler):
-    """
+    r"""
     Poly learning rate schedule used to train DeepLab.
     Paper: DeepLab: Semantic Image Segmentation with Deep Convolutional Nets,
         Atrous Convolution, and Fully Connected CRFs.

@@ -11,6 +11,8 @@ from .comm import (get_world_size, get_rank, get_local_rank, get_local_size,
 
 from .env import set_random_seed, collect_env_info
 
+from .fp16 import cast_tensor_type, auto_fp16, force_fp32
+
 from .launch import launch
 
 from .setup import default_argument_parser
