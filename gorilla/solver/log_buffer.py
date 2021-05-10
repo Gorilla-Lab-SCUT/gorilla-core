@@ -55,6 +55,17 @@ class TensorBoardWriter:
     # NOTE: the add_scalar and add_scalars is the wrapper of tensorboard
     #       we support the origin API for using
     @master_only
+    def add_text(self,
+                  tag,
+                  string,
+                  global_step,
+                  **kwargs):
+        r"""the wrapper API of SummaryWriter.add_text"""
+        self.writer.add_text(tag, string, global_step, **kwargs)
+
+    # NOTE: the add_scalar and add_scalars is the wrapper of tensorboard
+    #       we support the origin API for using
+    @master_only
     def add_scalar(self,
                   tag,
                   scalar_value,
