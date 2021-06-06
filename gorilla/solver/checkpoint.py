@@ -2,6 +2,7 @@
 import os
 import os.path as osp
 import time
+import signal
 import logging
 import pkgutil
 import warnings
@@ -192,6 +193,23 @@ def resume(model: nn.Module,
 
     return meta
 
+
+# modify from https://github.com/traveller59/second.pytorch/blob/master/torchplus/train/checkpoint.py
+class DelayedKeyboardInterrupt(object):
+    def __enter__(self):
+        self.signal_received = False
+        self.old_handler = signal.signal(signal.SIGINT, self.handler)
+
+    def handler(self, sig, frame):
+        self.signal_received = (sig, frame)
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt.')
+
+    def __exit__(self, type, value, traceback):
+        signal.signal(signal.SIGINT, self.old_handler)
+        if self.signal_received:
+            self.old_handler(*self.signal_received)
+
+
 @master_only
 def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
     r"""Save checkpoint to file.
@@ -204,48 +222,50 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
         optimizer (:obj:`Optimizer`, optional): Optimizer to be saved.
         meta (dict, optional): Metadata to be saved in checkpoint.
     """
-    if meta is None:
-        meta = {}
-    elif not isinstance(meta, dict):
-        raise TypeError(f"meta must be a dict or None, but got {type(meta)}")
-    meta.update(time=time.asctime())
+    # prevent save incomplete checkpoint due to key interrupt
+    with DelayedKeyboardInterrupt():
+        if meta is None:
+            meta = {}
+        elif not isinstance(meta, dict):
+            raise TypeError(f"meta must be a dict or None, but got {type(meta)}")
+        meta.update(time=time.asctime())
 
-    os.makedirs(osp.dirname(filename), exist_ok=True)
-    if is_module_wrapper(model):
-        model = model.module
+        os.makedirs(osp.dirname(filename), exist_ok=True)
+        if is_module_wrapper(model):
+            model = model.module
 
-    checkpoint = {
-        "meta": meta,
-        "model": weights_to_cpu(get_state_dict(model))
-    }
-    # save optimizer state dict in the checkpoint
-    if optimizer is not None:
-        if isinstance(optimizer, Optimizer):
-            checkpoint["optimizer"] = optimizer.state_dict()
-        elif isinstance(optimizer, dict):
-            checkpoint["optimizer"] = {}
-            for name, optim in optimizer.items():
-                checkpoint["optimizer"][name] = optim.state_dict()
-        else:
-            raise TypeError(
-                f"Optimizer should be dict or torch.optim.Optimizer but got {type(optimizer)}")
+        checkpoint = {
+            "meta": meta,
+            "model": weights_to_cpu(get_state_dict(model))
+        }
+        # save optimizer state dict in the checkpoint
+        if optimizer is not None:
+            if isinstance(optimizer, Optimizer):
+                checkpoint["optimizer"] = optimizer.state_dict()
+            elif isinstance(optimizer, dict):
+                checkpoint["optimizer"] = {}
+                for name, optim in optimizer.items():
+                    checkpoint["optimizer"][name] = optim.state_dict()
+            else:
+                raise TypeError(
+                    f"Optimizer should be dict or torch.optim.Optimizer but got {type(optimizer)}")
 
-    # save lr_scheduler state dict in the checkpoint
-    if scheduler is not None:
-        if isinstance(scheduler, _LRScheduler):
-            checkpoint["scheduler"] = scheduler.state_dict()
-        elif isinstance(scheduler, dict):
-            checkpoint["scheduler"] = {}
-            for name, sche in scheduler.items():
-                checkpoint["scheduler"][name] = sche.state_dict()
-        else:
-            raise TypeError(
-                f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}")
-        
-    # immediately flush buffer
-    with open(filename, "wb") as f:
-        torch.save(checkpoint, f)
-        f.flush()
+        # save lr_scheduler state dict in the checkpoint
+        if scheduler is not None:
+            if isinstance(scheduler, _LRScheduler):
+                checkpoint["scheduler"] = scheduler.state_dict()
+            elif isinstance(scheduler, dict):
+                checkpoint["scheduler"] = {}
+                for name, sche in scheduler.items():
+                    checkpoint["scheduler"][name] = sche.state_dict()
+            else:
+                raise TypeError(
+                    f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}")
+            
+        # immediately flush buffer
+        with open(filename, "wb") as f:
+            torch.save(checkpoint, f)
+            f.flush()
 
 
 def load_url_dist(url, model_dir=None):

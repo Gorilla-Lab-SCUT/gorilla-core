@@ -85,6 +85,7 @@ class Timer:
             self._is_running = True
         self._t_last = time.time()
 
+
     def since_start(self):
         r"""Total time since the timer is started.
 

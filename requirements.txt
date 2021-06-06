@@ -1,6 +1,5 @@
 numpy
 tqdm
-torch>=1.0.0
 tensorboardX
 gpustat
 pyyaml
@@ -11,6 +10,7 @@ tabulate
 pynvml
 rich
 
+# torch>=1.0.0
 # scipy
 # open3d==0.8.0.0
 # opencv-python

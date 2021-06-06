@@ -155,6 +155,7 @@ def get_logger(log_file: str=None,
     """
     logger = logging.getLogger(name)
     logger.timestamp = timestamp
+    logger.parent = None
 
     try:
         # piror rich handler
