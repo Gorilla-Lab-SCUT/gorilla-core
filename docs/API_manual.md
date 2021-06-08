@@ -329,7 +329,20 @@ Python 的 logging 库已经非常完善和易用了，但是具体的 `logger` 
 ```python
 def get_logger(log_file=None, name="gorilla", log_level=logging.INFO, timestamp=None):
 ```
-在实际使用中仅需要给定 `log_file` 即可初始化获得相应的 `logger`。
+在实际使用中仅需要给定 `log_file` 即可初始化获得相应的 `logger`，生成的 `logger` 的名称为 `gorilla`，该名称的作用后面会说。
+
+此外，在各个函数中如果我们要用到 `logger`，一种方式就是在函数的输入传入一个初始化的 `logger`，而另一种方式就是重新初始化一个，常见的方式有 `logger=logging.getLogger(__name__)` 这样会生成一个以文件路径为名的 `logger`，但是这样初始化出来的 `logger` 如果没有父类的话是没有注册句柄 (`handler`) 的，也就无法输出到相应的地方（控制台，文件等）。为此，我们提供了一个函数 `gorilla.derive_logger`，同样的利用该函数 `logger=gorilla.derive_logger(__name__)` 我们得到了相同名称的 `logger`，我们仅在里面对新初始化的 `logger` 指定了 `parent` 使得它能够利用 `parent` 的句柄实现输出，具体代码如下：
+```python
+def derive_logger(name: str,
+                  parent: str="gorilla") -> logging.Logger:
+    if parent not in logging.Logger.manager.loggerDict.keys():
+        raise KeyError(f"the parent logger-{parent} are not initialized")
+    logger = logging.getLogger(name)
+    logger.parent = logging.getLogger(parent)
+
+    return logger
+```
+可以看到其只是非常简单地指定了 `logger` 的 `parent`，默认为名为 `gorilla` 的 `logger`，所以在此之前需要初始化一个名为 `gorilla` 的 `logger`，也就是一开始说的，这样就能够利用到 `parent` 的句柄实现相应的输出了，避免了重复的句柄注册，同学们也可以修改其中的 `parent` 参数来实现对不同名称的 `logger` 的继承。
 
 此外针对 Tensorboard 的 `SummaryWriter`， 我们也进行了非常轻量化的包装 `TensorBoardWriter`:
 `TensorBoardWriter` 的初始化通 `SummaryWriter` 一致，也是给定 `logdir` 即可实现初始化，以及支持同样的 `add_scalar/add_scalars`：
