@@ -8,8 +8,8 @@ yapf
 termcolor
 tabulate
 pynvml
-rich
 
+# rich
 # torch>=1.0.0
 # scipy
 # open3d==0.8.0.0
