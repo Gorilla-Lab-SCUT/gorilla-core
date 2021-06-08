@@ -5,6 +5,7 @@ import os.path as osp
 import logging
 from typing import Dict, Iterable, Optional
 from collections import OrderedDict
+import termcolor
 
 import torch.distributed as dist
 from tabulate import tabulate
@@ -161,11 +162,12 @@ def get_logger(log_file: str=None,
         # piror rich handler
         from rich.logging import RichHandler
         handlers = [RichHandler(rich_tracebacks=True, show_level=False, show_time=False)]
-        colored = lambda x, y: x # NOTE: fix the conflict between rich and colored
+        # fake colored refer to termcolor's colored API
+        colored = lambda text, color, on_color=None, attrs=None: text # NOTE: fix the conflict between rich and colored
     except:
         stream_handler = logging.StreamHandler()
         handlers = [stream_handler]
-        from termcolor import colored
+        colored = termcolor.colored
 
     if dist.is_available() and dist.is_initialized():
         rank = dist.get_rank()
@@ -196,6 +198,7 @@ def get_logger(log_file: str=None,
             datefmt="%m/%d %H:%M:%S",
             root_name=name,
             abbrev_name=abbrev_name,
+            colored=colored,
         )
     else:
         if show_name:
@@ -276,6 +279,7 @@ class _ColorfulFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
         self._root_name = kwargs.pop("root_name") + "."
         self._abbrev_name = kwargs.pop("abbrev_name", "")
+        self._colored = kwargs.pop("colored", termcolor.colored)
         if len(self._abbrev_name):
             self._abbrev_name = self._abbrev_name + "."
         super(_ColorfulFormatter, self).__init__(*args, **kwargs)
@@ -284,9 +288,9 @@ class _ColorfulFormatter(logging.Formatter):
         record.name = record.name.replace(self._root_name, self._abbrev_name)
         log = super(_ColorfulFormatter, self).formatMessage(record)
         if record.levelno == logging.WARNING:
-            prefix = colored("WARNING", "red", attrs=["blink"])
+            prefix = self._colored("WARNING", "red", attrs=["blink"])
         elif record.levelno == logging.ERROR or record.levelno == logging.CRITICAL:
-            prefix = colored("ERROR", "red", attrs=["blink", "underline"])
+            prefix = self._colored("ERROR", "red", attrs=["blink", "underline"])
         else:
             return log
         return prefix + " " + log
