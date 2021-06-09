@@ -22,4 +22,6 @@ from .testing import (assert_attrs_equal, assert_dict_contains_subset,
                       assert_keys_equal, assert_params_all_zeros,
                       check_python_script)
 
+from .maintain import (search_expired_files)
+
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
