@@ -11,6 +11,51 @@ from six.moves import map, zip
 from typing import Dict, List, Callable, Iterable, Optional, Sequence, Union
 
 
+def import_modules_from_strings(imports, allow_failed_imports=False):
+    """Import modules from the given list of strings.
+    Args:
+        imports (list | str | None): The given module names to be imported.
+        allow_failed_imports (bool): If True, the failed imports will return
+            None. Otherwise, an ImportError is raise. Default: False.
+    Returns:
+        list[module] | module | None: The imported modules.
+    Examples:
+        >>> osp, sys = import_modules_from_strings(
+        ...     ['os.path', 'sys'])
+        >>> import os.path as osp_
+        >>> import sys as sys_
+        >>> assert osp == osp_
+        >>> assert sys == sys_
+    """
+    if not imports:
+        return
+    single_import = False
+    if isinstance(imports, str):
+        single_import = True
+        imports = [imports]
+    if not isinstance(imports, list):
+        raise TypeError(
+            f'custom_imports must be a list but got type {type(imports)}')
+    imported = []
+    for imp in imports:
+        if not isinstance(imp, str):
+            raise TypeError(
+                f'{imp} is of type {type(imp)} and cannot be imported.')
+        try:
+            imported_tmp = import_module(imp)
+        except ImportError:
+            if allow_failed_imports:
+                warnings.warn(f'{imp} failed to import and is ignored.',
+                              UserWarning)
+                imported_tmp = None
+            else:
+                raise ImportError
+        imported.append(imported_tmp)
+    if single_import:
+        imported = imported[0]
+    return imported
+
+
 def convert_list(input_list: List, type: Callable):
     return list(map(type, input_list))
 
@@ -86,14 +131,11 @@ def slice_list(in_list: List, lens: Union[int, List]) -> list:
     Returns:
         list: A list of sliced list.
     """
-    assert isinstance(
-        lens,
-        (int, list)), "`indices` must be an integer or a list of integers"
     if isinstance(lens, int):
-        assert len(
-            in_list
-        ) % lens == 0, "the len of `in_list` must be divisible by `lens`"
+        assert len(in_list) % lens == 0
         lens = [lens] * int(len(in_list) / lens)
+    if not isinstance(lens, list):
+        raise TypeError("'indices' must be an integer or a list of integers")
     elif sum(lens) != len(in_list):
         raise ValueError(f"sum of lens and list length does not "
                          f"match: {sum(lens)} != {len(in_list)}")
@@ -131,7 +173,7 @@ def check_prerequisites(prerequisites: Union[str, List[str]],
         decorator: A specific decorator.
     """
     if msg_tmpl is None:
-        msg_tmpl = ("Prerequisites '{}' are required"
+        msg_tmpl = ("Prerequisites '{}' are required "
                     "in method '{}' but not found, "
                     "please install them first.")
 

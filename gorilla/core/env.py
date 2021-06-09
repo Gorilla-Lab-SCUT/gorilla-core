@@ -135,7 +135,7 @@ def collect_env_info() -> str:
     try:
         import cv2
 
-        data.append(("cv2", cv2.__version__))
+        data.append(("OpenCV", cv2.__version__))
     except ImportError:
         data.append(("cv2", "Not found"))
     env_str = tabulate(data) + "\n"

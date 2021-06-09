@@ -176,14 +176,11 @@ def get_logger(log_file: str=None,
 
     # only rank 0 will add a FileHandler
     if rank == 0 and log_file is not None:
-        if not osp.isdir(osp.dirname(log_file)):
-            os.makedirs(osp.dirname(log_file))
+        log_dir = os.path.join(".", osp.dirname(log_file))
+        if not osp.isdir(log_dir):
+            os.makedirs(log_dir)
         file_handler = logging.FileHandler(log_file, "w")
         handlers.append(file_handler)
-
-    # # mmcv style
-    # formatter = logging.Formatter(
-    #     "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         
     # detectron2 style
     if abbrev_name is None:
@@ -206,6 +203,10 @@ def get_logger(log_file: str=None,
         else:
             prefix = "[%(asctime)s] %(levelname)s: %(message)s"
         formatter = logging.Formatter(prefix, datefmt="%m/%d %H:%M:%S")
+
+    # # mmcv style
+    # formatter = logging.Formatter(
+    #     "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     for handler in handlers:
         handler.setFormatter(formatter)
@@ -267,7 +268,7 @@ def print_log(msg: str,
     elif logger == "silent":
         pass
     elif isinstance(logger, str):
-        _logger = get_logger(logger)
+        _logger = get_logger(name=logger)
         _logger.log(level, msg)
     else:
         raise TypeError(

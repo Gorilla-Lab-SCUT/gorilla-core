@@ -8,6 +8,8 @@ yapf
 termcolor
 tabulate
 pynvml
+pytest
+lmdb
 
 # rich
 # torch>=1.0.0
