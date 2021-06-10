@@ -1,6 +1,5 @@
 # Copyright (c) Open-MMLab. All rights reserved.
 import functools
-import itertools
 import operator
 import subprocess
 import warnings

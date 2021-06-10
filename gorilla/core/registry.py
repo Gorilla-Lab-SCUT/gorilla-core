@@ -3,13 +3,19 @@ import sys
 import inspect
 import warnings
 from functools import partial
-from typing import Optional, Dict, Type
+from typing import Callable, List, Optional, Dict, Type, Union
+
+from termcolor import colored
 
 from .misc import is_seq_of
 
 
 class Registry:
-    def __init__(self, name: str, build_func=None, parent=None, scope=None):
+    def __init__(self,
+                 name: str,
+                 build_func: Optional[Callable]=None,
+                 parent: Optional[object]=None,
+                 scope: Optional[str]=None):
         r"""A registry to map strings to classes.
         
         Registered object could be built from registry.
@@ -34,7 +40,7 @@ class Registry:
                 children registry could be built from parent. Default: None.
             scope (str, optional): The scope of registry. It is the key to search
                 for children registry. If not specified, scope will be the name of
-                the package where class is defined, e.g. mmdet, mmcls, mmseg.
+                the package where class is defined, e.g. gorilla2d, gorilla3d.
                 Default: None.
         """
         self._name = name
@@ -42,23 +48,25 @@ class Registry:
         self._children = dict()
         self._scope = self.infer_scope() if scope is None else scope
 
-        # self.build_func will be set with the following priority:
-        # 1. build_func
-        # 2. parent.build_func
-        # 3. build_from_cfg
-        if build_func is None:
-            if parent is not None:
-                self.build_func = parent.build_func
-            else:
-                self.build_func = build_from_cfg
-        else:
-            self.build_func = build_func
+        # assert `parent`'s type if `parent` is given
         if parent is not None:
             assert isinstance(parent, Registry)
             parent._add_children(self)
             self.parent = parent
         else:
             self.parent = None
+
+        # `self.build_func` will be set with the following priority:
+        # 1. build_func
+        # 2. parent.build_func
+        # 3. build_from_cfg
+        if build_func is None:
+            if self.parent is not None:
+                self.build_func = self.parent.build_func
+            else:
+                self.build_func = build_from_cfg
+        else:
+            self.build_func = build_func
 
     def __len__(self):
         return len(self._module_dict)
@@ -67,19 +75,21 @@ class Registry:
         return self.get(key) is not None
 
     def __repr__(self):
-        format_str = self.__class__.__name__ + \
-                     f'(name={self._name}, ' \
-                     f'items={self._module_dict})'
-        return format_str
-    def __repr__(self):
-        format_str = self.__class__.__name__ + \
-                     f"(name={self._name}, " \
-                     f"items={self._module_dict})"
+        # # mmcv style
+        # format_str = self.__class__.__name__ + \
+        #              f'(name={self._name}, ' \
+        #              f'items={self._module_dict})'
+
+        # color rich style
+        format_str = self.__class__.__name__ + f"(type={colored(self._name, 'red')})\n"
+        for key, value in self._module_dict.items():
+            format_str += f"{colored(key, 'blue')}:\n"
+            format_str += f"    {value}\n"
         return format_str
 
     @staticmethod
     def infer_scope():
-        """Infer the scope of registry.
+        r"""Infer the scope of registry.
         The name of the package where registry is defined will be returned.
         Example:
             # in mmdet/models/backbone/resnet.py
@@ -98,8 +108,8 @@ class Registry:
         return split_filename[0]
 
     @staticmethod
-    def split_scope_key(key):
-        """Split scope and key.
+    def split_scope_key(key: str):
+        r"""Split scope and key.
         The first scope will be split from key.
         Examples:
             >>> Registry.split_scope_key('mmdet.ResNet')
@@ -110,7 +120,7 @@ class Registry:
             scope (str, None): The first scope.
             key (str): The remaining key.
         """
-        split_index = key.find('.')
+        split_index = key.find(".")
         if split_index != -1:
             return key[:split_index], key[split_index + 1:]
         else:
@@ -132,46 +142,6 @@ class Registry:
     def children(self):
         return self._children
 
-    def get(self, key: str) -> Type:
-        r"""Get the registry record.
-        Args:
-            key (str): The class name in string format.
-        Returns:
-            class: The corresponding class.
-        """
-        scope, real_key = self.split_scope_key(key)
-        if scope is None or scope == self._scope: # default
-            # get from self
-            if real_key in self._module_dict:
-                return self._module_dict[real_key]
-        else:
-            # get from self._children
-            if scope in self._children:
-                return self._children[scope].get(real_key)
-            else:
-                # goto root
-                parent = self.parent
-                while parent.parent is not None:
-                    parent = parent.parent
-                return parent.get(key)
-    
-    def _register_module(self, module_class, module_name=None, force=False):
-        if not inspect.isclass(module_class):
-            raise TypeError(f"module must be a class, but got {type(module_class)}")
-
-        if module_name is None:
-            module_name = module_class.__name__
-        if isinstance(module_name, str):
-            module_name = [module_name]
-        for name in module_name:
-            if not force and name in self._module_dict:
-                raise KeyError(f"{name} is already registered "
-                               f"in {self.name}")
-            self._module_dict[name] = module_class
-
-    def build(self, *args, **kwargs):
-        return self.build_func(*args, **kwargs, registry=self)
-
     def _add_children(self, registry):
         """Add children for a registry.
         The ``registry`` will be added as children based on its scope.
@@ -191,11 +161,55 @@ class Registry:
             f'scope {registry.scope} exists in {self.name} registry'
         self.children[registry.scope] = registry
 
+    def get(self, key: str) -> Type:
+        r"""Get the registry record.
+        Args:
+            key (str): The class name in string format.
+        Returns:
+            class: The corresponding class.
+        """
+        scope, real_key = self.split_scope_key(key)
+        if scope is None or scope == self._scope: # default
+            # get from self
+            return self._module_dict.get(real_key, None)
+        else:
+            # get from `self._children`
+            if scope in self._children:
+                return self._children[scope].get(real_key)
+            else:
+                # goto root
+                parent = self.parent
+                while parent.parent is not None:
+                    parent = parent.parent
+                return parent.get(key)
+
+    def build(self, *args, **kwargs):
+        return self.build_func(*args, **kwargs, registry=self)
+    
+    def _register_module(self,
+                         module_class: Type,
+                         module_name: Optional[Union[str, List[str]]]=None,
+                         force: bool=False):
+        if not inspect.isclass(module_class):
+            raise TypeError(f"module must be a class, but got {type(module_class)}")
+
+        # get the name of module, default to module's `__name__`
+        if module_name is None:
+            module_name = module_class.__name__
+        # wrap by list
+        if isinstance(module_name, str):
+            module_name = [module_name]
+        # register with statement
+        for name in module_name:
+            if not force and name in self._module_dict:
+                raise KeyError(f"{name} is already registered "
+                               f"in {self.name}")
+            self._module_dict[name] = module_class
+
     def deprecated_register_module(self, cls=None, force=False):
-        warnings.warn(
-            'The old API of register_module(module, force=False) '
-            'is deprecated and will be removed, please use the new API '
-            'register_module(name=None, force=False, module=None) instead.')
+        warnings.warn("The old API of register_module(module, force=False) "
+                      "is deprecated and will be removed, please use the new API "
+                      "register_module(name=None, force=False, module=None) instead.")
         if cls is None:
             return partial(self.deprecated_register_module, force=force)
         self._register_module(cls, force=force)
@@ -245,9 +259,8 @@ class Registry:
 
         # raise the error ahead of time
         if not (name is None or isinstance(name, str) or is_seq_of(name, str)):
-            raise TypeError(
-                f"name must be either of None, an instance of "
-                f"str or a sequence of str, but got {type(name)}")
+            raise TypeError(f"name must be either of None, an instance of "
+                            f"str or a sequence of str, but got {type(name)}")
 
         # use it as a decorator: @x.register_module()
         def _register(cls):
@@ -260,14 +273,17 @@ class Registry:
 
 def auto_registry(registry: Registry,
                   cls_dict: Dict,
-                  type=object,
+                  type: Type=object,
                   force: bool=False) -> None:
     r"""Author: liang.zhihao
 
     Args:
         registry (Registry): Registry
         cls_dict (Dict): dict of Class
-        type: typing to filter out
+        type (Type): typing to filter out
+        force (bool, optional):
+            Whether to override an existing class with
+            the same name for all class. Default to False
     """
     for key, cls in cls_dict.items():
         # skip the "_" begin
@@ -331,8 +347,11 @@ def build_from_cfg(cfg: Dict,
         raise type(e)(f'{obj_cls.__name__}: {e}')
 
 
-def obj_from_dict(info, parent=None, default_args=None):
-    """Initialize an object from dict.
+# NOTE: add example
+def obj_from_dict(info: Dict,
+                  parent: Optional[object]=None,
+                  default_args: Optional[Dict]=None):
+    r"""Initialize an object from dict.
 
     The dict must contain the key "type", which indicates the object type
 
@@ -343,19 +362,24 @@ def obj_from_dict(info, parent=None, default_args=None):
     """
     assert isinstance(info, dict) and "type" in info
     assert isinstance(default_args, dict) or default_args is None
-    args = info.copy()
-    obj_type = args.pop("type")
-    if isinstance(obj_type, str):
+    kwargs = info.copy()
+    module_type = kwargs.pop("type")
+    if isinstance(module_type, str):
+        obj_type = module_type.split(".")[-1]
         if parent is not None:
             obj_type = getattr(parent, obj_type)
         else:
-            obj_type = sys.modules[obj_type]
-    elif not isinstance(obj_type, type):
+            module = ".".join(module_type.split(".")[:-1])
+            module = sys.modules[module]
+            obj_type = getattr(module, obj_type)
+    
+    if not isinstance(obj_type, Callable):
         raise TypeError(
-            "type must be a str or valid type, but got {}".format(type(obj_type))
+            "type must be callable, but got {}".format(type(obj_type))
         )
+
     if default_args is not None:
         for name, value in default_args.items():
-            args.setdefault(name, value)
-    return obj_type(**args)
+            kwargs.setdefault(name, value)
+    return obj_type(**kwargs)
 

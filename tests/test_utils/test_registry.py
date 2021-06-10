@@ -1,4 +1,5 @@
 import pytest
+from termcolor import colored
 
 import gorilla
 
@@ -62,22 +63,40 @@ def test_registry():
     CATS.register_module(name=['Sphynx1', 'Sphynx2'], module=SphynxCat)
     assert CATS.get('Sphynx2') is SphynxCat
 
-    repr_str = "Registry(name=cat, items={"
-    repr_str += ("'BritishShorthair': <class 'test_registry.test_registry."
-                 "<locals>.BritishShorthair'>, ")
-    repr_str += ("'Munchkin': <class 'test_registry.test_registry."
-                 "<locals>.Munchkin'>, ")
-    repr_str += ("'Siamese': <class 'test_registry.test_registry."
-                 "<locals>.SiameseCat'>, ")
-    repr_str += ("'Siamese2': <class 'test_registry.test_registry."
-                 "<locals>.SiameseCat'>, ")
-    repr_str += ("'Sphynx': <class 'test_registry.test_registry."
-                 "<locals>.SphynxCat'>, ")
-    repr_str += ("'Sphynx1': <class 'test_registry.test_registry."
-                 "<locals>.SphynxCat'>, ")
-    repr_str += ("'Sphynx2': <class 'test_registry.test_registry."
-                 "<locals>.SphynxCat'>")
-    repr_str += '})'
+    # # mmcv's test example
+    # repr_str = "Registry(name=cat, items={"
+    # repr_str += ("'BritishShorthair': <class 'test_registry.test_registry."
+    #              "<locals>.BritishShorthair'>, ")
+    # repr_str += ("'Munchkin': <class 'test_registry.test_registry."
+    #              "<locals>.Munchkin'>, ")
+    # repr_str += ("'Siamese': <class 'test_registry.test_registry."
+    #              "<locals>.SiameseCat'>, ")
+    # repr_str += ("'Siamese2': <class 'test_registry.test_registry."
+    #              "<locals>.SiameseCat'>, ")
+    # repr_str += ("'Sphynx': <class 'test_registry.test_registry."
+    #              "<locals>.SphynxCat'>, ")
+    # repr_str += ("'Sphynx1': <class 'test_registry.test_registry."
+    #              "<locals>.SphynxCat'>, ")
+    # repr_str += ("'Sphynx2': <class 'test_registry.test_registry."
+    #              "<locals>.SphynxCat'>")
+    # repr_str += '})'
+
+    # color-rich test example
+    repr_str = (f"Registry(type={colored('cat', 'red')})\n"
+                f"{colored('BritishShorthair', 'blue')}:\n"
+                f"    <class 'test_registry.test_registry.<locals>.BritishShorthair'>\n"
+                f"{colored('Munchkin', 'blue')}:\n"
+                f"    <class 'test_registry.test_registry.<locals>.Munchkin'>\n"
+                f"{colored('Siamese', 'blue')}:\n"
+                f"    <class 'test_registry.test_registry.<locals>.SiameseCat'>\n"
+                f"{colored('Siamese2', 'blue')}:\n"
+                f"    <class 'test_registry.test_registry.<locals>.SiameseCat'>\n"
+                f"{colored('Sphynx', 'blue')}:\n"
+                f"    <class 'test_registry.test_registry.<locals>.SphynxCat'>\n"
+                f"{colored('Sphynx1', 'blue')}:\n"
+                f"    <class 'test_registry.test_registry.<locals>.SphynxCat'>\n"
+                f"{colored('Sphynx2', 'blue')}:\n"
+                f"    <class 'test_registry.test_registry.<locals>.SphynxCat'>\n")
     assert repr(CATS) == repr_str
 
     # name type
