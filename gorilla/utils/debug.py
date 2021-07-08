@@ -6,6 +6,7 @@ import functools
 import numpy as np
 import torch
 
+
 def check(*args, **kwargs):
     r"""
     Usage:
@@ -64,8 +65,11 @@ def check(*args, **kwargs):
     for kw, arg in kwargs.items():
         go(kw, arg)
 
-def display(name, param):
+
+def display(name, param, logger=None):
     r"""This function can be used to debug in data loading pipeline and model forwarding."""
+    if logger:
+        print = logger.info
     if isinstance(param, torch.Tensor):
         print(f"{name.ljust(45)} "
               f"max: {param.max().item():+.5f} "

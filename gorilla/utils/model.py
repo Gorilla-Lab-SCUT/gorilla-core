@@ -293,7 +293,7 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
     # return summary
 
 
-def check_params(model1, model2="", key=".", detailed=False):
+def check_params(model1, model2="", key=".", detailed=False, logger=None):
     """
     Single model version (model2 has passed nothing):
         Check parameters in models, especially used in weight-share model to verify that
@@ -313,7 +313,7 @@ def check_params(model1, model2="", key=".", detailed=False):
             if key in name:
                 # transfrom to float32 for some int variable to get "mean",
                 # such as num_batches_tracked
-                display(name, param.type(torch.float32))
+                display(name, param.type(torch.float32), logger)
         return
     if detailed:
         params1 = iter(model1.state_dict().items())
@@ -327,21 +327,19 @@ def check_params(model1, model2="", key=".", detailed=False):
         try:
             name, param = params1.__next__()
             if key in name:
-                # display(name, param)
-                display(name, param.type(torch.float32))
+                display(name, param.type(torch.float32), logger)
         except StopIteration:
             m1_next = False
         try:
             name, param = params2.__next__()
             if key in name:
-                # display(name, param)
-                display(name, param.type(torch.float32))
+                display(name, param.type(torch.float32), logger)
 
         except StopIteration:
             m2_next = False
 
 
-def check_grad(model1, model2=""):
+def check_grad(model1, model2="", logger=None):
     """
     Single model version (model2 has passed nothing):
         Check gradient of model parameters, especially used in weight-share model to verify that
@@ -355,10 +353,10 @@ def check_grad(model1, model2=""):
         try:
             # for the condition that model1 is not a module, but an image (in adversial-sample-like training)
             if "Tensor" in str(model1.__class__).split("'")[1]:
-                display("tensor", model1)
+                display("tensor", model1, logger)
 
             for name, param in model1.named_parameters():
-                display("grad of " + name, param.grad)
+                display("grad of " + name, param.grad, logger)
         except AttributeError as e:
             raise AttributeError(f"{e}. Maybe the parameter '{name}' in model is not used, please have a check.")
         
@@ -395,13 +393,13 @@ def check_grad(model1, model2=""):
     while m1_next or m2_next:
         try:
             name, param = params1.__next__()
-            display("grad of " + name, param.grad)
+            display("grad of " + name, param.grad, logger)
         except StopIteration:
             # print("stop1")
             m1_next = False
         try:
             name, param = params2.__next__()
-            display("grad of " + name, param.grad)
+            display("grad of " + name, param.grad, logger)
         except StopIteration:
             # print("stop2")
             m2_next = False
@@ -423,7 +421,7 @@ def check_optimizer(optimizer):
         state = optimizer.state_dict()["state"]
         for num in param_group["params"]:
             for key in keys:
-                display(f"{key} of layer {num}", state[num][key])
+                display(f"{key} of layer {num}", state[num][key], logger)
 
 
 def register_hook(model,
