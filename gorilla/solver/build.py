@@ -91,10 +91,15 @@ def build_lr_scheduler(
     Returns:
         _LRScheduler: the learning rate scheduler
     """
+    if isinstance(optimizer, dict):  # multi optimizer with the same lr_scheduler config
+        # TODO: maybe someone need multi optimizer whose have their own lr_scheduler config?
+        lr_schedulers = {}
+        for key, _optimizer in optimizer.items():
+            lr_scheduler_cfg["optimizer"] = _optimizer
+            lr_schedulers[key] = _build_scheduler(lr_scheduler_cfg)
+        return lr_schedulers
+
     lr_scheduler_cfg["optimizer"] = optimizer
-    if isinstance(optimizer, dict):
-        # TODO: do not support build multi lr_schedulers for multi optimizer
-        raise NotImplementedError
 
     # specificial for LambdaLR
     if lr_scheduler_cfg.get("type") == "LambdaLR":
