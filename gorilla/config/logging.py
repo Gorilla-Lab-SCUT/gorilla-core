@@ -326,6 +326,7 @@ def table(data: Iterable,
           tablefmt: str="psql",
           stralign: str="center",
           numalign="center",
+          floatfmt=".3f",
           **kwargs):
     r"""
     a lite wrapper of tabulate, given the default tablefmt/floatfmt/stralign/numalign
@@ -339,7 +340,7 @@ def table(data: Iterable,
         data,
         headers=headers,
         tablefmt=tablefmt,
-        floatfmt=".3f",
+        floatfmt=floatfmt,
         stralign=stralign,
         numalign=numalign,
         **kwargs
