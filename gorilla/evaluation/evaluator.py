@@ -1,12 +1,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-import datetime
 import logging
-import time
+from typing import Sequence
 from collections import OrderedDict
-from contextlib import contextmanager
-import torch
 
-from ..core import get_world_size, is_main_process
+import numpy as np
+
+from ..core import is_main_process
 
 
 class DatasetEvaluator:
@@ -19,8 +18,19 @@ class DatasetEvaluator:
     This class will accumulate information of the inputs/outputs (by :meth:`process`),
     and produce evaluation results in the end (by :meth:`evaluate`).
     """
-    def __init__(self):
+    def __init__(self,
+                 class_labels: Sequence[str]=[],
+                 class_ids: Sequence[int]=[],):
         self.logger = logging.getLogger(__name__)
+        self.class_labels = class_labels
+        self.class_ids = np.array(class_ids)
+        self.num_classes = len(class_labels)
+        assert len(self.class_labels) == len(self.class_ids), (
+            f"all classe labels are {self.class_labels}, length is {len(self.class_labels)}\n"
+            f"all class ids are {self.class_ids}, length is {len(self.class_ids)}\n"
+            f"their length do not match")
+        self.id_to_label = {class_id: class_label for \
+            (class_id, class_label) in zip(class_ids, class_labels)}
 
     def reset(self):
         r"""
@@ -62,20 +72,21 @@ class DatasetEvaluator:
         pass
 
 
-class DatasetEvaluators(DatasetEvaluator):
+class DatasetEvaluators():
     r"""
     Wrapper class to combine multiple :class:`DatasetEvaluator` instances.
 
     This class dispatches every evaluation call to
     all of its :class:`DatasetEvaluator`.
     """
-    def __init__(self, evaluators):
+    def __init__(self, evaluators: Sequence[DatasetEvaluator]):
         r"""
         Args:
             evaluators (list): the evaluators to combine.
         """
         super().__init__()
         self._evaluators = evaluators
+        self.logger = logging.getLogger(__name__)
 
     def reset(self):
         for evaluator in self._evaluators:
