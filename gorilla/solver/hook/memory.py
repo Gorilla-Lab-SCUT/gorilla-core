@@ -5,7 +5,7 @@ from gorilla.core import HOOKS
 from .hook import Hook
 
 
-@HOOKS.register_module()
+@HOOKS.register()
 class EmptyCacheHook(Hook):
 
     def __init__(self,

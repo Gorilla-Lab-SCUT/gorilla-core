@@ -5,7 +5,7 @@ from gorilla.core import HOOKS
 from .hook import Hook
 
 
-@HOOKS.register_module()
+@HOOKS.register()
 class IterTimerHook(Hook):
 
     def before_epoch(self, solver):

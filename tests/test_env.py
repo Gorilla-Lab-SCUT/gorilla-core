@@ -25,7 +25,7 @@ def test_collect_env():
 
     env_info_lines = env_info_str.split("\n")
     platform = env_info_lines[1].split(" ")[-1]
-    python_version = env_info_lines[2].split("  ")[-1]
+    python_version = env_info_lines[2].split("   ")[-1]
     gorilla_version = env_info_lines[4].split(" ")[-2]
     assert platform == sys.platform
     assert python_version == sys.version.replace('\n', '')

@@ -3,7 +3,7 @@ from .hook import Hook
 from ...core import HOOKS
 
 
-@HOOKS.register_module()
+@HOOKS.register()
 class DistSamplerSeedHook(Hook):
 
     def before_epoch(self, solver):

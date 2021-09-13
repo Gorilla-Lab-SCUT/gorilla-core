@@ -6,7 +6,7 @@ from .hook import Hook
 from ...core import master_only, HOOKS
 
 
-@HOOKS.register_module()
+@HOOKS.register()
 class CheckpointHook(Hook):
     r"""Save checkpoints periodically.
 

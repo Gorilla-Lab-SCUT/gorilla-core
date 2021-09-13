@@ -5,7 +5,7 @@ from .hook import Hook
 from ...core import HOOKS, get_dist_info
 
 
-@HOOKS.register_module()
+@HOOKS.register()
 class SyncBuffersHook(Hook):
     r"""Synchronize model buffers such as running_mean and running_var in BN at
         the end of each epoch.

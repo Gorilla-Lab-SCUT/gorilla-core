@@ -7,7 +7,7 @@ from .hook import Hook
 from ...core import HOOKS
 
 
-@HOOKS.register_module()
+@HOOKS.register()
 class OptimizerHook(Hook):
     # TODO: add comment
     def __init__(self, grad_clip=None):

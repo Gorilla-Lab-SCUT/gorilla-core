@@ -21,7 +21,7 @@ from typing import List
 # MultiStepLR with WarmupLR but the current LRScheduler design doesn't allow it.
 
 
-@SCHEDULERS.register_module()
+@SCHEDULERS.register()
 class PolyLR(torch.optim.lr_scheduler._LRScheduler):
     r"""
     Poly learning rate schedule used to train DeepLab.
@@ -62,7 +62,7 @@ class PolyLR(torch.optim.lr_scheduler._LRScheduler):
 
 
 # modify from https://github.com/cmpark0126/pytorch-polynomial-lr-decay/blob/master/torch_poly_lr_decay/torch_poly_lr_decay.py
-@SCHEDULERS.register_module()
+@SCHEDULERS.register()
 class DevPolyLR(torch.optim.lr_scheduler._LRScheduler):
     """Polynomial learning rate decay until step reach to max_decay_step
     
@@ -106,7 +106,7 @@ class DevPolyLR(torch.optim.lr_scheduler._LRScheduler):
                 param_group['lr'] = lr
 
 
-@SCHEDULERS.register_module(force=True)
+@SCHEDULERS.register(force=True)
 class StepLR(torch.optim.lr_scheduler._LRScheduler):
     r"""Decays the learning rate of each parameter group by gamma every
     step_size epochs. Notice that such decay can happen simultaneously with
@@ -150,7 +150,7 @@ class StepLR(torch.optim.lr_scheduler._LRScheduler):
                 for base_lr in self.base_lrs]
 
 
-@SCHEDULERS.register_module()
+@SCHEDULERS.register()
 class InvLR(torch.optim.lr_scheduler._LRScheduler):
     r"""
     Note p as current epoch or iter number according to user setting;
@@ -202,7 +202,7 @@ class InvLR(torch.optim.lr_scheduler._LRScheduler):
 
 # modify from https://github.com/PRBonn/lidar-bonnetal/blob/master/train/common/warmupLR.py
 # NOTE: maybe not work, need to fix
-@SCHEDULERS.register_module()
+@SCHEDULERS.register()
 class WarmupCyclicLR(torch.optim.lr_scheduler._LRScheduler):
     r""" Warmup learning rate scheduler.
       Initially, increases the learning rate from 0 to the final value, in a
@@ -257,7 +257,7 @@ class WarmupCyclicLR(torch.optim.lr_scheduler._LRScheduler):
             return self.initial_scheduler.step(epoch)
 
 
-@SCHEDULERS.register_module()
+@SCHEDULERS.register()
 class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(
         self,
@@ -294,7 +294,7 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
         return self.get_lr()
 
 
-@SCHEDULERS.register_module()
+@SCHEDULERS.register()
 class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
     def __init__(
         self,
@@ -347,7 +347,7 @@ class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
         return self.get_lr()
 
 
-@SCHEDULERS.register_module()
+@SCHEDULERS.register()
 class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
     """
     Poly learning rate schedule used to train DeepLab.
