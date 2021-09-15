@@ -210,18 +210,6 @@ def test_merge_from_dict():
         cfg.merge_from_dict(input_options)
 
 
-
-def test_merge_delete():
-    cfg_file = osp.join(data_path, 'config/delete.py')
-    cfg = Config.fromfile(cfg_file)
-    # cfg.field
-    assert cfg.item1 == [1, 2]
-    assert cfg.item2 == dict(b=0)
-    assert cfg.item3 is True
-    assert cfg.item4 == 'test'
-    assert '_delete_' not in cfg.item2
-
-
 def test_merge_intermediate_variable():
 
     cfg_file = osp.join(data_path, 'config/i_child.py')

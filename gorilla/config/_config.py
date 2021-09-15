@@ -1,21 +1,16 @@
 # Copyright (c) Open-MMLab. All rights reserved.
 import os
-import ast
-import sys
 import json
-import shutil
 import tempfile
 import warnings
 from typing import Optional
 from argparse import Namespace
 
 from addict import Dict
-from importlib import import_module
 
 from ..utils import check_file
 
 BASE_KEY = "_base_"
-DELETE_KEY = "_delete_"
 RESERVED_KEYS = ["filename", "text"]
 
 
@@ -93,14 +88,13 @@ class Config(object):
         filename = os.path.abspath(os.path.expanduser(filename))
         check_file(filename)
         from gorilla.fileio import load
-        cfg_dict = load(filename)
+        cfg_dict = ConfigDict(load(filename))
 
         with open(filename, "r") as f:
             cfg_text = f.read()
 
         # here cfg_dict is still the same as content in --config file,
         # and the code block below read 4 sub-config file then merge into one.
-        # BASE_KEY == "_base_"
         if BASE_KEY in cfg_dict:
             cfg_dir = os.path.dirname(filename)
             base_filename = cfg_dict.pop(BASE_KEY)
@@ -145,22 +139,16 @@ class Config(object):
             >>> Config._merge_a_into_b(
             ...     dict(obj=dict(a=2)), dict(obj=dict(a=1)))
             {"obj": {"a": 2}}
-            # Delete b first and merge a into b.
-            >>> Config._merge_a_into_b(
-            ...     dict(obj=dict(_delete_=True, a=2)), dict(obj=dict(a=1)))
-            {"obj": {"a": 2}}
-            # b is a list
         """
         b = b.copy()
         for k, v in a.items():
-            if isinstance(v, dict) and k in b and not v.pop(DELETE_KEY, False):
+            if isinstance(v, dict) and k in b:
                 allowed_types = dict
                 if not isinstance(b[k], allowed_types):
                     raise TypeError(
                         f"{k}={v} in child config cannot inherit from base "
                         f"because {k} is a dict in the child config but is of "
-                        f"type {type(b[k])} in base config. You may set "
-                        f"`{DELETE_KEY}=True` to ignore the base config")
+                        f"type {type(b[k])} in base config.")
                 b[k] = Config._merge_a_into_b(v, b[k])
             else:
                 b[k] = v
@@ -233,7 +221,7 @@ class Config(object):
         return iter(self._cfg_dict)
 
     def dump(self, file: Optional[str] = None, **kwargs):
-        cfg_dict = super(Config, self).__getattribute__("_cfg_dict").to_dict()
+        cfg_dict = self._cfg_dict.to_dict()
         from gorilla.fileio import dump
         if file is None:
             # output the content
@@ -280,10 +268,11 @@ class Config(object):
             subkey = key_list[-1]
             d[subkey] = v
 
-        cfg_dict = super(Config, self).__getattribute__("_cfg_dict")
-        super(Config, self).__setattr__(
-            "_cfg_dict",
-            Config._merge_a_into_b(option_cfg_dict, cfg_dict))
+        cfg_dict = self._cfg_dict
+        cfg_dict = Config._merge_a_into_b(option_cfg_dict, cfg_dict)
+        # NOTE: strange phenomenon
+        # self._cfg_dict = cfg_dict
+        super(Config, self).__setattr__("_cfg_dict", cfg_dict)
 
 
 def merge_cfg_and_args(cfg: Optional[Config] = None,
