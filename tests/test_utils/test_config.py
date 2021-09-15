@@ -9,7 +9,7 @@ import tempfile
 import pytest
 import yaml
 
-from gorilla import Config, DictAction, dump, load
+from gorilla.config import Config
 
 data_path = osp.join(osp.dirname(osp.dirname(__file__)), 'data')
 
@@ -364,37 +364,6 @@ def test_pretty_text():
             f.write(cfg.pretty_text)
         text_cfg = Config.fromfile(text_cfg_filename)
     assert text_cfg._cfg_dict == cfg._cfg_dict
-
-
-def test_dict_action():
-    parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument('--options',
-                        nargs='+',
-                        action=DictAction,
-                        help='custom options')
-    # Nested brackets
-    args = parser.parse_args(
-        ['--options', 'item2.a=a,b', 'item2.b=[(a,b), [1,2], false]'])
-    out_dict = {'item2.a': ['a', 'b'], 'item2.b': [('a', 'b'), [1, 2], False]}
-    print("args.options: ", args.options)
-    assert args.options == out_dict
-    # Single Nested brackets
-    args = parser.parse_args(['--options', 'item2.a=[[1]]'])
-    out_dict = {'item2.a': [[1]]}
-    assert args.options == out_dict
-    # Imbalance bracket
-    with pytest.raises(AssertionError):
-        parser.parse_args(['--options', 'item2.a=[(a,b), [1,2], false'])
-    # Normal values
-    args = parser.parse_args(
-        ['--options', 'item2.a=1', 'item2.b=0.1', 'item2.c=x', 'item3=false'])
-    out_dict = {'item2.a': 1, 'item2.b': 0.1, 'item2.c': 'x', 'item3': False}
-    assert args.options == out_dict
-    cfg_file = osp.join(data_path, 'config/a.py')
-    cfg = Config.fromfile(cfg_file)
-    cfg.merge_from_dict(args.options)
-    assert cfg.item2 == dict(a=1, b=0.1, c='x')
-    assert cfg.item3 is False
 
 
 def test_dump_mapping():

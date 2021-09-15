@@ -1,5 +1,5 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
-from ._config import (add_args, Config, ConfigDict, DictAction,
+from ._config import (add_args, Config, ConfigDict,
                       merge_cfg_and_args)
 
 from .logging import (get_logger, print_log, get_log_dir, collect_logger,
