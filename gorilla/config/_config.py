@@ -131,16 +131,13 @@ class Config(object):
         return cfg_dict, cfg_text
 
     @staticmethod
-    def _merge_a_into_b(a, b, allow_list_keys=False):
+    def _merge_a_into_b(a, b):
         r"""merge dict ``a`` into dict ``b`` (non-inplace).
         Values in ``a`` will overwrite ``b``. ``b`` is copied first to avoid
         in-place modifications.
         Args:
             a (dict): The source dict to be merged into ``b``.
             b (dict): The origin dict to be fetch keys from ``a``.
-            allow_list_keys (bool): If True, int string keys (e.g. "0", "1")
-              are allowed in source ``a`` and will replace the element of the
-              corresponding index in b if b is a list. Default: False.
         Returns:
             dict: The modified dict of ``b`` using ``a``.
         Examples:
@@ -153,27 +150,18 @@ class Config(object):
             ...     dict(obj=dict(_delete_=True, a=2)), dict(obj=dict(a=1)))
             {"obj": {"a": 2}}
             # b is a list
-            >>> Config._merge_a_into_b(
-            ...     {"0": dict(a=2)}, [dict(a=1), dict(b=2)], True)
-            [{"a": 2}, {"b": 2}]
         """
         b = b.copy()
         for k, v in a.items():
-            if allow_list_keys and k.isdigit() and isinstance(b, list):
-                k = int(k)
-                if len(b) <= k:
-                    raise KeyError(f"Index {k} exceeds the length of list {b}")
-                b[k] = Config._merge_a_into_b(v, b[k], allow_list_keys)
-            elif isinstance(v,
-                            dict) and k in b and not v.pop(DELETE_KEY, False):
-                allowed_types = (dict, list) if allow_list_keys else dict
+            if isinstance(v, dict) and k in b and not v.pop(DELETE_KEY, False):
+                allowed_types = dict
                 if not isinstance(b[k], allowed_types):
                     raise TypeError(
                         f"{k}={v} in child config cannot inherit from base "
                         f"because {k} is a dict in the child config but is of "
                         f"type {type(b[k])} in base config. You may set "
                         f"`{DELETE_KEY}=True` to ignore the base config")
-                b[k] = Config._merge_a_into_b(v, b[k], allow_list_keys)
+                b[k] = Config._merge_a_into_b(v, b[k])
             else:
                 b[k] = v
         return b
@@ -261,7 +249,7 @@ class Config(object):
             else:
                 dump(cfg_dict, file, **kwargs)
 
-    def merge_from_dict(self, options: Dict, allow_list_keys: bool = True):
+    def merge_from_dict(self, options: Dict):
         r"""Merge list into cfg_dict.
         Merge the dict parsed by MultipleKVAction into this cfg.
         Examples:
@@ -277,16 +265,8 @@ class Config(object):
             >>> cfg = Config(dict(pipeline=[
             ...     dict(type="LoadImage"), dict(type="LoadAnnotations")]))
             >>> options = dict(pipeline={"0": dict(type="SelfLoadImage")})
-            >>> cfg.merge_from_dict(options, allow_list_keys=True)
-            >>> cfg_dict = super(Config, self).__getattribute__("_cfg_dict")
-            >>> assert cfg_dict == dict(pipeline=[
-            ...     dict(type="SelfLoadImage"), dict(type="LoadAnnotations")])
         Args:
             options (dict): dict of configs to merge from.
-            allow_list_keys (bool): If True, int string keys (e.g. '0', '1')
-              are allowed in ``options`` and will replace the element of the
-              corresponding index in the config if the config is a list.
-              Default: True.
         """
         option_cfg_dict = {}
         for full_key, v in options.items():
@@ -303,9 +283,7 @@ class Config(object):
         cfg_dict = super(Config, self).__getattribute__("_cfg_dict")
         super(Config, self).__setattr__(
             "_cfg_dict",
-            Config._merge_a_into_b(option_cfg_dict,
-                                   cfg_dict,
-                                   allow_list_keys=allow_list_keys))
+            Config._merge_a_into_b(option_cfg_dict, cfg_dict))
 
 
 def merge_cfg_and_args(cfg: Optional[Config] = None,
