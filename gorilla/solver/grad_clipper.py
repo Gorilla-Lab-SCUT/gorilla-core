@@ -6,8 +6,9 @@ from torch.nn.utils import clip_grad
 
 from ..config import Config
 
+
 class GradClipper:
-    def __init__(self, grad_clip_cfg: Optional[Union[Dict, Config]]=None):
+    def __init__(self, grad_clip_cfg: Optional[Union[Dict, Config]] = None):
         self.clip = True
         if grad_clip_cfg is not None:
             try:
@@ -27,7 +28,8 @@ class GradClipper:
             if isinstance(params, Module):
                 params = params.parameters()
             params = list(
-                filter(lambda p: p.requires_grad and p.grad is not None, params))
+                filter(lambda p: p.requires_grad and p.grad is not None,
+                       params))
             if len(params) > 0:
                 self.clipper(params, **self.grad_clip_cfg)
 
@@ -35,5 +37,3 @@ class GradClipper:
 def build_grad_clipper(grad_clip_cfg):
     assert "type" in grad_clip_cfg
     return GradClipper(grad_clip_cfg)
-
-

@@ -29,7 +29,6 @@ class PolyLR(torch.optim.lr_scheduler._LRScheduler):
         Atrous Convolution, and Fully Connected CRFs.
     Reference: https://github.com/tensorflow/models/blob/21b73d22f3ed05b650e85ac50849408dd36de32e/research/deeplab/utils/train_utils.py#L337  # noqa
     """
-
     def __init__(
         self,
         optimizer: torch.optim.Optimizer,
@@ -46,13 +45,14 @@ class PolyLR(torch.optim.lr_scheduler._LRScheduler):
     def get_lr(self) -> List[float]:
         if self.constant_ending > 0:
             # Constant ending lr.
-            if (
-                math.pow((1.0 - self.last_epoch / self.max_iters), self.power)
-                < self.constant_ending
-            ):
-                return [base_lr * self.constant_ending for base_lr in self.base_lrs]
+            if (math.pow((1.0 - self.last_epoch / self.max_iters), self.power)
+                    < self.constant_ending):
+                return [
+                    base_lr * self.constant_ending for base_lr in self.base_lrs
+                ]
         return [
-            base_lr * math.pow((1.0 - self.last_epoch / self.max_iters), self.power)
+            base_lr * math.pow(
+                (1.0 - self.last_epoch / self.max_iters), self.power)
             for base_lr in self.base_lrs
         ]
 
@@ -72,12 +72,11 @@ class DevPolyLR(torch.optim.lr_scheduler._LRScheduler):
         end_learning_rate: scheduler stoping learning rate decay, value of learning rate must be this value
         power: The power of the polynomial.
     """
-
     def __init__(self,
                  optimizer: torch.optim.Optimizer,
                  max_decay_steps: int,
-                 end_learning_rate: float=0.0001,
-                 power: float=1.0):
+                 end_learning_rate: float = 0.0001,
+                 power: float = 1.0):
         if max_decay_steps <= 1.:
             raise ValueError('max_decay_steps should be greater than 1.')
         self.max_decay_steps = max_decay_steps
@@ -91,7 +90,7 @@ class DevPolyLR(torch.optim.lr_scheduler._LRScheduler):
             return [self.end_learning_rate for _ in self.base_lrs]
 
         return [(base_lr - self.end_learning_rate) *
-                ((1 - self.last_step / self.max_decay_steps) ** (self.power)) +
+                ((1 - self.last_step / self.max_decay_steps)**(self.power)) +
                 self.end_learning_rate for base_lr in self.base_lrs]
 
     def step(self, step=None):
@@ -99,9 +98,11 @@ class DevPolyLR(torch.optim.lr_scheduler._LRScheduler):
             step = self.last_step + 1
         self.last_step = step if step != 0 else 1
         if self.last_step <= self.max_decay_steps:
-            decay_lrs = [(base_lr - self.end_learning_rate) *
-                         ((1 - self.last_step / self.max_decay_steps) ** (self.power)) +
-                         self.end_learning_rate for base_lr in self.base_lrs]
+            decay_lrs = [
+                (base_lr - self.end_learning_rate) *
+                ((1 - self.last_step / self.max_decay_steps)**(self.power)) +
+                self.end_learning_rate for base_lr in self.base_lrs
+            ]
             for param_group, lr in zip(self.optimizer.param_groups, decay_lrs):
                 param_group['lr'] = lr
 
@@ -132,7 +133,6 @@ class StepLR(torch.optim.lr_scheduler._LRScheduler):
         >>>     validate(...)
         >>>     scheduler.step()
     """
-
     def __init__(self, optimizer, step_size, gamma=0.1, last_epoch=-1):
         self.step_size = step_size
         self.gamma = gamma
@@ -140,14 +140,20 @@ class StepLR(torch.optim.lr_scheduler._LRScheduler):
 
     def get_lr(self):
         if (self.last_epoch == 0) or (self.last_epoch % self.step_size != 0):
-            return [group["lr"] * group.get("lr_multi", 1.0)
-                for group in self.optimizer.param_groups]
-        return [group["lr"] * self.gamma * group.get("lr_multi", 1.0)
-            for group in self.optimizer.param_groups]
+            return [
+                group["lr"] * group.get("lr_multi", 1.0)
+                for group in self.optimizer.param_groups
+            ]
+        return [
+            group["lr"] * self.gamma * group.get("lr_multi", 1.0)
+            for group in self.optimizer.param_groups
+        ]
 
     def _get_closed_form_lr(self):
-        return [base_lr * self.gamma ** (self.last_epoch // self.step_size)
-                for base_lr in self.base_lrs]
+        return [
+            base_lr * self.gamma**(self.last_epoch // self.step_size)
+            for base_lr in self.base_lrs
+        ]
 
 
 @SCHEDULERS.register()
@@ -173,6 +179,7 @@ class InvLR(torch.optim.lr_scheduler._LRScheduler):
         >>>     validate(...)
         >>>     scheduler.step()
     """
+
     # def __init__(self, optimizer, maxp, gamma=10, power=0.75, last_epoch=-1):
     def __init__(self, optimizer, gamma=10, power=0.75, last_epoch=-1):
         self.gamma = gamma
@@ -200,6 +207,7 @@ class InvLR(torch.optim.lr_scheduler._LRScheduler):
                     self.optimizer.param_groups, self.base_lrs)
             ]
 
+
 # modify from https://github.com/PRBonn/lidar-bonnetal/blob/master/train/common/warmupLR.py
 # NOTE: maybe not work, need to fix
 @SCHEDULERS.register()
@@ -209,14 +217,13 @@ class WarmupCyclicLR(torch.optim.lr_scheduler._LRScheduler):
       certain number of steps. After this number of steps, each step decreases
       LR exponentially.
   """
-
     def __init__(self,
                  optimizer: torch.optim.Optimizer,
                  max_lr: float,
-                 base_lr: float=0.0,
-                 warmup_iters: int=1000,
-                 momentum: float=0.9,
-                 decay: float=0.99,
+                 base_lr: float = 0.0,
+                 warmup_iters: int = 1000,
+                 momentum: float = 0.9,
+                 decay: float = 0.99,
                  last_epoch: int = -1):
         # cyclic params
         self.max_lr = max_lr
@@ -245,7 +252,9 @@ class WarmupCyclicLR(torch.optim.lr_scheduler._LRScheduler):
         super().__init__(optimizer, self.last_epoch)
 
     def get_lr(self):
-        return [self.max_lr * (self.decay ** self.last_epoch) for lr in self.base_lrs]
+        return [
+            self.max_lr * (self.decay**self.last_epoch) for lr in self.base_lrs
+        ]
 
     def step(self, epoch=None):
         if self.finished or self.initial_scheduler.last_epoch >= self.warmup_iters:
@@ -271,8 +280,8 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
     ):
         if not list(milestones) == sorted(milestones):
             raise ValueError(
-                "Milestones should be a list of" " increasing integers. Got {}", milestones
-            )
+                "Milestones should be a list of"
+                " increasing integers. Got {}", milestones)
         self.milestones = milestones
         self.gamma = gamma
         self.warmup_factor = warmup_factor
@@ -281,11 +290,13 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
         super().__init__(optimizer, last_epoch)
 
     def get_lr(self) -> List[float]:
-        warmup_factor = _get_warmup_factor_at_iter(
-            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
-        )
+        warmup_factor = _get_warmup_factor_at_iter(self.warmup_method,
+                                                   self.last_epoch,
+                                                   self.warmup_iters,
+                                                   self.warmup_factor)
         return [
-            base_lr * warmup_factor * self.gamma ** bisect_right(self.milestones, self.last_epoch)
+            base_lr * warmup_factor *
+            self.gamma**bisect_right(self.milestones, self.last_epoch)
             for base_lr in self.base_lrs
         ]
 
@@ -327,7 +338,8 @@ class WarmupCosineLR(torch.optim.lr_scheduler._LRScheduler):
                               (self.last_epoch - self.warmup_iters) /
                               max(1, (self.max_iters - self.warmup_iters)))
         else:
-            cosine = math.cos(math.pi * self.cycle_factor * self.last_epoch / self.max_iters)
+            cosine = math.cos(math.pi * self.cycle_factor * self.last_epoch /
+                              self.max_iters)
 
         if self.cycle_factor > 0.5:
             # scale curve to prevent negative value
@@ -355,7 +367,6 @@ class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
         Atrous Convolution, and Fully Connected CRFs.
     Reference: https://github.com/tensorflow/models/blob/21b73d22f3ed05b650e85ac50849408dd36de32e/research/deeplab/utils/train_utils.py#L337  # noqa
     """
-
     def __init__(
         self,
         optimizer: torch.optim.Optimizer,
@@ -376,18 +387,20 @@ class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
         super().__init__(optimizer, last_epoch)
 
     def get_lr(self) -> List[float]:
-        warmup_factor = _get_warmup_factor_at_iter(
-            self.warmup_method, self.last_epoch, self.warmup_iters, self.warmup_factor
-        )
+        warmup_factor = _get_warmup_factor_at_iter(self.warmup_method,
+                                                   self.last_epoch,
+                                                   self.warmup_iters,
+                                                   self.warmup_factor)
         if self.constant_ending > 0 or warmup_factor == 1.0:
             # Constant ending lr.
-            if (
-                math.pow((1.0 - self.last_epoch / self.max_iters), self.power)
-                < self.constant_ending
-            ):
-                return [base_lr * self.constant_ending for base_lr in self.base_lrs]
+            if (math.pow((1.0 - self.last_epoch / self.max_iters), self.power)
+                    < self.constant_ending):
+                return [
+                    base_lr * self.constant_ending for base_lr in self.base_lrs
+                ]
         return [
-            base_lr * warmup_factor * math.pow((1.0 - self.last_epoch / self.max_iters), self.power)
+            base_lr * warmup_factor * math.pow(
+                (1.0 - self.last_epoch / self.max_iters), self.power)
             for base_lr in self.base_lrs
         ]
 
@@ -396,9 +409,8 @@ class WarmupPolyLR(torch.optim.lr_scheduler._LRScheduler):
         return self.get_lr()
 
 
-def _get_warmup_factor_at_iter(
-    method: str, iter: int, warmup_iters: int, warmup_factor: float
-) -> float:
+def _get_warmup_factor_at_iter(method: str, iter: int, warmup_iters: int,
+                               warmup_factor: float) -> float:
     """
     Return the learning rate warmup factor at a specific iteration.
     See :paper:`ImageNet in 1h` for more details.
@@ -424,7 +436,12 @@ def _get_warmup_factor_at_iter(
         raise ValueError(f"Unknown warmup method: {method}")
 
 
-def adjust_learning_rate(optimizer, epoch, args, mode="auto", value=0.1, namelist=[]):
+def adjust_learning_rate(optimizer,
+                         epoch,
+                         args,
+                         mode="auto",
+                         value=0.1,
+                         namelist=[]):
     r"""
     Adjust the learning rate according to the epoch
     Parameters
@@ -461,7 +478,7 @@ def adjust_learning_rate(optimizer, epoch, args, mode="auto", value=0.1, namelis
     for param_group in select_groups:
         if mode == "auto":
             p = float(epoch) / args.epochs
-            lr = args.base_lr / ((1 + 10 * p) ** 0.75)
+            lr = args.base_lr / ((1 + 10 * p)**0.75)
             lr_pretrain = lr * value
             for param_group in optimizer.param_groups:
                 if param_group["type"] == "pre-trained":

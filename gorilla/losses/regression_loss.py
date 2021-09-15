@@ -1,6 +1,7 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 import torch
 
+
 def log_cosh_loss(input: torch.Tensor,
                   target: torch.Tensor,
                   reduction: str = "none") -> torch.Tensor:
@@ -87,5 +88,3 @@ def smooth_l1_loss(input: torch.Tensor,
     elif reduction == "sum":
         loss = loss.sum()
     return loss
-
-

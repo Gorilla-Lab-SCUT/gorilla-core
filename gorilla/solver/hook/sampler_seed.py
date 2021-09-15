@@ -5,7 +5,6 @@ from ...core import HOOKS
 
 @HOOKS.register()
 class DistSamplerSeedHook(Hook):
-
     def before_epoch(self, solver):
         # if isinstance(solver.dataloader.sampler, list):
         #     for s in solver.dataloader.sampler:

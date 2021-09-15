@@ -225,7 +225,7 @@ def gather(data, dst=0, group=None):
         return []
 
 
-def shared_random_seed(): # TODO: use in the data sampler
+def shared_random_seed():  # TODO: use in the data sampler
     r"""
     Returns:
         int: a random number that is the same across all workers.
@@ -293,4 +293,3 @@ def master_only(func):
             return func(*args, **kwargs)
 
     return wrapper
-

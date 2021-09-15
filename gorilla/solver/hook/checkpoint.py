@@ -26,7 +26,6 @@ class CheckpointHook(Hook):
             like to delete old ones to save the disk space.
             Default: -1, which means unlimited.
     """
-
     def __init__(self,
                  interval=-1,
                  by_epoch=True,
@@ -47,8 +46,9 @@ class CheckpointHook(Hook):
         solver.logger.info(f"Saving checkpoint at {solver.epoch + 1} epochs")
         if not self.out_dir:
             self.out_dir = solver.work_dir
-        solver.save_checkpoint(
-            self.out_dir, save_optimizer=self.save_optimizer, **self.args)
+        solver.save_checkpoint(self.out_dir,
+                               save_optimizer=self.save_optimizer,
+                               **self.args)
 
         # remove other checkpoints
         if self.max_keep_ckpts > 0:
@@ -67,11 +67,13 @@ class CheckpointHook(Hook):
         if self.by_epoch or not self.every_n_iters(solver, self.interval):
             return
 
-        solver.logger.info(f"Saving checkpoint at {solver.iter + 1} iterations")
+        solver.logger.info(
+            f"Saving checkpoint at {solver.iter + 1} iterations")
         if not self.out_dir:
             self.out_dir = solver.work_dir
-        solver.save_checkpoint(
-            self.out_dir, save_optimizer=self.save_optimizer, **self.args)
+        solver.save_checkpoint(self.out_dir,
+                               save_optimizer=self.save_optimizer,
+                               **self.args)
 
         # remove other checkpoints
         if self.max_keep_ckpts > 0:

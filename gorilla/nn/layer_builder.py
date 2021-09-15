@@ -35,9 +35,9 @@ def get_torch_layer_caller(type_name: str) -> Type:
 
 
 def build_from_package(type_name: str,
-                      args: Dict,
-                      pack: ModuleType=nn,
-                      **kwargs) -> object:
+                       args: Dict,
+                       pack: ModuleType = nn,
+                       **kwargs) -> object:
     layer_type = NAME_MAP[type_name] if type_name in NAME_MAP else type_name
     try:
         layer = getattr(pack, layer_type)

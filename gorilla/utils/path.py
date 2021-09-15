@@ -4,6 +4,7 @@ import os
 import os.path as osp
 from pathlib import Path
 
+
 def is_filepath(x) -> bool:
     r"""Path check function.
 
@@ -16,7 +17,8 @@ def is_filepath(x) -> bool:
     return isinstance(x, (str, Path))
 
 
-def check_file(filepath: [str, Path], msg_tmpl="file `{}` not exist or is a directory"):
+def check_file(filepath: [str, Path],
+               msg_tmpl="file `{}` not exist or is a directory"):
     r"""Check path exists and file or not.
 
     Args:
@@ -61,7 +63,8 @@ def fopen(filepath, *args, **kwargs):
     try:
         check_file(filepath)
     except:
-        raise ValueError("`filepath` should be a string or a Path and not a directory")
+        raise ValueError(
+            "`filepath` should be a string or a Path and not a directory")
     return open(str(filepath), *args, **kwargs)
 
 
@@ -106,10 +109,14 @@ def scandir(dir_path, suffix=None, recursive=False):
     if isinstance(dir_path, (str, Path)):
         dir_path = str(dir_path)
     else:
-        raise TypeError(f"`dir_path` must be a string or Path object, but got {type(dir_path)}")
+        raise TypeError(
+            f"`dir_path` must be a string or Path object, but got {type(dir_path)}"
+        )
 
     if (suffix is not None) and not isinstance(suffix, (str, tuple)):
-        raise TypeError(f"`suffix` must be a string or tuple of strings, but got {type(suffix)}")
+        raise TypeError(
+            f"`suffix` must be a string or tuple of strings, but got {type(suffix)}"
+        )
 
     root = dir_path
 
@@ -123,8 +130,9 @@ def scandir(dir_path, suffix=None, recursive=False):
                     yield rel_path
             else:
                 if recursive:
-                    yield from _scandir(
-                        entry.path, suffix=suffix, recursive=recursive)
+                    yield from _scandir(entry.path,
+                                        suffix=suffix,
+                                        recursive=recursive)
                 else:
                     continue
 
@@ -149,5 +157,3 @@ def find_vcs_root(path, markers=(".git", )):
             return cur
         prev, cur = cur, osp.split(cur)[0]
     return None
-
-    

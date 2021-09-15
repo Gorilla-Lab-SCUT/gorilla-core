@@ -24,7 +24,8 @@ def get_free_gpu(mode="memory", memory_need=11000) -> list:
     Returns:
         list: free gpu ids
     """
-    assert mode in ["memory", "process"], f"mode must be 'memory' or 'process', but got {mode}"
+    assert mode in ["memory", "process"
+                    ], f"mode must be 'memory' or 'process', but got {mode}"
     if mode == "memory":
         assert memory_need is not None, "'memory_need' if None, 'memory' mode must give the free memory you want to apply for"
         memory_need = int(memory_need)
@@ -56,7 +57,8 @@ def gpu_check_condition(gpu_stat, mode, memory_need) -> bool:
         for process in gpu_stat.processes:
             if process["command"] == "python": return False
         return True
-    else: return False
+    else:
+        return False
 
 
 def supervise_gpu(num_gpu=1, mode="memory", memory_need=11000) -> list:
@@ -71,8 +73,10 @@ def supervise_gpu(num_gpu=1, mode="memory", memory_need=11000) -> list:
         list: free gpu id list
     """
     gpu_free_id_list = []
-    if num_gpu> NUM_GPUS:
-        warnings.warn(f"num_gpu: {num_gpu} > all_num_gpu: {NUM_GPUS} we surplus this num")
+    if num_gpu > NUM_GPUS:
+        warnings.warn(
+            f"num_gpu: {num_gpu} > all_num_gpu: {NUM_GPUS} we surplus this num"
+        )
         num_gpu %= NUM_GPUS
     while len(gpu_free_id_list) < num_gpu:
         time.sleep(2)
@@ -81,7 +85,10 @@ def supervise_gpu(num_gpu=1, mode="memory", memory_need=11000) -> list:
     return used_gpu_id_list
 
 
-def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need=11000):
+def set_cuda_visible_devices(gpu_ids=None,
+                             num_gpu=1,
+                             mode="memory",
+                             memory_need=11000):
     r"""Set cuda visible devices automatically
 
     Args:
@@ -92,20 +99,18 @@ def set_cuda_visible_devices(gpu_ids=None, num_gpu=1, mode="memory", memory_need
             the num of gpus you want to use. Defaults to 1.
             (useless if `gpu_ids` is not None)
     """
-    if gpu_ids is not None: # specified gpus
+    if gpu_ids is not None:  # specified gpus
         if not isinstance(gpu_ids, list):
             gpu_ids = [gpu_ids]
-    elif gpu_ids is None and num_gpu >= 1: # not specify gpus
+    elif gpu_ids is None and num_gpu >= 1:  # not specify gpus
         gpu_ids = supervise_gpu(num_gpu, mode, memory_need)
     else:
         raise ValueError(f"`num_gpu` is invalid: {num_gpu}, it must '>=1'")
-    
+
     # just for single machine multi gpu setting, the ngpus_per_node is
     # all gpus in this machine
     gpu_ids = ",".join(convert_list_str(gpu_ids))
     print(f"set CUDA_VISIBLE_DEVICES as {gpu_ids}")
     # return  gpu_ids
-    os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = gpu_ids
-
-

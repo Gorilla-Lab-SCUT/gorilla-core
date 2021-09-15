@@ -9,4 +9,3 @@ class CallbackHook(Hook):
         assert hasattr(self, fn_name)
         assert callable(fn)
         setattr(self, fn_name, fn)
-

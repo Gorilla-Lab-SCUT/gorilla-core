@@ -21,7 +21,6 @@ def reset_string_io(io):
 
 
 class TestProgressBar:
-
     def test_start(self):
         out = StringIO()
         bar_width = 20
@@ -29,7 +28,9 @@ class TestProgressBar:
         prog_bar = gorilla.ProgressBar(bar_width=bar_width, file=out)
         assert out.getvalue() == 'completed: 0, elapsed: 0s'
         reset_string_io(out)
-        prog_bar = gorilla.ProgressBar(bar_width=bar_width, start=False, file=out)
+        prog_bar = gorilla.ProgressBar(bar_width=bar_width,
+                                       start=False,
+                                       file=out)
         assert out.getvalue() == ''
         reset_string_io(out)
         prog_bar.start()
@@ -39,8 +40,10 @@ class TestProgressBar:
         prog_bar = gorilla.ProgressBar(10, bar_width=bar_width, file=out)
         assert out.getvalue() == f'[{" " * bar_width}] 0/10, elapsed: 0s, ETA:'
         reset_string_io(out)
-        prog_bar = gorilla.ProgressBar(
-            10, bar_width=bar_width, start=False, file=out)
+        prog_bar = gorilla.ProgressBar(10,
+                                       bar_width=bar_width,
+                                       start=False,
+                                       file=out)
         assert out.getvalue() == ''
         reset_string_io(out)
         prog_bar.start()
@@ -103,8 +106,9 @@ def test_track_progress_list():
 
 def test_track_progress_iterator():
     out = StringIO()
-    ret = gorilla.track_progress(
-        sleep_1s, ((i for i in [1, 2, 3]), 3), bar_width=3, file=out)
+    ret = gorilla.track_progress(sleep_1s, ((i for i in [1, 2, 3]), 3),
+                                 bar_width=3,
+                                 file=out)
     assert out.getvalue() == (
         '[   ] 0/3, elapsed: 0s, ETA:'
         '\r[>  ] 1/3, 1.0 task/s, elapsed: 1s, ETA:     2s'
@@ -130,8 +134,7 @@ def test_track_enum_progress():
     out = StringIO()
     ret = []
     count = []
-    for i, num in enumerate(
-            gorilla.track([1, 2, 3], bar_width=3, file=out)):
+    for i, num in enumerate(gorilla.track([1, 2, 3], bar_width=3, file=out)):
         ret.append(sleep_1s(num))
         count.append(i)
     assert out.getvalue() == (
@@ -145,8 +148,10 @@ def test_track_enum_progress():
 
 def test_track_parallel_progress_list():
     out = StringIO()
-    results = gorilla.track_parallel_progress(
-        sleep_1s, [1, 2, 3, 4], 2, bar_width=4, file=out)
+    results = gorilla.track_parallel_progress(sleep_1s, [1, 2, 3, 4],
+                                              2,
+                                              bar_width=4,
+                                              file=out)
     # The following cannot pass CI on Github Action
     # assert out.getvalue() == (
     #     '[    ] 0/4, elapsed: 0s, ETA:'
@@ -159,8 +164,11 @@ def test_track_parallel_progress_list():
 
 def test_track_parallel_progress_iterator():
     out = StringIO()
-    results = gorilla.track_parallel_progress(
-        sleep_1s, ((i for i in [1, 2, 3, 4]), 4), 2, bar_width=4, file=out)
+    results = gorilla.track_parallel_progress(sleep_1s,
+                                              ((i for i in [1, 2, 3, 4]), 4),
+                                              2,
+                                              bar_width=4,
+                                              file=out)
     # The following cannot pass CI on Github Action
     # assert out.getvalue() == (
     #     '[    ] 0/4, elapsed: 0s, ETA:'

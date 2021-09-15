@@ -10,7 +10,11 @@ def constant_init(module: nn.Module, val, bias=0, **kwargs):
         nn.init.constant_(module.bias, bias)
 
 
-def xavier_init(module: nn.Module, gain=1, bias=0, distribution="normal", **kwargs):
+def xavier_init(module: nn.Module,
+                gain=1,
+                bias=0,
+                distribution="normal",
+                **kwargs):
     assert distribution in ["uniform", "normal"]
     if distribution == "uniform":
         nn.init.xavier_uniform_(module.weight, gain=gain)
@@ -82,8 +86,8 @@ def c2_msra_init(module: nn.Module, **kwargs) -> None:
 
 
 def geometric_init(module: nn.Linear,
-                   geometric_radius: int=1.0,
-                   last: bool=False,
+                   geometric_radius: int = 1.0,
+                   last: bool = False,
                    **kwargs) -> None:
     r"""Author: lei.jiabao
     gepometric_init defined from SAL paper, work for MLP
@@ -97,11 +101,11 @@ def geometric_init(module: nn.Linear,
     in_dim = module.weight.shape[1]
     out_dim = module.weight.shape[0]
 
-    if last: # last layer
+    if last:  # last layer
         nn.init.constant_(module.weight, np.sqrt(np.pi) / np.sqrt(in_dim))
         if hasattr(module, "bias") and module.bias is not None:
             nn.init.constant_(module.bias, -geometric_radius)
-    else: # hidden layer
+    else:  # hidden layer
         nn.init.normal_(module.weight, 0.0, np.sqrt(2) / np.sqrt(out_dim))
         if hasattr(module, "bias") and module.bias is not None:
             nn.init.zeros_(module.bias)

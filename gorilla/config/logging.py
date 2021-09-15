@@ -14,12 +14,12 @@ from ..utils import timestamp
 from ..core import convert_list_str
 
 
-def collect_logger(root: str="log",
-                   prefix: Optional[str]=None,
-                   suffix: Optional[str]=None,
-                   log_name: Optional[str]=None,
-                   log_file: Optional[str]=None,
-                   show_name: bool=True,
+def collect_logger(root: str = "log",
+                   prefix: Optional[str] = None,
+                   suffix: Optional[str] = None,
+                   log_name: Optional[str] = None,
+                   log_file: Optional[str] = None,
+                   show_name: bool = True,
                    **kwargs):
     r"""Author: liang.zhihao
     A easy combination of get_log_dir and get_logger, use the timestamp
@@ -46,18 +46,15 @@ def collect_logger(root: str="log",
     time_stamp = timestamp()
     # get the log_file
     if log_file is None:
-        log_dir = get_log_dir(root,
-                            prefix,
-                            suffix,
-                            **kwargs)
-        
+        log_dir = get_log_dir(root, prefix, suffix, **kwargs)
+
         if log_name is None:
             log_file = osp.join(log_dir, f"{time_stamp}.log")
         else:
             log_file = osp.join(log_dir, f"{log_name}.log")
     else:
         log_dir = osp.dirname(log_file)
-    
+
     if not log_dir.startswith("."):
         log_dir = f"./{log_dir}"
 
@@ -69,9 +66,9 @@ def collect_logger(root: str="log",
     return log_dir, logger
 
 
-def get_log_dir(root: str="log",
-                prefix: str=None,
-                suffix: str=None,
+def get_log_dir(root: str = "log",
+                prefix: str = None,
+                suffix: str = None,
                 **kwargs) -> str:
     r"""Author: liang.zhihao
     Get log dir according to the given params key-value pair
@@ -103,15 +100,15 @@ def get_log_dir(root: str="log",
     params = []
     for key, value in args_dict.items():
         params.extend([key, value])
-    
+
     # deal with prefix
     if prefix is not None:
         params.insert(0, prefix)
-    
+
     # deal with suffix
     if suffix is not None:
         params.append(suffix)
-    
+
     # convert all parameters as str
     params = convert_list_str(params)
 
@@ -123,14 +120,15 @@ def get_log_dir(root: str="log",
     return log_dir
 
 
-@functools.lru_cache()  # so that calling setup_logger multiple times won't add many handlers
-def get_logger(log_file: str=None,
-               name: str="gorilla",
-               log_level: int=logging.INFO,
-               timestamp: Optional[str]=None,
-               abbrev_name: Optional[str]=None,
-               show_name: bool=True,
-               color: bool=True) -> logging.Logger:
+@functools.lru_cache(
+)  # so that calling setup_logger multiple times won't add many handlers
+def get_logger(log_file: str = None,
+               name: str = "gorilla",
+               log_level: int = logging.INFO,
+               timestamp: Optional[str] = None,
+               abbrev_name: Optional[str] = None,
+               show_name: bool = True,
+               color: bool = True) -> logging.Logger:
     r"""Initialize and get a logger by name.
         If the logger has not been initialized, this method will initialize the
         logger by adding one or two handlers, otherwise the initialized logger will
@@ -161,9 +159,13 @@ def get_logger(log_file: str=None,
     try:
         # piror rich handler
         from rich.logging import RichHandler
-        handlers = [RichHandler(rich_tracebacks=True, show_level=False, show_time=False)]
+        handlers = [
+            RichHandler(rich_tracebacks=True,
+                        show_level=False,
+                        show_time=False)
+        ]
         # fake colored refer to termcolor's colored API
-        colored = lambda text, color, on_color=None, attrs=None: text # NOTE: fix the conflict between rich and colored
+        colored = lambda text, color, on_color=None, attrs=None: text  # NOTE: fix the conflict between rich and colored
     except:
         stream_handler = logging.StreamHandler()
         handlers = [stream_handler]
@@ -181,15 +183,17 @@ def get_logger(log_file: str=None,
             os.makedirs(log_dir)
         file_handler = logging.FileHandler(log_file, "w")
         handlers.append(file_handler)
-        
+
     # detectron2 style
     if abbrev_name is None:
         abbrev_name = name
     if color:
         if show_name:
-            prefix = colored("[%(asctime)s %(name)s]", "green") + " %(levelname)s: %(message)s"
+            prefix = colored("[%(asctime)s %(name)s]",
+                             "green") + " %(levelname)s: %(message)s"
         else:
-            prefix = colored("[%(asctime)s]", "green") + " %(levelname)s: %(message)s"
+            prefix = colored("[%(asctime)s]",
+                             "green") + " %(levelname)s: %(message)s"
         formatter = _ColorfulFormatter(
             prefix,
             datefmt="%m/%d %H:%M:%S",
@@ -221,8 +225,7 @@ def get_logger(log_file: str=None,
     return logger
 
 
-def derive_logger(name: str,
-                  parent: str="gorilla") -> logging.Logger:
+def derive_logger(name: str, parent: str = "gorilla") -> logging.Logger:
     r"""
     drive a logger, whose parent is decided by the `parent` name
     in order to intialize logger by `__name__` more convenient
@@ -247,8 +250,8 @@ def derive_logger(name: str,
 
 
 def print_log(msg: str,
-              logger: Optional[logging.Logger]=None,
-              level: int=logging.INFO):
+              logger: Optional[logging.Logger] = None,
+              level: int = logging.INFO):
     r"""Print a log message.
 
     Args:
@@ -275,6 +278,7 @@ def print_log(msg: str,
             f"logger should be either a logging.Logger object, str, "
             f"'silent' or None, but got {type(logger)}")
 
+
 # modify from detectron2 https://github.com/facebookresearch/detectron2/blob/master/detectron2/utils/logger.py
 class _ColorfulFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
@@ -291,16 +295,16 @@ class _ColorfulFormatter(logging.Formatter):
         if record.levelno == logging.WARNING:
             prefix = self._colored("WARNING", "red", attrs=["blink"])
         elif record.levelno == logging.ERROR or record.levelno == logging.CRITICAL:
-            prefix = self._colored("ERROR", "red", attrs=["blink", "underline"])
+            prefix = self._colored("ERROR",
+                                   "red",
+                                   attrs=["blink", "underline"])
         else:
             return log
         return prefix + " " + log
 
 
 # modify from https://github.com/Megvii-BaseDetection/cvpods/blob/master/cvpods/utils/dump/logger.py
-def create_small_table(small_dict: Dict,
-                       tablefmt: str="psql",
-                       **kwargs):
+def create_small_table(small_dict: Dict, tablefmt: str = "psql", **kwargs):
     """
     Create a small table using the keys of small_dict as headers. This is only
     suitable for small dictionaries.
@@ -310,21 +314,20 @@ def create_small_table(small_dict: Dict,
         str: the table as a string.
     """
     keys, values = tuple(zip(*small_dict.items()))
-    table = tabulate(
-        [values],
-        headers=keys,
-        tablefmt=tablefmt,
-        floatfmt=".3f",
-        stralign="center",
-        numalign="center",
-        **kwargs
-    )
+    table = tabulate([values],
+                     headers=keys,
+                     tablefmt=tablefmt,
+                     floatfmt=".3f",
+                     stralign="center",
+                     numalign="center",
+                     **kwargs)
     return table
+
 
 def table(data: Iterable,
           headers: Iterable,
-          tablefmt: str="psql",
-          stralign: str="center",
+          tablefmt: str = "psql",
+          stralign: str = "center",
           numalign="center",
           floatfmt=".3f",
           **kwargs):
@@ -336,13 +339,11 @@ def table(data: Iterable,
     if not isinstance(headers, Iterable):
         headers = [headers]
 
-    table = tabulate(
-        data,
-        headers=headers,
-        tablefmt=tablefmt,
-        floatfmt=floatfmt,
-        stralign=stralign,
-        numalign=numalign,
-        **kwargs
-    )
+    table = tabulate(data,
+                     headers=headers,
+                     tablefmt=tablefmt,
+                     floatfmt=floatfmt,
+                     stralign=stralign,
+                     numalign=numalign,
+                     **kwargs)
     return table

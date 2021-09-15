@@ -12,10 +12,7 @@ class GraphConvolution(Module):
     r"""
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
-    def __init__(self,
-                 in_features: int,
-                 out_features: int,
-                 bias: bool=True):
+    def __init__(self, in_features: int, out_features: int, bias: bool = True):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -32,9 +29,7 @@ class GraphConvolution(Module):
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
 
-    def forward(self,
-                input: torch.Tensor,
-                adj: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
         # normalize adj
         support = torch.mm(input, self.weight)
         output = torch.spmm(adj, support)
@@ -52,8 +47,8 @@ class GraphConvolution(Module):
 class GCN(nn.Sequential):
     def __init__(self,
                  channels: List[int],
-                 dropout: float=0.0,
-                 drop_last: bool=True):
+                 dropout: float = 0.0,
+                 drop_last: bool = True):
         r"""Author: liang.zhihao
         Graph Convolution Block
 
@@ -64,22 +59,20 @@ class GCN(nn.Sequential):
         super(GCN, self).__init__()
         assert len(channels) >= 2
         self.num_layers = len(channels) - 1
-        for idx, (in_features, out_features) in enumerate(zip(channels[:-1], channels[1:])):
+        for idx, (in_features,
+                  out_features) in enumerate(zip(channels[:-1], channels[1:])):
             idx = idx + 1
-            self.add_module(f"gc{idx}", GraphConvolution(in_features, out_features))
+            self.add_module(f"gc{idx}",
+                            GraphConvolution(in_features, out_features))
             # explict the last layer
             if idx != self.num_layers or not drop_last:
                 self.add_module(f"ReLU{idx}", nn.ReLU(inplace=True))
                 self.add_module(f"dropout{idx}", nn.Dropout(dropout))
 
-    def forward(self,
-                x: torch.Tensor,
-                adj: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
         for module_name in self._modules:
             if "gc" in module_name:
                 x = self._modules[module_name](x, adj)
             else:
                 x = self._modules[module_name](x)
         return x
-
-

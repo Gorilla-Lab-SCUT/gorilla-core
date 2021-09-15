@@ -58,6 +58,7 @@ def import_modules_from_strings(imports, allow_failed_imports=False):
 def convert_list(input_list: List, type: Callable):
     return list(map(type, input_list))
 
+
 convert_list_str = functools.partial(convert_list, type=str)
 convert_list_int = functools.partial(convert_list, type=int)
 convert_list_float = functools.partial(convert_list, type=float)
@@ -65,7 +66,7 @@ convert_list_float = functools.partial(convert_list, type=float)
 
 def iter_cast(inputs: Iterable,
               dst_type: Callable,
-              return_type: Optional[Callable]=None):
+              return_type: Optional[Callable] = None):
     r"""Cast elements of an iterable object into some type.
 
     Args:
@@ -95,7 +96,7 @@ tuple_cast = functools.partial(iter_cast, return_type=tuple)
 
 def is_seq_of(seq: Sequence,
               expected_type: Callable,
-              seq_type: Optional[Callable]=None) -> bool:
+              seq_type: Optional[Callable] = None) -> bool:
     r"""Check whether it is a sequence of some type.
 
     Args:
@@ -161,7 +162,7 @@ def concat_list(in_list: List) -> list:
 
 def check_prerequisites(prerequisites: Union[str, List[str]],
                         checker: Callable,
-                        msg_tmpl: Optional[str]=None):
+                        msg_tmpl: Optional[str] = None):
     r"""A decorator factory to check if prerequisites are satisfied.
     Args:
         prerequisites (str of list[str]): Prerequisites to be checked.
@@ -215,7 +216,7 @@ def _check_py_package(package: str) -> bool:
         return True
 
 
-def _check_executable(cmd: str  ) -> bool:
+def _check_executable(cmd: str) -> bool:
     r"""Check whether cmd can be executed
 
     Args:
@@ -237,7 +238,7 @@ requires_executable = functools.partial(check_prerequisites,
 
 
 # NOTE: use to maintain
-def deprecated_api_warning(name_dict: Dict, cls_name: Optional[str]=None):
+def deprecated_api_warning(name_dict: Dict, cls_name: Optional[str] = None):
     r"""A decorator to check if some argments are deprecate and try to replace
     deprecate src_arg_name to dst_arg_name.
 
@@ -261,14 +262,16 @@ def deprecated_api_warning(name_dict: Dict, cls_name: Optional[str]=None):
                 arg_names = args_info.args[:len(args)]
                 for src_arg_name, dst_arg_name in name_dict.items():
                     if src_arg_name in arg_names:
-                        warnings.warn(f"'{src_arg_name}' is deprecated in `{func_name}`, "
-                                      f"please use `{dst_arg_name}` instead")
+                        warnings.warn(
+                            f"'{src_arg_name}' is deprecated in `{func_name}`, "
+                            f"please use `{dst_arg_name}` instead")
                         arg_names[arg_names.index(src_arg_name)] = dst_arg_name
             if kwargs:
                 for src_arg_name, dst_arg_name in name_dict.items():
                     if src_arg_name in kwargs:
-                        warnings.warn(f"`{src_arg_name}` is deprecated in `{func_name}`, "
-                                      f"please use `{dst_arg_name}` ")
+                        warnings.warn(
+                            f"`{src_arg_name}` is deprecated in `{func_name}`, "
+                            f"please use `{dst_arg_name}` ")
                         kwargs[dst_arg_name] = kwargs.pop(src_arg_name)
 
             # apply converted arguments to the decorated method
@@ -298,6 +301,7 @@ def multi_apply(func: Callable, *args, **kwargs):
     map_results = map(pfunc, *args)
     return tuple(map(list, zip(*map_results)))
 
+
 def is_power2(num: int) -> bool:
     r"""Author: liang.zhihao
 
@@ -308,6 +312,7 @@ def is_power2(num: int) -> bool:
         bool: is the power of 2 or not
     """
     return num != 0 and ((num & (num - 1)) == 0)
+
 
 def is_multiple(num: Union[int, float], multiple: Union[int, float]) -> bool:
     r"""Author: liang.zhihao
@@ -320,4 +325,3 @@ def is_multiple(num: Union[int, float], multiple: Union[int, float]) -> bool:
         bool: can num be multiply by multiple or not
     """
     return num != 0. and num % multiple == 0.
-

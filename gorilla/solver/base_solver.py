@@ -12,21 +12,20 @@ from .checkpoint import resume
 from ..utils import check_file
 from ..core import build_model
 
+
 class BaseSolver(metaclass=ABCMeta):
     r"""Base class of model solver."""
-    def __init__(self,
-                 model,
-                 dataloaders,
-                 cfg,
-                 **kwargs):
-        # TODO: the model builder is ugly and need to 
+    def __init__(self, model, dataloaders, cfg, **kwargs):
+        # TODO: the model builder is ugly and need to
         # integrate into solver elegant
         if isinstance(model, dict):
             self.model = build_model(model)
         elif isinstance(model, torch.nn.Module):
             self.model = model
         else:
-            raise TypeError(f"`model` must be `nn.module` or cfg `dict`, but got `{type(model)}`")
+            raise TypeError(
+                f"`model` must be `nn.module` or cfg `dict`, but got `{type(model)}`"
+            )
 
         # get the epoch or iteration mode
         self.mode = cfg.get("mode", "epoch")
@@ -34,11 +33,12 @@ class BaseSolver(metaclass=ABCMeta):
 
         # merge some essentital parameter for each project(like independent criterion)
         self.__dict__.update(kwargs)
-        
+
         # initial essential parameters
         self.dataloaders = dataloaders
         self.optimizer = build_optimizer(model, cfg.optimizer)
-        self.lr_scheduler = build_lr_scheduler(self.optimizer, cfg.lr_scheduler)
+        self.lr_scheduler = build_lr_scheduler(self.optimizer,
+                                               cfg.lr_scheduler)
         self.cfg = cfg
         self.logger = logging.getLogger(__name__)
 
@@ -47,8 +47,9 @@ class BaseSolver(metaclass=ABCMeta):
 
     def get_ready(self, **kwargs):
         self.epoch = self.cfg.get("start_epoch", 1)
-        self.tb_writer = TensorBoardWriter(self.cfg.log_dir) # tensorboard writer
-        self.log_buffer = self.tb_writer.buffer # to fix old API
+        self.tb_writer = TensorBoardWriter(
+            self.cfg.log_dir)  # tensorboard writer
+        self.log_buffer = self.tb_writer.buffer  # to fix old API
         self.iter = 0  # cumulative iter number, doesn't flush when come into a new epoch
         self.meta = {}
 
@@ -59,11 +60,8 @@ class BaseSolver(metaclass=ABCMeta):
 
     def resume(self, checkpoint, **kwargs):
         check_file(checkpoint)
-        self.meta = resume(self.model,
-                           checkpoint,
-                           self.optimizer,
-                           self.lr_scheduler,
-                           **kwargs)
+        self.meta = resume(self.model, checkpoint, self.optimizer,
+                           self.lr_scheduler, **kwargs)
         if "epoch" in self.meta:
             self.epoch = self.meta["epoch"] + 1
         if "iter" in self.meta:
@@ -119,6 +117,3 @@ class BaseSolver(metaclass=ABCMeta):
     #     """
     #     for hook in self._hooks:
     #         getattr(hook, fn_name)(self)
-
-
-

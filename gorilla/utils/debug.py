@@ -38,20 +38,28 @@ def check(*args, **kwargs):
             print(f"{' '*ind}{kw}: type={strip(type(arg))} value={arg}")
         elif isinstance(arg, (list, tuple)):
             other = "..." if len(arg) > dl else ""
-            print(f"{' '*ind}{kw}: type={strip(type(arg))} value={arg[:dl]}{other} len={len(arg)}")
+            print(
+                f"{' '*ind}{kw}: type={strip(type(arg))} value={arg[:dl]}{other} len={len(arg)}"
+            )
         elif isinstance(arg, set):
             print(f"{' '*ind}{kw}: type={strip(type(arg))} len={len(arg)}")
             for i, value in enumerate(arg):
-                go(f"Unnamed {i+1}", value, dl, ind+4)
+                go(f"Unnamed {i+1}", value, dl, ind + 4)
         elif isinstance(arg, dict):
             other = "..." if len(arg.keys()) > dl else ""
-            print(f"{' '*ind}{kw}: type={strip(type(arg))} key={list(arg.keys())[:dl]}{other} len={len(arg)}")
+            print(
+                f"{' '*ind}{kw}: type={strip(type(arg))} key={list(arg.keys())[:dl]}{other} len={len(arg)}"
+            )
             for key, value in arg.items():
-                go(key, value, dl, ind+4)
+                go(key, value, dl, ind + 4)
         elif isinstance(arg, np.ndarray):
-            print(f"{' '*ind}{kw}: type={strip(type(arg))} shape={arg.shape} dtype={arg.dtype}")
+            print(
+                f"{' '*ind}{kw}: type={strip(type(arg))} shape={arg.shape} dtype={arg.dtype}"
+            )
         elif isinstance(arg, torch.Tensor):
-            print(f"{' '*ind}{kw}: type={strip(type(arg))} size={arg.size()} dtype={arg.dtype}")
+            print(
+                f"{' '*ind}{kw}: type={strip(type(arg))} size={arg.size()} dtype={arg.dtype}"
+            )
         elif isinstance(arg, (int, float)):
             print(f"{' '*ind}{kw}: type={strip(type(arg))} value={arg}")
         else:
@@ -59,7 +67,7 @@ def check(*args, **kwargs):
                 print(f"{' '*ind}{kw}: type={strip(type(arg))} len={len(arg)}")
             except TypeError:
                 print(f"{' '*ind}{kw}: type={strip(type(arg))}")
-            
+
     for i, arg in enumerate(args):
         go(f"Unnamed {i+1}", arg)
     for kw, arg in kwargs.items():
@@ -81,8 +89,7 @@ def display(name, param, logger=None):
         print(f"{name.ljust(15)} "
               f"max: {param.max().item():+.5f} ",
               f"min: {param.min().item():+.5f} ",
-              f"mean: {param.mean().item():+.5f} ",
-              f"shape: {param.shape}")
+              f"mean: {param.mean().item():+.5f} ", f"shape: {param.shape}")
     elif isinstance(param, str):
         print(f"{name}: {param}")
     else:
@@ -98,15 +105,22 @@ def check_rand_state():
     state = np.random.get_state()
     print(f"numpy: state: {list(state[1][:n])}, counter: {state[2]}")
     state = torch.get_rng_state()
+
     def uint8_to_uint32(u8list):
         r"""Concat a list of 4 uint8 number to an uint32 number.
         validated supported input type: torch.ByteTensor, list
         """
-        return (int(u8list[3])<<24) + (int(u8list[2])<<16) + (int(u8list[1])<<8) + int(u8list[0])
-    front_state = [uint8_to_uint32(state[24+8*i: 24+8*i+4]) for i in range(n-1)]
-    print(f"torch: seed: {uint8_to_uint32(state[:4])}, "
-          f"state: {front_state} "
-          f"counter: {int(state[8]) + (int(state[9])<<8)} {int(state[16]) + (int(state[17])<<8)}")
+        return (int(u8list[3]) << 24) + (int(u8list[2]) << 16) + (
+            int(u8list[1]) << 8) + int(u8list[0])
+
+    front_state = [
+        uint8_to_uint32(state[24 + 8 * i:24 + 8 * i + 4]) for i in range(n - 1)
+    ]
+    print(
+        f"torch: seed: {uint8_to_uint32(state[:4])}, "
+        f"state: {front_state} "
+        f"counter: {int(state[8]) + (int(state[9])<<8)} {int(state[16]) + (int(state[17])<<8)}"
+    )
 
 
 def debugtor():
@@ -136,7 +150,10 @@ def debugtor():
             try:
                 return func(*args, **kwargs)
             except:
-                from ipdb import set_trace; set_trace()
-                return func(*args, **kwargs) # `s` to step in
+                from ipdb import set_trace
+                set_trace()
+                return func(*args, **kwargs)  # `s` to step in
+
         return wrapper
+
     return actual_decorator

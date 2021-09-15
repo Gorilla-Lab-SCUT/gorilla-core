@@ -14,8 +14,14 @@ def test_collect_env():
 
     env_info_str = gorilla.collect_env_info()
     expected_keys = [
-        'sys.platform', 'Python', 'numpy', 'gorilla', 'PyTorch',
-        'GPU available', 'torchvision', 'OpenCV',
+        'sys.platform',
+        'Python',
+        'numpy',
+        'gorilla',
+        'PyTorch',
+        'GPU available',
+        'torchvision',
+        'OpenCV',
     ]
     for key in expected_keys:
         assert key in env_info_str

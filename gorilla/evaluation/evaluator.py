@@ -18,9 +18,11 @@ class DatasetEvaluator:
     This class will accumulate information of the inputs/outputs (by :meth:`process`),
     and produce evaluation results in the end (by :meth:`evaluate`).
     """
-    def __init__(self,
-                 class_labels: Sequence[str]=[],
-                 class_ids: Sequence[int]=[],):
+    def __init__(
+        self,
+        class_labels: Sequence[str] = [],
+        class_ids: Sequence[int] = [],
+    ):
         self.logger = logging.getLogger(__name__)
         self.class_labels = class_labels
         self.class_ids = np.array(class_ids)

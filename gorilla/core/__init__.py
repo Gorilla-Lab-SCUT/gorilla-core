@@ -1,11 +1,10 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 from .misc import (concat_list, convert_list, convert_list_str,
                    convert_list_int, convert_list_float, iter_cast, slice_list,
-                   iter_cast, list_cast, tuple_cast,
-                   check_prerequisites, deprecated_api_warning,
-                   is_seq_of, is_list_of, is_tuple_of, multi_apply,
-                   is_multiple, is_power2,
-                   requires_package, requires_executable, check_prerequisites,
+                   iter_cast, list_cast, tuple_cast, check_prerequisites,
+                   deprecated_api_warning, is_seq_of, is_list_of, is_tuple_of,
+                   multi_apply, is_multiple, is_power2, requires_package,
+                   requires_executable, check_prerequisites,
                    import_modules_from_strings)
 
 from .comm import (get_world_size, get_rank, get_local_rank, get_local_size,

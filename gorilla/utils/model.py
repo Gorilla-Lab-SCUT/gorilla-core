@@ -20,7 +20,6 @@ from urllib.parse import urlparse
 from tqdm import tqdm
 
 from .debug import display
-
 """
 directory
 ---------
@@ -41,14 +40,20 @@ ENV_TORCH_HOME = "TORCH_HOME"
 ENV_XDG_CACHE_HOME = "XDG_CACHE_HOME"
 DEFAULT_CACHE_DIR = "~/.cache"
 
+
 def _get_torch_home():
     torch_home = osp.expanduser(
-        os.getenv(ENV_TORCH_HOME,
-                  osp.join(os.getenv(ENV_XDG_CACHE_HOME, DEFAULT_CACHE_DIR), "torch")))
+        os.getenv(
+            ENV_TORCH_HOME,
+            osp.join(os.getenv(ENV_XDG_CACHE_HOME, DEFAULT_CACHE_DIR),
+                     "torch")))
     return torch_home
 
 
-def load_state_dict_from_url(url, model_dir=None, map_location=None, progress=True):
+def load_state_dict_from_url(url,
+                             model_dir=None,
+                             map_location=None,
+                             progress=True):
     r"""Loads the Torch serialized object at the given URL.
 
     If the object is already present in `model_dir`, it's deserialized and
@@ -74,7 +79,8 @@ def load_state_dict_from_url(url, model_dir=None, map_location=None, progress=Tr
     """
     # Issue warning to move data if old env is set
     if os.getenv("TORCH_MODEL_ZOO"):
-        warnings.warn("TORCH_MODEL_ZOO is deprecated, please use env TORCH_HOME instead")
+        warnings.warn(
+            "TORCH_MODEL_ZOO is deprecated, please use env TORCH_HOME instead")
 
     if model_dir is None:
         torch_home = _get_torch_home()
@@ -120,8 +126,11 @@ def _download_url_to_file(url, dst, hash_prefix, progress):
     try:
         if hash_prefix is not None:
             sha256 = hashlib.sha256()
-        with tqdm(total=file_size, disable=not progress,
-                  unit="B", unit_scale=True, unit_divisor=1024) as pbar:
+        with tqdm(total=file_size,
+                  disable=not progress,
+                  unit="B",
+                  unit_scale=True,
+                  unit_divisor=1024) as pbar:
             while True:
                 buffer = u.read(8192)
                 if len(buffer) == 0:
@@ -135,7 +144,9 @@ def _download_url_to_file(url, dst, hash_prefix, progress):
         if hash_prefix is not None:
             digest = sha256.hexdigest()
             if digest[:len(hash_prefix)] != hash_prefix:
-                raise RuntimeError(f"invalid hash value (expected '{hash_prefix}', got '{digest}')")
+                raise RuntimeError(
+                    f"invalid hash value (expected '{hash_prefix}', got '{digest}')"
+                )
         shutil.move(f.name, dst)
     finally:
         f.close()
@@ -166,7 +177,9 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
         check_model(input_size, model)
     """
     def get_sth(output, sth):
-        if isinstance(output, tuple): # if the model has more than one output, "output" here will be a tuple
+        if isinstance(
+                output, tuple
+        ):  # if the model has more than one output, "output" here will be a tuple
             result = {}
             for i, _ in enumerate(output):
                 result[i] = OrderedDict()
@@ -187,20 +200,14 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
         def hook(module, input, output):
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(summary)
-            allow_base_modules_only = True # it control whether create summary for those middle modules
+            allow_base_modules_only = True  # it control whether create summary for those middle modules
             if allow_base_modules_only:
                 # add base module name if needed
-                base_classes = ["Linear",
-                                "Conv2d",
-                                "Flatten",
-                                "ReLU",
-                                "PReLU",
-                                "Sigmoid",
-                                "Dropout",
-                                "BatchNorm1d",
-                                "BatchNorm2d",
-                                "MaxPool2d",
-                                "AdaptiveAvgPool2d"]
+                base_classes = [
+                    "Linear", "Conv2d", "Flatten", "ReLU", "PReLU", "Sigmoid",
+                    "Dropout", "BatchNorm1d", "BatchNorm2d", "MaxPool2d",
+                    "AdaptiveAvgPool2d"
+                ]
                 if class_name not in base_classes:
                     return
             class_idx = classes_idx.get(class_name)
@@ -212,9 +219,10 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
 
             m_key = f"{class_name}-{class_idx + 1} ({module_idx + 1})"
             summary[m_key] = OrderedDict()
-            summary[m_key]["input_shape"] = list(input[0].size()) # input is a tuple whose first element is a tensor
+            summary[m_key]["input_shape"] = list(input[0].size(
+            ))  # input is a tuple whose first element is a tensor
             summary[m_key]["output_shape"] = get_sth(output, "size")
-            if layer_wise: # more exact checking
+            if layer_wise:  # more exact checking
                 summary[m_key]["input_sum"] = get_sth(input[0], "sum")
                 summary[m_key]["output_sum"] = get_sth(output, "sum")
                 summary[m_key]["output_max"] = get_sth(output, "max")
@@ -223,7 +231,8 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
 
             params = 0
             if hasattr(module, "weight"):
-                params += int(torch.prod(torch.LongTensor(list(module.weight.size()))))
+                params += int(
+                    torch.prod(torch.LongTensor(list(module.weight.size()))))
                 if module.weight.requires_grad:
                     summary[m_key]["trainable"] = True
                 else:
@@ -231,22 +240,27 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
             #if hasattr(module, "bias"):
             #  params +=  torch.prod(torch.LongTensor(list(module.bias.size())))
 
-            summary[m_key]["num_params"] = params # not take bias into consideration
+            summary[m_key][
+                "num_params"] = params  # not take bias into consideration
             pprint.pprint({m_key: summary[m_key]})
 
         if not isinstance(module, nn.Sequential) and \
             not isinstance(module, nn.ModuleList) and \
             not module == model: # make sure "module" is a base module, such conv, fc and so on
-            hooks.append(module.register_forward_hook(hook)) # hooks is used to record added hook for removing them later
+            hooks.append(
+                module.register_forward_hook(hook)
+            )  # hooks is used to record added hook for removing them later
 
     model.eval()
     # check if there are multiple inputs to the network
     if isinstance(input_size[0], (list, tuple)):
         x = [torch.ones(2, *in_size) for in_size in input_size]
     else:
-        x = torch.ones(2, *input_size) # 1 is batch_size dimension to adapt the model's structure
+        x = torch.ones(
+            2, *input_size
+        )  # 1 is batch_size dimension to adapt the model's structure
 
-    if next( model.parameters() ).is_cuda:
+    if next(model.parameters()).is_cuda:
         x = x.cuda()
 
     # create properties
@@ -254,16 +268,16 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
     classes_idx = {}
     hooks = []
     # register hook
-    model.apply(register_hook) # 递归地去给每个网络组件挂挂钩（不只是conv, fc这种底层组件，上面的Sequential组件也会被访问到）
+    model.apply(register_hook
+                )  # 递归地去给每个网络组件挂挂钩（不只是conv, fc这种底层组件，上面的Sequential组件也会被访问到）
     # make a forward pass
     I = inspect.getfullargspec(model.forward)
     # for standard nn.Modules class: self.forward(x)
     with torch.no_grad():
         if I.varargs is None and I.varkw is None:
             output = model(x)
-        else: # for gorilla's BaseModel class: self.forward(be_train=True, **kwargs)
-            data = dict(img=x,
-                        sample_metas=[])
+        else:  # for gorilla's BaseModel class: self.forward(be_train=True, **kwargs)
+            data = dict(img=x, sample_metas=[])
             output = model.forward_train(data, be_train=True)
 
     # remove these hooks
@@ -277,7 +291,9 @@ def check_model(input_size, model, layer_wise=False, keep_hook=False):
         # more exact comparison
         # tmp = out.view(-1, 1)
         # print(f"output {i} size: {out.size()}, sum: {tmp[:10]}")
-        print(f"{name}{num}: size={list(out.size())}, sum={out.sum().item():.5f}")
+        print(
+            f"{name}{num}: size={list(out.size())}, sum={out.sum().item():.5f}"
+        )
 
     if isinstance(output, tuple):
         for i, out in enumerate(output):
@@ -358,8 +374,10 @@ def check_grad(model1, model2="", logger=None):
             for name, param in model1.named_parameters():
                 display("grad of " + name, param.grad, logger)
         except AttributeError as e:
-            raise AttributeError(f"{e}. Maybe the parameter '{name}' in model is not used, please have a check.")
-        
+            raise AttributeError(
+                f"{e}. Maybe the parameter '{name}' in model is not used, please have a check."
+            )
+
         return
 
         # minimum = 10086
@@ -370,7 +388,7 @@ def check_grad(model1, model2="", logger=None):
         #     # for the condition that model1 is not a module, but an image (in adversial-sample-like training)
         #     if "Tensor" in str(model1.__class__).split("'")[1]:
         #         print("min:", model1.grad.abs().min(), "max:", model1.grad.abs().max(), "mean:", model1.grad.abs().mean())
-        #         return model1.grad.abs().mean()   
+        #         return model1.grad.abs().mean()
 
         #     for name, param in model1.named_parameters():
         #         if param.grad.abs().mean() < minimum:
@@ -415,7 +433,8 @@ def check_optimizer(optimizer):
 
     print(optimizer)
     for i, (group, param_group) in enumerate(
-        zip(optimizer.param_groups, optimizer.state_dict()["param_groups"])):
+            zip(optimizer.param_groups,
+                optimizer.state_dict()["param_groups"])):
         type_name = group.get("type", f"Unnamed {i}")
         print(f"{type_name}: {len(group['params'])} layers of params")
         state = optimizer.state_dict()["state"]
@@ -451,27 +470,23 @@ def register_hook(model,
     """
     # modules in base_classes will be add a hook_fn, while others not
     # add base module name if needed
-    base_classes = ["Linear",
-                    "Conv2d",
-                    "Flatten",
-                    "ReLU",
-                    "PReLU",
-                    "Sigmoid",
-                    "Dropout",
-                    "BatchNorm1d",
-                    "BatchNorm2d",
-                    "MaxPool2d",
-                    "AdaptiveAvgPool2d"]
+    base_classes = [
+        "Linear", "Conv2d", "Flatten", "ReLU", "PReLU", "Sigmoid", "Dropout",
+        "BatchNorm1d", "BatchNorm2d", "MaxPool2d", "AdaptiveAvgPool2d"
+    ]
     # create properties
     summary = OrderedDict()
     classes_idx = {}
-    hooks = [] # hooks is used to record added hook for removing them later
+    hooks = []  # hooks is used to record added hook for removing them later
     assert trigger in ["forward_pre", "forward", "backward"], \
         f"trigger should be in ['forward_pre', 'forward', 'backward'], but got {trigger}"
+
     # register_fn = f"register_{trigger}_hook"
 
     def get_sth(output, sth):
-        if isinstance(output, tuple): # if the model has more than one output, "output" here will be a tuple
+        if isinstance(
+                output, tuple
+        ):  # if the model has more than one output, "output" here will be a tuple
             result = {}
             for i, _ in enumerate(output):
                 result[i] = OrderedDict()
@@ -511,9 +526,10 @@ def register_hook(model,
 
         m_key = f"{class_name}-{class_idx + 1} ({module_idx})"
         summary[m_key] = OrderedDict()
-        summary[m_key]["input_shape"] = list(input[0].size()) # input is a tuple whose first element is a tensor
+        summary[m_key]["input_shape"] = list(input[0].size(
+        ))  # input is a tuple whose first element is a tensor
         summary[m_key]["output_shape"] = get_sth(output, "size")
-        if layer_wise: # more exact checking
+        if layer_wise:  # more exact checking
             summary[m_key]["input_sum"] = get_sth(input[0], "sum")
             summary[m_key]["output_sum"] = get_sth(output, "sum")
             summary[m_key]["output_max"] = get_sth(output, "max")
@@ -522,7 +538,8 @@ def register_hook(model,
 
         params = 0
         if hasattr(module, "weight"):
-            params += int(torch.prod(torch.LongTensor(list(module.weight.size()))))
+            params += int(
+                torch.prod(torch.LongTensor(list(module.weight.size()))))
             if module.weight.requires_grad:
                 summary[m_key]["trainable"] = True
             else:
@@ -530,7 +547,8 @@ def register_hook(model,
         #if hasattr(module, "bias"):
         #  params +=  torch.prod(torch.LongTensor(list(module.bias.size())))
 
-        summary[m_key]["num_params"] = params # not take bias into consideration
+        summary[m_key][
+            "num_params"] = params  # not take bias into consideration
         pprint.pprint({m_key: summary[m_key]})
 
     def backward_hook(module, grad_input, grad_output):
@@ -541,14 +559,16 @@ def register_hook(model,
             grad_input (torch.Tensor): gradient of this module's input
             grad_output (torch.Tensor): gradient of this module's output
         """
-        info_dict = {"Sigmoid": ["downstream"],
-                     "Linear": ["bias", "downstream", "weight"],
-                     "ReLU": ["downstream"],
-                     "Conv2d": ["downstream", "weight", "bias"],
-                     "BatchNorm1d": ["downstream", "weight", "bias"],
-                     "BatchNorm2d": ["downstream", "weight", "bias"],
-                     "AdaptiveAvgPool2d": ["downstream"],
-                     "MaxPool2d": ["downstream"]}
+        info_dict = {
+            "Sigmoid": ["downstream"],
+            "Linear": ["bias", "downstream", "weight"],
+            "ReLU": ["downstream"],
+            "Conv2d": ["downstream", "weight", "bias"],
+            "BatchNorm1d": ["downstream", "weight", "bias"],
+            "BatchNorm2d": ["downstream", "weight", "bias"],
+            "AdaptiveAvgPool2d": ["downstream"],
+            "MaxPool2d": ["downstream"]
+        }
         class_name = str(module.__class__).split(".")[-1].split("'")[0]
         module_idx = len(summary)
         # if allow_base_modules_only:
@@ -567,7 +587,7 @@ def register_hook(model,
 
         if class_name in info_dict:
             for i, gin in enumerate(grad_input):
-                if gin is None: # the beginning network layer has no grad for downstream
+                if gin is None:  # the beginning network layer has no grad for downstream
                     print(f"grad to {info_dict[class_name][i]}: None")
                 else:
                     display(f"grad to {info_dict[class_name][i]}", gin)
@@ -601,4 +621,3 @@ def register_hook(model,
     model.apply(_register_hook)
 
     return hooks
-

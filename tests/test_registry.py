@@ -19,5 +19,3 @@ def test_registry():
         OBJECT_REGISTRY.get("Object2")
 
     assert list(OBJECT_REGISTRY) == [("Object1", Object1)]
-
-

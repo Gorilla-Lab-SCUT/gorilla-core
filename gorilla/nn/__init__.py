@@ -12,9 +12,9 @@ from .transformer import (Transformer, TransformerEncoder, TransformerDecoder,
 
 from .vgg import VGG
 from .alexnet import AlexNet
-from .resnet import (BasicBlock, Bottleneck, resnet,
-                     resnet18, resnet34, resnet50, resnet101, resnet152,
-                     resnext50_32x4d, resnext101_32x8d, wide_resnet50_2, wide_resnet101_2)
+from .resnet import (BasicBlock, Bottleneck, resnet, resnet18, resnet34,
+                     resnet50, resnet101, resnet152, resnext50_32x4d,
+                     resnext101_32x8d, wide_resnet50_2, wide_resnet101_2)
 
 # auto registry all defined module
 from ..core import MODULES, auto_registry

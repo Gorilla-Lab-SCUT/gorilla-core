@@ -22,7 +22,6 @@ class DistributedSampler(Sampler):
             distributed training.
         rank (optional): Rank of the current process within num_replicas.
     """
-
     def __init__(self, dataset, num_replicas=None, rank=None, shuffle=True):
         if num_replicas is None:
             num_replicas = get_world_size()
@@ -32,7 +31,8 @@ class DistributedSampler(Sampler):
         self.num_replicas = num_replicas
         self.rank = rank
         self.epoch = 0
-        self.num_samples = int(math.ceil(len(self.dataset) * 1.0 / self.num_replicas))
+        self.num_samples = int(
+            math.ceil(len(self.dataset) * 1.0 / self.num_replicas))
         self.total_size = self.num_samples * self.num_replicas
         self.shuffle = shuffle
 
@@ -46,12 +46,12 @@ class DistributedSampler(Sampler):
             indices = torch.arange(len(self.dataset)).tolist()
 
         # add extra samples to make it evenly divisible
-        indices += indices[: (self.total_size - len(indices))]
+        indices += indices[:(self.total_size - len(indices))]
         assert len(indices) == self.total_size
 
         # subsample
         offset = self.num_samples * self.rank
-        indices = indices[offset : offset + self.num_samples]
+        indices = indices[offset:offset + self.num_samples]
         assert len(indices) == self.num_samples
 
         return iter(indices)
@@ -61,6 +61,3 @@ class DistributedSampler(Sampler):
 
     def set_epoch(self, epoch):
         self.epoch = epoch
-
-
-

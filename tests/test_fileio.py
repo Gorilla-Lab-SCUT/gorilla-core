@@ -45,7 +45,6 @@ obj_for_test = [{'a': 'abc', 'b': 1}, 2, 'c']
 
 
 def test_json():
-
     def json_checker(dump_str):
         assert dump_str in [
             '[{"a": "abc", "b": 1}, 2, "c"]', '[{"b": 1, "a": "abc"}, 2, "c"]'
@@ -55,7 +54,6 @@ def test_json():
 
 
 def test_yaml():
-
     def yaml_checker(dump_str):
         assert dump_str in [
             '- {a: abc, b: 1}\n- 2\n- c\n', '- {b: 1, a: abc}\n- 2\n- c\n',
@@ -66,7 +64,6 @@ def test_yaml():
 
 
 def test_pickle():
-
     def pickle_checker(dump_str):
         import pickle
         assert pickle.loads(dump_str) == obj_for_test
@@ -85,10 +82,8 @@ def test_exception():
 
 
 def test_register_handler():
-
     @gorilla.register_handler('txt')
     class TxtHandler1(gorilla.BaseFileHandler):
-
         def load_from_fileobj(self, file):
             return file.read()
 
@@ -100,7 +95,6 @@ def test_register_handler():
 
     @gorilla.register_handler(['txt1', 'txt2'])
     class TxtHandler2(gorilla.BaseFileHandler):
-
         def load_from_fileobj(self, file):
             return file.read()
 
@@ -111,7 +105,8 @@ def test_register_handler():
         def dump_to_str(self, obj, **kwargs):
             return str(obj)
 
-    content = gorilla.load(osp.join(osp.dirname(__file__), 'data/filelist.txt'))
+    content = gorilla.load(osp.join(osp.dirname(__file__),
+                                    'data/filelist.txt'))
     assert content == '1.jpg\n2.jpg\n3.jpg\n4.jpg\n5.jpg'
     tmp_filename = osp.join(tempfile.gettempdir(), 'gorilla_test.txt2')
     gorilla.dump(content, tmp_filename)

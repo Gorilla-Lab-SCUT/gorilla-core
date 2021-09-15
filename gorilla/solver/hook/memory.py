@@ -7,10 +7,7 @@ from .hook import Hook
 
 @HOOKS.register()
 class EmptyCacheHook(Hook):
-
-    def __init__(self,
-                 after_step=True,
-                 after_epoch=True):
+    def __init__(self, after_step=True, after_epoch=True):
         self._after_step = after_step
         self._after_epoch = after_epoch
 
@@ -23,4 +20,3 @@ class EmptyCacheHook(Hook):
         r"""clean cuda memoty"""
         if self._after_epoch:
             torch.cuda.empty_cache()
-

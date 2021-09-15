@@ -5,16 +5,14 @@ import torch
 
 from ..data import DistributedSampler, DataLoaderX
 from ..config import Config
-from ..core import (is_seq_of, _build_optimizer, _build_scheduler,
-                    get_rank, get_world_size, build_from_cfg, DATASETS)
+from ..core import (is_seq_of, _build_optimizer, _build_scheduler, get_rank,
+                    get_world_size, build_from_cfg, DATASETS)
 from ..data import ConcatDataset, RepeatDataset
 
 # the default optimizer and lr_scheduler config dict
-OPTIM = {"type": "Adam",
-         "lr": 0.001}
+OPTIM = {"type": "Adam", "lr": 0.001}
 
-SCHEDULER = {"type": "StepLR",
-             "step_size": 10000}
+SCHEDULER = {"type": "StepLR", "step_size": 10000}
 
 
 def build_single_optimizer(
@@ -36,16 +34,19 @@ def build_single_optimizer(
         for key, value in paramwise_cfg.items():
             optimizer_cfg["params"].append({
                 "params":
-                filter(lambda p: p.requires_grad, getattr(model, key).parameters()),
-                "type": key,
+                filter(lambda p: p.requires_grad,
+                       getattr(model, key).parameters()),
+                "type":
+                key,
                 **value
             })
-    
+
     return _build_optimizer(optimizer_cfg)
 
 
-def build_optimizer(model: torch.nn.Module,
-                    optimizer_cfg: [Config, Dict]=OPTIM) -> torch.optim.Optimizer:
+def build_optimizer(
+        model: torch.nn.Module,
+        optimizer_cfg: [Config, Dict] = OPTIM) -> torch.optim.Optimizer:
     r"""Author: zhang.haojian
     Build an optimizer from config, supporting multi optimizers.
     If there is no omission, build_optimizer_v2 can take the place of
@@ -68,7 +69,7 @@ def build_optimizer(model: torch.nn.Module,
 
 def build_lr_scheduler(
         optimizer: torch.optim.Optimizer,
-        lr_scheduler_cfg: [Config, Dict]=SCHEDULER,
+        lr_scheduler_cfg: [Config, Dict] = SCHEDULER,
         lambda_func=None) -> torch.optim.lr_scheduler._LRScheduler:
     r"""Author: liang.zhihao
     Build a LR scheduler from config.
@@ -91,7 +92,8 @@ def build_lr_scheduler(
     Returns:
         _LRScheduler: the learning rate scheduler
     """
-    if isinstance(optimizer, dict):  # multi optimizer with the same lr_scheduler config
+    if isinstance(optimizer,
+                  dict):  # multi optimizer with the same lr_scheduler config
         # TODO: maybe someone need multi optimizer whose have their own lr_scheduler config?
         lr_schedulers = {}
         for key, _optimizer in optimizer.items():
@@ -116,9 +118,8 @@ def build_dataset(cfg, default_args=None):
     if isinstance(cfg, (list, tuple)):
         dataset = ConcatDataset([build_dataset(c, default_args) for c in cfg])
     elif cfg["type"] == "RepeatDataset":
-        dataset = RepeatDataset(
-            build_dataset(cfg["dataset"], default_args), cfg["times"]
-        )
+        dataset = RepeatDataset(build_dataset(cfg["dataset"], default_args),
+                                cfg["times"])
     # elif isinstance(cfg['ann_file'], (list, tuple)):
     #     dataset = _concat_dataset(cfg, default_args)
     else:
@@ -127,11 +128,10 @@ def build_dataset(cfg, default_args=None):
     return dataset
 
 
-def build_dataloader(
-    dataset: [torch.utils.data.Dataset, Dict],
-    dataloader_cfg: Dict,
-    prefetch: bool=False,
-    **kwargs) -> torch.utils.data.DataLoader:
+def build_dataloader(dataset: [torch.utils.data.Dataset, Dict],
+                     dataloader_cfg: Dict,
+                     prefetch: bool = False,
+                     **kwargs) -> torch.utils.data.DataLoader:
     """Author: liang.zhihao
     Support callback "collate_fn" defined in dataset
 
@@ -159,7 +159,7 @@ def build_dataloader(
         dataloader_cfg.pop("shuffle")
         # For simulate large batch training
         sampler = DistributedSampler(dataset=dataset, shuffle=shuffle)
-        dataloader_cfg.sampler = sampler # update into parameters for dataloader config
+        dataloader_cfg.sampler = sampler  # update into parameters for dataloader config
 
     # if dataloader_cfg.get("distributed", False):
     #     dataloader_cfg.pop("distributed")
@@ -168,7 +168,6 @@ def build_dataloader(
     #     # For simulate large batch training
     #     sampler = DistributedSampler(dataset=dataset, shuffle=shuffle)
     #     dataloader_cfg.sampler = sampler # update into parameters for dataloader config
-
 
     if prefetch and get_world_size() == 1:
         return DataLoaderX(dataset, **dataloader_cfg)

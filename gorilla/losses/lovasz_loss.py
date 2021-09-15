@@ -4,7 +4,12 @@ from torch.autograd import Variable
 
 # TODO: complete hinge loss
 
-def lovasz_loss(probas, labels, with_softmax=True, classes="present", ignore=None):
+
+def lovasz_loss(probas,
+                labels,
+                with_softmax=True,
+                classes="present",
+                ignore=None):
     r"""
     Multi-class Lovasz-Softmax loss
         NOTE: the first dimension must be B
@@ -17,8 +22,9 @@ def lovasz_loss(probas, labels, with_softmax=True, classes="present", ignore=Non
         ignore: void class labels
     """
     if with_softmax:
-        probas = F.softmax(probas, dim=1) # [B, C, ...]
-    loss = lovasz_softmax_flat(*flatten_probas(probas, labels, ignore), classes=classes)
+        probas = F.softmax(probas, dim=1)  # [B, C, ...]
+    loss = lovasz_softmax_flat(*flatten_probas(probas, labels, ignore),
+                               classes=classes)
     return loss
 
 
@@ -37,7 +43,7 @@ def lovasz_softmax_flat(probas, labels, classes="present"):
     class_to_sum = list(range(C)) if classes in ["all", "present"] else classes
     # calculate loss for each class
     for c in class_to_sum:
-        fg = (labels == c).float() # foreground for class c
+        fg = (labels == c).float()  # foreground for class c
         if (classes == "present" and fg.sum() == 0):
             continue
         if C == 1:
@@ -50,7 +56,8 @@ def lovasz_softmax_flat(probas, labels, classes="present"):
         errors_sorted, perm = torch.sort(errors, 0, descending=True)
         perm = perm.data
         fg_sorted = fg[perm]
-        losses.append(torch.dot(errors_sorted, Variable(lovasz_grad(fg_sorted))))
+        losses.append(
+            torch.dot(errors_sorted, Variable(lovasz_grad(fg_sorted))))
     # average
     losses = sum(losses) / len(losses)
     return losses
@@ -62,16 +69,17 @@ def flatten_probas(probas, labels, ignore=None, sigmoid=False):
     """
     if sigmoid:
         # assumes output of a sigmoid layer
-        probas = probas.unsqueeze(1) # [B, 1, ...]
+        probas = probas.unsqueeze(1)  # [B, 1, ...]
     C = probas.shape[1]
     ndim = len(probas.shape)
-    probas = probas.permute(0, *range(2, ndim), 1).contiguous().view(-1, C) # [B*..., C]
-    labels = labels.view(-1) # [B*...]
+    probas = probas.permute(0, *range(2, ndim),
+                            1).contiguous().view(-1, C)  # [B*..., C]
+    labels = labels.view(-1)  # [B*...]
     if ignore is None:
         return probas, labels
     valid = (labels != ignore)
-    vprobas = probas[valid.nonzero().squeeze()] # [num_valid, C]
-    vlabels = labels[valid] # [num_valid, C]
+    vprobas = probas[valid.nonzero().squeeze()]  # [num_valid, C]
+    vlabels = labels[valid]  # [num_valid, C]
     return vprobas, vlabels
 
 
@@ -85,7 +93,6 @@ def lovasz_grad(gt_sorted):
     intersection = gts - gt_sorted.float().cumsum(0)
     union = gts + (1 - gt_sorted).float().cumsum(0)
     jaccard = 1. - intersection / union
-    if p > 1: # cover 1-pixel case
+    if p > 1:  # cover 1-pixel case
         jaccard[1:p] = jaccard[1:p] - jaccard[0:-1]
     return jaccard
-

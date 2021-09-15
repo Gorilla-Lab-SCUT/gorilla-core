@@ -43,7 +43,6 @@ def test_concat_list():
 
 
 def test_requires_package(capsys):
-
     @gorilla.requires_package('nnn')
     def func_a():
         pass
@@ -65,15 +64,13 @@ def test_requires_package(capsys):
     with pytest.raises(RuntimeError):
         func_b()
     out, _ = capsys.readouterr()
-    assert out == (
-        "Prerequisites 'n1, n2' are required in method 'func_b' "
-        "but not found, please install them first.\n")
+    assert out == ("Prerequisites 'n1, n2' are required in method 'func_b' "
+                   "but not found, please install them first.\n")
 
     assert func_c() == 1
 
 
 def test_requires_executable(capsys):
-
     @gorilla.requires_executable('nnn')
     def func_a():
         pass
@@ -95,9 +92,8 @@ def test_requires_executable(capsys):
     with pytest.raises(RuntimeError):
         func_b()
     out, _ = capsys.readouterr()
-    assert out == (
-        "Prerequisites 'n1, n2' are required in method 'func_b' "
-        "but not found, please install them first.\n")
+    assert out == ("Prerequisites 'n1, n2' are required in method 'func_b' "
+                   "but not found, please install them first.\n")
 
     assert func_c() == 1
 

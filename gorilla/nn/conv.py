@@ -55,19 +55,19 @@ class GorillaConv(nn.Sequential):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 kernel_size: int=3,
-                 stride: int=1,
-                 padding: int=0,
-                 dilation: int=1,
-                 groups: int=1,
-                 bias: bool=True,
-                 name: str="",
-                 D: int=2,
-                 norm_cfg: Optional[Dict]=dict(type="BN2d"),
-                 act_cfg: Optional[Dict]=dict(type="ReLU", inplace=True),
-                 with_spectral_norm: bool=False,
-                 padding_mode: List="zeros",
-                 order: List[str]=["conv", "norm", "act"]):
+                 kernel_size: int = 3,
+                 stride: int = 1,
+                 padding: int = 0,
+                 dilation: int = 1,
+                 groups: int = 1,
+                 bias: bool = True,
+                 name: str = "",
+                 D: int = 2,
+                 norm_cfg: Optional[Dict] = dict(type="BN2d"),
+                 act_cfg: Optional[Dict] = dict(type="ReLU", inplace=True),
+                 with_spectral_norm: bool = False,
+                 padding_mode: List = "zeros",
+                 order: List[str] = ["conv", "norm", "act"]):
         super().__init__()
         assert D in [1, 2, 3]
         assert norm_cfg is None or isinstance(norm_cfg, dict)

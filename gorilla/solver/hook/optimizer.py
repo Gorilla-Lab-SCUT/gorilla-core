@@ -27,5 +27,3 @@ class OptimizerHook(Hook):
         loss.backward()
         solver.optimizer.step()
         solver.lr_scheduler.step()
-
-

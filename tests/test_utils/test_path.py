@@ -43,9 +43,9 @@ def test_scandir():
         'sub/1.txt'
     ]
     assert set(gorilla.scandir(folder,
-                            recursive=True)) == set(filenames_recursive)
+                               recursive=True)) == set(filenames_recursive)
     assert set(gorilla.scandir(Path(folder),
-                            recursive=True)) == set(filenames_recursive)
+                               recursive=True)) == set(filenames_recursive)
     assert set(gorilla.scandir(folder, '.txt', recursive=True)) == set([
         filename for filename in filenames_recursive
         if filename.endswith('.txt')

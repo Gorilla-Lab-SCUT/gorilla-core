@@ -4,6 +4,7 @@ import queue as Queue
 
 from torch.utils.data import DataLoader
 
+
 # modify from https://github.com/justheuristic/prefetch_generator/blob/master/prefetch_generator/__init__.py
 class BackgroundGenerator(threading.Thread):
     def __init__(self, generator, max_prefetch=1):
@@ -49,13 +50,17 @@ class BackgroundGenerator(threading.Thread):
     def __iter__(self):
         return self
 
+
 #decorator
 class background:
     def __init__(self, max_prefetch=1):
         self.max_prefetch = max_prefetch
+
     def __call__(self, gen):
-        def bg_generator(*args,**kwargs):
-            return BackgroundGenerator(gen(*args,**kwargs), max_prefetch=self.max_prefetch)
+        def bg_generator(*args, **kwargs):
+            return BackgroundGenerator(gen(*args, **kwargs),
+                                       max_prefetch=self.max_prefetch)
+
         return bg_generator
 
 

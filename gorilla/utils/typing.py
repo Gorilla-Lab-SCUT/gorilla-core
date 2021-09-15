@@ -91,7 +91,9 @@ def auto_type(type):
         >>> test(torch.randn(3), c=np.ones(3), b=[1, 1, 1])
         a: <class 'torch.Tensor'>, b: <class 'list'>, c: <class 'torch.Tensor'>
     """
-    assert type in ["numpy", "torch"], f"must be 'numpy' or 'torch', but got {type}"
+    assert type in ["numpy",
+                    "torch"], f"must be 'numpy' or 'torch', but got {type}"
+
     def actual_decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -102,7 +104,9 @@ def auto_type(type):
             for key, arg in kwargs.items():
                 replace_kwargs[key] = _replace(arg, type)
             return func(*replace_args, **replace_kwargs)
+
         return wrapper
+
     return actual_decorator
 
 
@@ -117,10 +121,9 @@ def to_float32(arr: np.ndarray) -> np.ndarray:
         np.ndarray: array as float32
     """
     if arr.dtype == np.float16:
-        return arr.astype(np.float32) + 1e-4 * np.random.randn(*arr.shape).astype(np.float32)
+        return arr.astype(
+            np.float32) + 1e-4 * np.random.randn(*arr.shape).astype(np.float32)
     elif arr.dtype == np.float32:
         return arr
     else:
         return arr.astype(np.float32)
-
-

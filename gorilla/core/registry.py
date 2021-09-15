@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, Iterator, Tuple
 from tabulate import tabulate
 from termcolor import colored
 
+
 class Registry(Iterable[Tuple[str, Any]]):
     """
     The registry that provides name -> object mapping, to support third-party
@@ -24,7 +25,6 @@ class Registry(Iterable[Tuple[str, Any]]):
     .. code-block:: python
         BACKBONE_REGISTRY.register(MyBackbone)
     """
-
     def __init__(self, name: str) -> None:
         """
         Args:
@@ -33,15 +33,15 @@ class Registry(Iterable[Tuple[str, Any]]):
         self._name: str = name
         self._obj_map: Dict[str, Any] = {}
 
-    def _do_register(self, name: str, obj: Any, force: bool=False) -> None:
-        
+    def _do_register(self, name: str, obj: Any, force: bool = False) -> None:
+
         if not force and name in self._obj_map:
             raise KeyError(f"An object named '{name}' was already "
                            f"registered in '{self._name}' registry!\n"
                            f"Or let `force=True` to cover the origin")
         self._obj_map[name] = obj
 
-    def register(self, obj: Any = None, force: bool=False) -> Any:
+    def register(self, obj: Any = None, force: bool = False) -> Any:
         """
         Register the given object under the the name `obj.__name__`.
         Can be used as either a decorator or not. See docstring of this class for usage.
@@ -79,16 +79,14 @@ class Registry(Iterable[Tuple[str, Any]]):
         self._do_register(name, obj, force)
 
     # NOTE: to fix the `register_module` API
-    def register_module(self, obj: Any=None, force: bool=False):
+    def register_module(self, obj: Any = None, force: bool = False):
         return self.register(obj, force)
 
     def get(self, name: str) -> Any:
         ret = self._obj_map.get(name)
         if ret is None:
-            raise KeyError(
-                f"No object named '{name}' "
-                f"found in '{self._name}' registry!"
-            )
+            raise KeyError(f"No object named '{name}' "
+                           f"found in '{self._name}' registry!")
         return ret
 
     @property
@@ -110,8 +108,7 @@ class Registry(Iterable[Tuple[str, Any]]):
         table = tabulate(
             ((colored(k, "blue"), v) for k, v in self._obj_map.items()),
             headers=table_headers,
-            tablefmt="fancy_grid"
-        )
+            tablefmt="fancy_grid")
         return f"Registry of {self._name}:\n" + table
 
     def __iter__(self) -> Iterator[Tuple[str, Any]]:
@@ -121,11 +118,10 @@ class Registry(Iterable[Tuple[str, Any]]):
     __str__ = __repr__
 
 
-
 def auto_registry(registry: Registry,
                   cls_dict: Dict,
-                  type: Type=object,
-                  force: bool=False) -> None:
+                  type: Type = object,
+                  force: bool = False) -> None:
     r"""Author: liang.zhihao
 
     Args:
@@ -151,7 +147,7 @@ def auto_registry(registry: Registry,
 
 def build_from_cfg(cfg: Dict,
                    registry: Registry,
-                   default_args: Optional[Dict]=None) -> object:
+                   default_args: Optional[Dict] = None) -> object:
     r"""Build a module from config dict.
     Args:
         cfg (dict): Config dict. It should at least contain the key "type".
@@ -164,9 +160,8 @@ def build_from_cfg(cfg: Dict,
         raise TypeError(f"cfg must be a dict, but got {type(cfg)}")
     if "type" not in cfg:
         if default_args is None or "type" not in default_args:
-            raise KeyError(
-                "`cfg` or `default_args` must contain the key "
-                f"'type', but got {cfg}\n{default_args}")
+            raise KeyError("`cfg` or `default_args` must contain the key "
+                           f"'type', but got {cfg}\n{default_args}")
     if not isinstance(registry, Registry):
         raise TypeError(f"registry must be an mmcv.Registry object, "
                         f"but got {type(registry)}")
@@ -200,8 +195,8 @@ def build_from_cfg(cfg: Dict,
 
 # NOTE: add example
 def obj_from_dict(info: Dict,
-                  parent: Optional[object]=None,
-                  default_args: Optional[Dict]=None):
+                  parent: Optional[object] = None,
+                  default_args: Optional[Dict] = None):
     r"""Initialize an object from dict.
 
     The dict must contain the key "type", which indicates the object type
@@ -223,14 +218,11 @@ def obj_from_dict(info: Dict,
             module = ".".join(module_type.split(".")[:-1])
             module = sys.modules[module]
             obj_type = getattr(module, obj_type)
-    
+
     if not isinstance(obj_type, Callable):
-        raise TypeError(
-            f"type must be callable, but got {type(obj_type)}"
-        )
+        raise TypeError(f"type must be callable, but got {type(obj_type)}")
 
     if default_args is not None:
         for name, value in default_args.items():
             kwargs.setdefault(name, value)
     return obj_type(**kwargs)
-

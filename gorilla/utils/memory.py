@@ -52,7 +52,6 @@ def retry_if_cuda_oom(func):
         2. Since the function might be called more than once, it has to be
            stateless.
     """
-
     def maybe_to_cpu(x):
         try:
             like_gpu_tensor = x.device.type == "cuda" and hasattr(x, "to")
@@ -75,7 +74,8 @@ def retry_if_cuda_oom(func):
 
         # Try on CPU. This slows down the code significantly, therefore print a notice.
         logger = logging.getLogger(__name__)
-        logger.info(f"Attempting to copy inputs of {str(func)} to CPU due to CUDA OOM")
+        logger.info(
+            f"Attempting to copy inputs of {str(func)} to CPU due to CUDA OOM")
         new_args = (maybe_to_cpu(x) for x in args)
         new_kwargs = {k: maybe_to_cpu(v) for k, v in kwargs.items()}
         return func(*new_args, **new_kwargs)
@@ -152,7 +152,8 @@ def parameter_count_table(model: nn.Module, max_depth: int = 3) -> str:
     # pyre-fixme[24]: Generic type `tuple` expects at least 1 type parameter.
     # pyre-fixme[24]: Generic type `tuple` expects at least 1 type parameter.
     param_shape: typing.Dict[str, typing.Tuple] = {
-        k: tuple(v.shape) for k, v in model.named_parameters()
+        k: tuple(v.shape)
+        for k, v in model.named_parameters()
     }
 
     # pyre-fixme[24]: Generic type `tuple` expects at least 1 type parameter.
@@ -173,7 +174,8 @@ def parameter_count_table(model: nn.Module, max_depth: int = 3) -> str:
             if name.count(".") == lvl and name.startswith(prefix):
                 indent = " " * (lvl + 1)
                 if name in param_shape:
-                    table.append((indent + name, indent + str(param_shape[name])))
+                    table.append(
+                        (indent + name, indent + str(param_shape[name])))
                 else:
                     table.append((indent + name, indent + format_size(v)))
                     fill(lvl + 1, name + ".")
@@ -183,10 +185,8 @@ def parameter_count_table(model: nn.Module, max_depth: int = 3) -> str:
 
     old_ws = tabulate.PRESERVE_WHITESPACE
     tabulate.PRESERVE_WHITESPACE = True
-    tab = tabulate.tabulate(
-        table, headers=["name", "#elements or shape"], tablefmt="pipe"
-    )
+    tab = tabulate.tabulate(table,
+                            headers=["name", "#elements or shape"],
+                            tablefmt="pipe")
     tabulate.PRESERVE_WHITESPACE = old_ws
     return tab
-
-    

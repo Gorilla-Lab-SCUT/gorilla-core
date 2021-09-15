@@ -55,15 +55,16 @@ def test_assert_dict_contains_subset():
 
         # case 7
         expected_subset = {'d': torch.tensor([5, 5, 5])}
-        assert not gorilla.assert_dict_contains_subset(dict_obj, expected_subset)
+        assert not gorilla.assert_dict_contains_subset(dict_obj,
+                                                       expected_subset)
 
         # case 8
         expected_subset = {'d': torch.tensor([[5, 3, 5], [4, 1, 2]])}
-        assert not gorilla.assert_dict_contains_subset(dict_obj, expected_subset)
+        assert not gorilla.assert_dict_contains_subset(dict_obj,
+                                                       expected_subset)
 
 
 def test_assert_attrs_equal():
-
     class TestExample(object):
         a, b, c = 1, ('wvi', 3), [4.5, 3.14]
 

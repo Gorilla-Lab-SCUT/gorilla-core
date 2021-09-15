@@ -41,8 +41,8 @@ def detect_compute_compatibility(CUDA_HOME, so_file):
     try:
         cuobjdump = osp.join(CUDA_HOME, "bin", "cuobjdump")
         if osp.isfile(cuobjdump):
-            output = subprocess.check_output(f"'{cuobjdump}' --list-elf 'so_file{so_file}'",
-                                             shell=True)
+            output = subprocess.check_output(
+                f"'{cuobjdump}' --list-elf 'so_file{so_file}'", shell=True)
             output = output.decode("utf-8").strip().split("\n")
             arch = []
             for line in output:
@@ -144,8 +144,8 @@ def collect_env_info() -> str:
 
 
 def set_random_seed(seed: int,
-                    deterministic: bool=True,
-                    use_rank_shift: bool=False,
+                    deterministic: bool = True,
+                    use_rank_shift: bool = False,
                     **kwargs) -> None:
     r"""Set random seed.
     Args:
@@ -159,7 +159,7 @@ def set_random_seed(seed: int,
     """
     logger = logging.getLogger(__name__)
     logger.info(f"set random seed: {seed}")
-        
+
     if use_rank_shift:
         rank, _ = get_dist_info()
         seed += rank

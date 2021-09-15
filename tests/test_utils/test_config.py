@@ -66,10 +66,9 @@ def test_construct():
 
     # test h.py
     cfg_file = osp.join(data_path, 'config/h.py')
-    cfg_dict = dict(
-        item1='h.py',
-        item2=f'{osp.dirname(__file__)}/data/config',
-        item3='abc_h')
+    cfg_dict = dict(item1='h.py',
+                    item2=f'{osp.dirname(__file__)}/data/config',
+                    item3='abc_h')
     cfg = Config(cfg_dict, filename=cfg_file)
     assert isinstance(cfg, Config)
     assert cfg.filename == cfg_file
@@ -85,10 +84,9 @@ def test_construct():
         assert Config.fromfile(dump_file)['item3'] == cfg_dict['item3']
 
     # test no use_predefined_variable
-    cfg_dict = dict(
-        item1='{{fileBasename}}',
-        item2='{{ fileDirname}}',
-        item3='abc_{{ fileBasenameNoExtension }}')
+    cfg_dict = dict(item1='{{fileBasename}}',
+                    item2='{{ fileDirname}}',
+                    item3='abc_{{ fileBasenameNoExtension }}')
     assert Config.fromfile(cfg_file, False)
     assert Config.fromfile(cfg_file, False)['item1'] == cfg_dict['item1']
     assert Config.fromfile(cfg_file, False)['item2'] == cfg_dict['item2']
@@ -370,8 +368,10 @@ def test_pretty_text():
 
 def test_dict_action():
     parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument(
-        '--options', nargs='+', action=DictAction, help='custom options')
+    parser.add_argument('--options',
+                        nargs='+',
+                        action=DictAction,
+                        help='custom options')
     # Nested brackets
     args = parser.parse_args(
         ['--options', 'item2.a=a,b', 'item2.b=[(a,b), [1,2], false]'])
@@ -421,10 +421,8 @@ def test_syntax_error():
     # write a file with syntax error
     with open(temp_cfg_path, 'w') as f:
         f.write('a=0b=dict(c=1)')
-    with pytest.raises(
-            SyntaxError,
-            match='There are syntax errors in config '
-            f'file {temp_cfg_path}'):
+    with pytest.raises(SyntaxError,
+                       match='There are syntax errors in config '
+                       f'file {temp_cfg_path}'):
         Config.fromfile(temp_cfg_path)
     temp_cfg_file.close()
-

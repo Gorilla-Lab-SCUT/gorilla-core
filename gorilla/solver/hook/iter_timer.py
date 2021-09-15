@@ -7,7 +7,6 @@ from .hook import Hook
 
 @HOOKS.register()
 class IterTimerHook(Hook):
-
     def before_epoch(self, solver):
         r"""init start time for record consume time"""
         self.t = time.time()

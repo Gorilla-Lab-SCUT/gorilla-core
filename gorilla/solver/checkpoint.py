@@ -37,9 +37,11 @@ def is_module_wrapper(module: nn.Module):
 
 
 @master_only
-def load_state_dict(module: nn.Module,
-                    state_dict: Dict,
-                    strict: bool=False,):
+def load_state_dict(
+    module: nn.Module,
+    state_dict: Dict,
+    strict: bool = False,
+):
     """Load state_dict to a module.
     This method is modified from :meth:`torch.nn.Module.load_state_dict`.
     Default value for ``strict`` is set to ``False`` and the message for
@@ -85,9 +87,12 @@ def load_state_dict(module: nn.Module,
     ]
 
     if unexpected_keys:
-        err_msg.append(f"unexpected key in source state_dict: {', '.join(unexpected_keys)}\n")
+        err_msg.append(
+            f"unexpected key in source state_dict: {', '.join(unexpected_keys)}\n"
+        )
     if missing_keys:
-        err_msg.append(f"missing keys in source state_dict: {', '.join(missing_keys)}\n")
+        err_msg.append(
+            f"missing keys in source state_dict: {', '.join(missing_keys)}\n")
 
     if len(err_msg) > 0:
         err_msg.insert(
@@ -103,8 +108,8 @@ def load_state_dict(module: nn.Module,
 
 def load_checkpoint(model: nn.Module,
                     filename: str,
-                    map_location: Optional[Union[str, Callable]]=None,
-                    strict: bool=True):
+                    map_location: Optional[Union[str, Callable]] = None,
+                    strict: bool = True):
     r"""Load checkpoint from a file or URI.
     Args:
         model (Module): Module to load checkpoint.
@@ -137,12 +142,12 @@ def load_checkpoint(model: nn.Module,
 
 def resume(model: nn.Module,
            filename: str,
-           optimizer: Optional[Optimizer]=None,
-           scheduler: Optional[_LRScheduler]=None,
-           resume_optimizer: bool=True,
-           resume_scheduler: bool=True,
-           map_location: Optional[Union[str, Callable]]="default",
-           strict: bool=True,
+           optimizer: Optional[Optimizer] = None,
+           scheduler: Optional[_LRScheduler] = None,
+           resume_optimizer: bool = True,
+           resume_scheduler: bool = True,
+           map_location: Optional[Union[str, Callable]] = "default",
+           strict: bool = True,
            **kwargs):
 
     logger = logging.getLogger(__name__)
@@ -156,9 +161,16 @@ def resume(model: nn.Module,
                 map_location=lambda storage, loc: storage.cuda(device_id),
                 **kwargs)
         else:
-            checkpoint = load_checkpoint(model, filename, strict=strict, **kwargs)
+            checkpoint = load_checkpoint(model,
+                                         filename,
+                                         strict=strict,
+                                         **kwargs)
     else:
-        checkpoint = load_checkpoint(model, filename, strict=strict, map_location=map_location, **kwargs)
+        checkpoint = load_checkpoint(model,
+                                     filename,
+                                     strict=strict,
+                                     map_location=map_location,
+                                     **kwargs)
     logger.info(f"Loading checkpoint from {filename}")
 
     if "optimizer" in checkpoint and resume_optimizer:
@@ -168,11 +180,11 @@ def resume(model: nn.Module,
             optimizer.load_state_dict(checkpoint['optimizer'])
         elif isinstance(optimizer, dict):
             for k in optimizer.keys():
-                optimizer[k].load_state_dict(
-                    checkpoint["optimizer"][k])
+                optimizer[k].load_state_dict(checkpoint["optimizer"][k])
         else:
             raise TypeError(
-                f"Optimizer should be dict or torch.optim.Optimizer but got {type(optimizer)}")
+                f"Optimizer should be dict or torch.optim.Optimizer but got {type(optimizer)}"
+            )
         logger.info(f"Loading optimizer from {filename}")
 
     if "scheduler" in checkpoint and resume_scheduler:
@@ -182,11 +194,11 @@ def resume(model: nn.Module,
             scheduler.load_state_dict(checkpoint['scheduler'])
         elif isinstance(scheduler, dict):
             for k in scheduler.keys():
-                scheduler[k].load_state_dict(
-                    checkpoint["scheduler"][k])
+                scheduler[k].load_state_dict(checkpoint["scheduler"][k])
         else:
             raise TypeError(
-                f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}")
+                f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}"
+            )
         logger.info(f"Loading scheduler from {filename}")
 
     meta = checkpoint.get("meta", {})
@@ -211,7 +223,11 @@ class DelayedKeyboardInterrupt(object):
 
 
 @master_only
-def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
+def save_checkpoint(model,
+                    filename,
+                    optimizer=None,
+                    scheduler=None,
+                    meta=None):
     r"""Save checkpoint to file.
     The checkpoint will have 3 fields:
         ``meta``, ``state_dict`` and ``optimizer``.
@@ -227,7 +243,8 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
         if meta is None:
             meta = {}
         elif not isinstance(meta, dict):
-            raise TypeError(f"meta must be a dict or None, but got {type(meta)}")
+            raise TypeError(
+                f"meta must be a dict or None, but got {type(meta)}")
         meta.update(time=time.asctime())
 
         os.makedirs(osp.dirname(filename), exist_ok=True)
@@ -248,7 +265,8 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
                     checkpoint["optimizer"][name] = optim.state_dict()
             else:
                 raise TypeError(
-                    f"Optimizer should be dict or torch.optim.Optimizer but got {type(optimizer)}")
+                    f"Optimizer should be dict or torch.optim.Optimizer but got {type(optimizer)}"
+                )
 
         # save lr_scheduler state dict in the checkpoint
         if scheduler is not None:
@@ -260,8 +278,9 @@ def save_checkpoint(model, filename, optimizer=None, scheduler=None, meta=None):
                     checkpoint["scheduler"][name] = sche.state_dict()
             else:
                 raise TypeError(
-                    f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}")
-            
+                    f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}"
+                )
+
         # immediately flush buffer
         with open(filename, "wb") as f:
             torch.save(checkpoint, f)
@@ -295,7 +314,7 @@ def get_torchvision_models():
 
 
 def _load_checkpoint(filename: str,
-                     map_location: Optional[Union[str, Callable]]=None):
+                     map_location: Optional[Union[str, Callable]] = None):
     r"""Load checkpoint from somewhere (modelzoo, file, url).
     Args:
         filename (str): Accept local filepath, URL, ``torchvision://xxx``.
@@ -337,9 +356,7 @@ def weights_to_cpu(state_dict: Dict):
     return state_dict_cpu
 
 
-def _save_to_state_dict(module: nn.Module,
-                        destination: Dict, 
-                        prefix: str,
+def _save_to_state_dict(module: nn.Module, destination: Dict, prefix: str,
                         keep_vars: bool):
     r"""Saves module state to `destination` dictionary.
     This method is modified from :meth:`torch.nn.Module._save_to_state_dict`.
@@ -389,8 +406,10 @@ def get_state_dict(module, destination=None, prefix="", keep_vars=False):
     _save_to_state_dict(module, destination, prefix, keep_vars)
     for name, child in module._modules.items():
         if child is not None:
-            get_state_dict(
-                child, destination, prefix + name + ".", keep_vars=keep_vars)
+            get_state_dict(child,
+                           destination,
+                           prefix + name + ".",
+                           keep_vars=keep_vars)
     for hook in module._state_dict_hooks.values():
         hook_result = hook(module, destination, prefix, local_metadata)
         if hook_result is not None:
@@ -415,7 +434,13 @@ def resume_checkpoint(model, cfg):
     return model
 
 
-def save_summary(filepath, state, dir_save_file, best, desc="loss", smaller=True, overwrite=False):
+def save_summary(filepath,
+                 state,
+                 dir_save_file,
+                 best,
+                 desc="loss",
+                 smaller=True,
+                 overwrite=False):
     r"""
     Save a summary npy file, which contain path of the best model and its performance.
     Parameters
@@ -441,7 +466,7 @@ def save_summary(filepath, state, dir_save_file, best, desc="loss", smaller=True
     """
     try:
         summary = np.load(filepath, allow_pickle=True).item()
-    except: # the summary file has not been created
+    except:  # the summary file has not been created
         summary = {}
     if overwrite:
         torch.save(state, dir_save_file)
@@ -449,15 +474,17 @@ def save_summary(filepath, state, dir_save_file, best, desc="loss", smaller=True
     else:
         if dir_save_file in summary.keys():
             if smaller:
-                if best < summary[dir_save_file][1]: # refresh the old state info to a better one
+                if best < summary[dir_save_file][
+                        1]:  # refresh the old state info to a better one
                     torch.save(state, dir_save_file)
                     summary[dir_save_file] = [desc, best]
             else:
-                if best > summary[dir_save_file][1]: # refresh the old state info to a better one
+                if best > summary[dir_save_file][
+                        1]:  # refresh the old state info to a better one
                     torch.save(state, dir_save_file)
                     summary[dir_save_file] = [desc, best]
 
-        else: # new state
+        else:  # new state
             torch.save(state, dir_save_file)
             summary[dir_save_file] = [desc, best]
 

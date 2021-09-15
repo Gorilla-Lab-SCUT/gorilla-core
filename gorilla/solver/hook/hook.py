@@ -6,17 +6,20 @@ from typing import List, Union
 from ..base_solver import BaseSolver
 from ...core import build_hook
 
+
 class Hook(metaclass=ABCMeta):
     def __init__(self) -> None:
         super().__init__()
-        self.priority = 50 # NORMAL
+        self.priority = 50  # NORMAL
 
 
 class HookManager(object):
     def __init__(self) -> None:
         super().__init__()
         self._hooks = []
-        self._status = ["before_epoch", "before_step", "after_step", "after_epoch"]
+        self._status = [
+            "before_epoch", "before_step", "after_step", "after_epoch"
+        ]
 
     def register_hook(self, hooks: Union[List[Hook], Hook]):
         r"""
@@ -32,10 +35,10 @@ class HookManager(object):
             for hook in hooks:
                 if hook is not None and isinstance(Hook, hook):
                     _hooks.append(hook)
-            
+
         self._hooks.extend(_hooks)
 
-    def concat_solver(self, solver:BaseSolver):
+    def concat_solver(self, solver: BaseSolver):
         self.solver = solver
 
     def register_hook_from_cfg(self, hook_cfg):
@@ -93,9 +96,8 @@ class HookManager(object):
                 empty_flag = False
             if empty_flag:
                 content.append(colored("Empty", "green"))
-            content.append(colored("="*50, "blue"))
+            content.append(colored("=" * 50, "blue"))
             content.append("")
         content.append(colored("".center(50, "*"), "yellow"))
 
         return "\n".join(content)
-

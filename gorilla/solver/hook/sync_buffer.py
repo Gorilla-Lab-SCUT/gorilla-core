@@ -14,7 +14,6 @@ class SyncBuffersHook(Hook):
         distributed (bool): Whether distributed training is used. It is
           effective only for distributed training. Defaults to True.
     """
-
     def __init__(self, distributed=True):
         self.distributed = distributed
 

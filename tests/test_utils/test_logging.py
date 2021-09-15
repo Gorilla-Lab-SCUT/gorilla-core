@@ -71,7 +71,7 @@ def test_print_log_silent(capsys, caplog):
     print_log('welcome', logger='silent')
     out, _ = capsys.readouterr()
     assert out == ''
-    assert len(caplog.records) == 0 
+    assert len(caplog.records) == 0
 
 
 def test_print_log_logger(caplog):

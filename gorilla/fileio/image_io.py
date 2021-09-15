@@ -157,8 +157,7 @@ def imread(img_or_path, flag='color', channel_order='bgr', backend=None):
     if isinstance(img_or_path, np.ndarray):
         return img_or_path
     elif isinstance(img_or_path, str):
-        check_file(img_or_path,
-                   f'img file does not exist: {img_or_path}')
+        check_file(img_or_path, f'img file does not exist: {img_or_path}')
         if backend == 'turbojpeg':
             with open(img_or_path, 'rb') as in_file:
                 img = jpeg.decode(in_file.read(),
@@ -236,4 +235,3 @@ def imwrite(img, file_path, params=None, auto_mkdir=True):
         dir_name = osp.abspath(osp.dirname(file_path))
         mkdir_or_exist(dir_name)
     return cv2.imwrite(file_path, img, params)
-

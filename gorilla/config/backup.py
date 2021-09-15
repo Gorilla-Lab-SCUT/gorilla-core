@@ -16,8 +16,8 @@ from ..version import __version__
 @master_only
 def backup(backup_dir: str,
            backup_list: [List[str], str],
-           contain_suffix :List=["*.py"], 
-           strict: bool=False,
+           contain_suffix: List = ["*.py"],
+           strict: bool = False,
            **kwargs) -> None:
     r"""Author: liang.zhihao
     The backup helper function
@@ -72,10 +72,12 @@ def backup(backup_dir: str,
         if osp.isdir(name):
             # only match '.py' files
             files = glob.iglob(osp.join(name, "**", "*.*"), recursive=True)
-            ignore_suffix = set(map(lambda x: "*." + x.split("/")[-1].split(".")[-1], files))
+            ignore_suffix = set(
+                map(lambda x: "*." + x.split("/")[-1].split(".")[-1], files))
             for suffix in contain_suffix:
                 if suffix in ignore_suffix:
                     ignore_suffix.remove(suffix)
             # copy dir
-            shutil.copytree(name, osp.join(backup_dir, name), ignore=shutil.ignore_patterns(*ignore_suffix))
-
+            shutil.copytree(name,
+                            osp.join(backup_dir, name),
+                            ignore=shutil.ignore_patterns(*ignore_suffix))

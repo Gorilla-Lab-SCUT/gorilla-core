@@ -8,6 +8,7 @@ import torch.nn as nn
 from .layer_builder import get_torch_layer_caller
 from .weight_init import *  # constant_init, kaiming_init and so on
 
+
 class GorillaFC(nn.Sequential):
     r"""A FC block that bundles FC/norm/activation layers.
 
@@ -44,18 +45,19 @@ class GorillaFC(nn.Sequential):
     def __init__(self,
                  in_features: int,
                  out_features: int,
-                 bias: bool=True,
-                 name: str="",
-                 norm_cfg: Optional[Dict]=dict(type="BN1d"),
-                 act_cfg: Optional[Dict]=dict(type="ReLU", inplace=True),
-                 dropout: Optional[float]=None,
-                 init: Union[str, Callable]="kaiming",
-                 order: List[str]=["FC", "norm", "act", "dropout"]):
+                 bias: bool = True,
+                 name: str = "",
+                 norm_cfg: Optional[Dict] = dict(type="BN1d"),
+                 act_cfg: Optional[Dict] = dict(type="ReLU", inplace=True),
+                 dropout: Optional[float] = None,
+                 init: Union[str, Callable] = "kaiming",
+                 order: List[str] = ["FC", "norm", "act", "dropout"]):
         super().__init__()
         assert norm_cfg is None or isinstance(norm_cfg, dict)
         assert act_cfg is None or isinstance(act_cfg, dict)
 
-        assert set(order).difference(set(["FC", "norm", "act", "dropout"])) == set()
+        assert set(order).difference(set(["FC", "norm", "act",
+                                          "dropout"])) == set()
 
         self.order = deepcopy(order)
         self.norm_cfg = deepcopy(norm_cfg)
@@ -117,17 +119,19 @@ class GorillaFC(nn.Sequential):
 
 
 class MultiFC(nn.Sequential):
-    def __init__(
-            self,
-            nodes: List[int],
-            bias: Union[List[bool], bool]=True,
-            name: Union[List[str], str]="",
-            norm_cfg: Optional[Union[List[Dict], Dict]]=dict(type="BN1d"),
-            act_cfg: Optional[Union[List[Dict], Dict]]=dict(type="ReLU", inplace=True),
-            dropout: Optional[Union[List[float], float]]=None,
-            init: Union[str, Callable]="kaiming",
-            order: List[str]=["FC", "norm", "act", "dropout"],
-            drop_last: bool=True):
+    def __init__(self,
+                 nodes: List[int],
+                 bias: Union[List[bool], bool] = True,
+                 name: Union[List[str], str] = "",
+                 norm_cfg: Optional[Union[List[Dict],
+                                          Dict]] = dict(type="BN1d"),
+                 act_cfg: Optional[Union[List[Dict],
+                                         Dict]] = dict(type="ReLU",
+                                                       inplace=True),
+                 dropout: Optional[Union[List[float], float]] = None,
+                 init: Union[str, Callable] = "kaiming",
+                 order: List[str] = ["FC", "norm", "act", "dropout"],
+                 drop_last: bool = True):
         r"""Author: liang.zhihao
         Build the multi FC layer easily
 
@@ -170,25 +174,23 @@ class MultiFC(nn.Sequential):
             enumerate(zip(nodes[:-1], nodes[1:], bias_list, name_list, norm_cfg_list, act_cfg_list, dropout_list)):
             self.add_module(
                 str(idx),
-                GorillaFC(
-                    in_features=in_features,
-                    out_features=out_features,
-                    bias=b,
-                    name=n,
-                    norm_cfg=norm,
-                    act_cfg=act,
-                    dropout=drop,
-                    init=init,
-                    order=order))
+                GorillaFC(in_features=in_features,
+                          out_features=out_features,
+                          bias=b,
+                          name=n,
+                          norm_cfg=norm,
+                          act_cfg=act,
+                          dropout=drop,
+                          init=init,
+                          order=order))
 
 
 class DenseFC(nn.Module):
-    def __init__(
-            self,
-            nodes: List[int],
-            arc_tale: List[List[int]],
-            arc_tm_shape: List[List[int]],
-            init: Union[str, Callable]="geometric"):
+    def __init__(self,
+                 nodes: List[int],
+                 arc_tale: List[List[int]],
+                 arc_tm_shape: List[List[int]],
+                 init: Union[str, Callable] = "geometric"):
         r"""Author: lei.jiabao, liang.zhihao
         initialization for MLP of arbitrary architecture (specialized for cuam library)
 
@@ -256,7 +258,9 @@ class DenseFC(nn.Module):
         self.linears = torch.nn.ModuleList()
         for linear_idx in range(self.num_of_linears):
             # init the linear linear
-            linear = torch.nn.Linear(self.nodes[linear_idx], self.nodes[linear_idx + 1], bias=True)
+            linear = torch.nn.Linear(self.nodes[linear_idx],
+                                     self.nodes[linear_idx + 1],
+                                     bias=True)
             # get the related init function and init
             last = (linear_idx == self.num_of_linears)
             if isinstance(init, str):
@@ -264,7 +268,8 @@ class DenseFC(nn.Module):
             elif isinstance(init, Callable):
                 init_func = init
             else:
-                raise TypeError(f"init must be 'str' or 'Callable', but got {type(init)}")
+                raise TypeError(
+                    f"init must be 'str' or 'Callable', but got {type(init)}")
             init_func(linear, last)
             self.linears.append(linear)
 
@@ -277,7 +282,6 @@ class DenseFC(nn.Module):
             else:
                 self.acts.append(torch.nn.Identity())
 
-
         # transform matrix
         self.num_of_tms = len(self.arc_tm_shape)
         self.tms = torch.nn.ModuleList()
@@ -285,7 +289,10 @@ class DenseFC(nn.Module):
             if tm_shape[0] == 0 and tm_shape[1] == 0:
                 self.tms.append(torch.nn.Identity())
             else:
-                self.tms.append(torch.nn.Linear(in_features=tm_shape[1], out_features=tm_shape[0], bias=False))
+                self.tms.append(
+                    torch.nn.Linear(in_features=tm_shape[1],
+                                    out_features=tm_shape[0],
+                                    bias=False))
 
         # source of transform
         self.srcs = {}
@@ -297,7 +304,7 @@ class DenseFC(nn.Module):
 
     def forward(self,
                 x: torch.Tensor,
-                requires_outputs_list: bool=False) -> torch.Tensor:
+                requires_outputs_list: bool = False) -> torch.Tensor:
         if requires_outputs_list:
             self.outputs_list.clear()
 
@@ -347,9 +354,15 @@ class DenseFC(nn.Module):
                 arc_tm.append(tms.weight)
 
         arc_table_width = max([len(arc) for arc in self.arc_tale])
-        arc_table = torch.zeros([len(self.arc_tale), arc_table_width], dtype=torch.int32)
+        arc_table = torch.zeros([len(self.arc_tale), arc_table_width],
+                                dtype=torch.int32)
         for r in range(len(self.arc_tale)):
             for c in range(len(self.arc_tale[r])):
                 arc_table[r, c] = self.arc_tale[r][c]
 
-        return {"weights": weights, "biases": biases, "arc_tm": arc_tm, "arc_table": arc_table}
+        return {
+            "weights": weights,
+            "biases": biases,
+            "arc_tm": arc_tm,
+            "arc_table": arc_table
+        }

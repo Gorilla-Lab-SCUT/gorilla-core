@@ -6,6 +6,7 @@
 import os
 import argparse
 
+
 def default_argument_parser():
     """
     Create a parser with some common arguments used by gorilla users.

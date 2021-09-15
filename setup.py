@@ -24,14 +24,13 @@ def get_version():
 
 
 if __name__ == "__main__":
-    setup(
-        name="gorilla-core",
-        version=get_version(),
-        author="Gorilla Authors",
-        author_email="mszhihaoliang@mail.scut.edu.cn",
-        description="ToolBox Package for Gorilla-Lab using PyTorch",
-        long_description=open("README.md").read(),
-        license="MIT",
-        install_requires=get_requirements(),
-        packages=find_packages(exclude=["tests"]),
-        zip_safe=False)
+    setup(name="gorilla-core",
+          version=get_version(),
+          author="Gorilla Authors",
+          author_email="mszhihaoliang@mail.scut.edu.cn",
+          description="ToolBox Package for Gorilla-Lab using PyTorch",
+          long_description=open("README.md").read(),
+          license="MIT",
+          install_requires=get_requirements(),
+          packages=find_packages(exclude=["tests"]),
+          zip_safe=False)

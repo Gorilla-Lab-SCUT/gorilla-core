@@ -24,7 +24,8 @@ def print_csv_format(results):
         important_res = [(k, v) for k, v in res.items() if "-" not in k]
         logger.info(f"copypaste: Task: {task}")
         logger.info(f"copypaste: " + ",".join([k[0] for k in important_res]))
-        logger.info(f"copypaste: " + ",".join([f"{k[1]:.4f}" for k in important_res]))
+        logger.info(f"copypaste: " +
+                    ",".join([f"{k[1]:.4f}" for k in important_res]))
 
 
 def verify_results(cfg, results):

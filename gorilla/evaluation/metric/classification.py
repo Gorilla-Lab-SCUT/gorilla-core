@@ -1,7 +1,8 @@
 # Copyright (c) Gorilla-Lab. All rights reserved.
 import torch
 
-def accuracy(output, label, topk=(1,), mode="percentage"):
+
+def accuracy(output, label, topk=(1, ), mode="percentage"):
     r"""
     Computes the precision@k for the specified values of k
     Args:
@@ -18,7 +19,7 @@ def accuracy(output, label, topk=(1,), mode="percentage"):
     """
     assert mode in ["percentage", "number"]
     maxk = max(topk)
-    batch_size = output.size(0) # The type of batch_size is int, not tensor
+    batch_size = output.size(0)  # The type of batch_size is int, not tensor
     _, pred = output.topk(maxk, 1, True, True)
     pred = pred.t()
     correct = pred.eq(label.view(1, -1).expand_as(pred))

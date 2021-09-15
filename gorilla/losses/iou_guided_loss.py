@@ -3,13 +3,13 @@
 import torch
 import torch.nn.functional as F
 
-def iou_guided_loss(
-        scores: torch.Tensor,
-        gt_ious: torch.Tensor,
-        fg_thresh: float=1.0,
-        bg_thresh: float=0.0,
-        reduction: str="none",
-        use_sigmoid: bool=True) -> torch.Tensor:
+
+def iou_guided_loss(scores: torch.Tensor,
+                    gt_ious: torch.Tensor,
+                    fg_thresh: float = 1.0,
+                    bg_thresh: float = 0.0,
+                    reduction: str = "none",
+                    use_sigmoid: bool = True) -> torch.Tensor:
     r"""
     IoU-guided NMS Loss
     https://arxiv.org/abs/1807.11590
@@ -31,11 +31,9 @@ def iou_guided_loss(
     k = 1 / (fg_thresh - bg_thresh)
     b = bg_thresh / (bg_thresh - fg_thresh)
     gt_scores[interval_mask] = gt_ious[interval_mask] * k + b
-    
+
     if use_sigmoid:
         scores = torch.sigmoid(scores)
     loss = F.binary_cross_entropy(scores, gt_scores, reduction=reduction)
 
     return loss
-
-

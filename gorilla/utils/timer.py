@@ -2,6 +2,7 @@
 import re
 import time
 
+
 def convert_seconds(seconds: int) -> str:
     """Author: liang.zhihao
     convert seconds into "{hours}:{minutes}:{seconds}"
@@ -15,6 +16,7 @@ def convert_seconds(seconds: int) -> str:
     """
     return time.strftime("%d days %H:%M:%S", time.gmtime(seconds))
 
+
 def timestamp() -> str:
     r"""Author: liang.zhihao
     Get time stamp
@@ -23,6 +25,7 @@ def timestamp() -> str:
         str: str of time stamp
     """
     return time.strftime("%Y%m%d_%H%M%S", time.localtime())
+
 
 class TimerError(Exception):
     def __init__(self, message):
@@ -55,10 +58,10 @@ class Timer:
     >>> print(timer.since_start())
     1.000
     """
-
     def __init__(self, print_tmpl=None, start=True):
         self._is_running = False
-        if (print_tmpl is not None) and not re.findall(r"({:.*\df})", print_tmpl):
+        if (print_tmpl
+                is not None) and not re.findall(r"({:.*\df})", print_tmpl):
             print_tmpl += " {:.3f}"
             # raise ValueError("`print_tmpl` must has the `{:.nf}` to show time.")
         self.print_tmpl = print_tmpl if print_tmpl else "{:.3f}"
@@ -84,7 +87,6 @@ class Timer:
             self._t_start = time.time()
             self._is_running = True
         self._t_last = time.time()
-
 
     def since_start(self):
         r"""Total time since the timer is started.
@@ -148,5 +150,3 @@ def check_time(timer_id):
         return 0
     else:
         return _g_timers[timer_id].since_last()
-
-        

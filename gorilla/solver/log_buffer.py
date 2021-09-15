@@ -22,7 +22,7 @@ class TensorBoardWriter:
         self.buffer.clear()
 
     @master_only
-    def update(self, content: Dict, global_step: Optional[int]=None):
+    def update(self, content: Dict, global_step: Optional[int] = None):
         """"update the buffer according to given directory"""
         self.buffer.update(content)
         # write immediately
@@ -30,7 +30,7 @@ class TensorBoardWriter:
             self.write(global_step)
 
     @master_only
-    def write(self, global_step: Optional[int]=None):
+    def write(self, global_step: Optional[int] = None):
         """write according to buffer"""
         self.buffer.average()
         scalar_type = (int, float, torch.Tensor, np.ndarray)
@@ -55,31 +55,19 @@ class TensorBoardWriter:
     # NOTE: the add_scalar and add_scalars is the wrapper of tensorboard
     #       we support the origin API for using
     @master_only
-    def add_text(self,
-                  tag,
-                  string,
-                  global_step,
-                  **kwargs):
+    def add_text(self, tag, string, global_step, **kwargs):
         r"""the wrapper API of SummaryWriter.add_text"""
         self.writer.add_text(tag, string, global_step, **kwargs)
 
     # NOTE: the add_scalar and add_scalars is the wrapper of tensorboard
     #       we support the origin API for using
     @master_only
-    def add_scalar(self,
-                  tag,
-                  scalar_value,
-                  global_step,
-                  **kwargs):
+    def add_scalar(self, tag, scalar_value, global_step, **kwargs):
         r"""the wrapper API of SummaryWriter.add_scalar"""
         self.writer.add_scalar(tag, scalar_value, global_step, **kwargs)
 
     @master_only
-    def add_scalars(self,
-                    tag,
-                    scalar_value,
-                    global_step,
-                    **kwargs):
+    def add_scalars(self, tag, scalar_value, global_step, **kwargs):
         r"""the wrapper API of SummaryWriter.add_scalars"""
         self.writer.add_scalars(tag, scalar_value, global_step, **kwargs)
 
@@ -115,13 +103,14 @@ class LogBuffer:
         for key, var in content.items():
             scalar_type = (int, float, torch.Tensor, np.ndarray)
             if isinstance(var, Sequence) and len(var) == 2:
-                var = list(var) # change tuple
+                var = list(var)  # change tuple
                 if isinstance(var[0], scalar_type):
                     var[0] = float(var[0])
                 elif isinstance(var[0], Sequence):
                     var[0] = np.sum(np.array(var[0]))
                 else:
-                    raise TypeError(f"get invalid type of var '{type(var[0])}'")
+                    raise TypeError(
+                        f"get invalid type of var '{type(var[0])}'")
                 self._val_history[key].update(*var)
             elif isinstance(var, scalar_type):
                 var = float(var)
@@ -160,7 +149,7 @@ class LogBuffer:
         for key in self._val_history:
             sum_dict[key] = self._val_history[key].sum
         return sum_dict
-        
+
     @property
     def latest(self):
         latest_dict = {}
@@ -183,7 +172,6 @@ class HistoryBuffer:
     Track a series of scalar values and provide access to smoothed values over a
     window or the global average of the series.
     """
-
     def __init__(self) -> None:
         self.clear()
 
@@ -194,9 +182,7 @@ class HistoryBuffer:
         self._global_avg: float = 0
         self._global_sum: float = 0
 
-    def update(self,
-               value: float,
-               num: Optional[float] = None) -> None:
+    def update(self, value: float, num: Optional[float] = None) -> None:
         r"""
         Add a new scalar value and the number of counter. If the length
         of the buffer exceeds self._max_length, the oldest element will be
@@ -208,7 +194,8 @@ class HistoryBuffer:
         self._nums.append(num)
 
         self._count += 1
-        self._global_sum = sum(map(lambda x: x[0] * x[1], zip(self._values, self._nums)))
+        self._global_sum = sum(
+            map(lambda x: x[0] * x[1], zip(self._values, self._nums)))
         self._global_avg = self._global_sum / sum(self._nums)
 
     def median(self, window_size: int) -> float:
@@ -221,8 +208,9 @@ class HistoryBuffer:
         r"""
         Return the summation of the latest `window_size` values in the buffer.
         """
-        _sum = sum(map(lambda x: x[0] * x[1], zip(self._values[-window_size:],
-                                                  self._nums[-window_size:])))
+        _sum = sum(
+            map(lambda x: x[0] * x[1],
+                zip(self._values[-window_size:], self._nums[-window_size:])))
         return _sum
 
     def average(self, window_size: int) -> float:
@@ -271,11 +259,10 @@ class HistoryBuffer:
         return self._nums
 
     def __str__(self) -> str:
-        msg = "\n".join([f"    values: {self.values}",
-                         f"    nums:   {self.nums}",
-                         f"    count:  {self._count}",
-                         f"    avg:    {self.avg}",
-                         f"    sum:    {self.sum}\n"])
+        msg = "\n".join([
+            f"    values: {self.values}", f"    nums:   {self.nums}",
+            f"    count:  {self._count}", f"    avg:    {self.avg}",
+            f"    sum:    {self.sum}\n"
+        ])
 
         return msg
-
