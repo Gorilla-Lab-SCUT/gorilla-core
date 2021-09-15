@@ -1,8 +1,11 @@
 # Copyright (c) Open-MMLab. All rights reserved.
 from pathlib import Path
 
+from importlib import import_module
+
 from ..core import is_list_of
-from .handlers import BaseFileHandler, JsonHandler, PickleHandler, YamlHandler, TxtHandler
+from .handlers import (BaseFileHandler, JsonHandler, PickleHandler,
+                       YamlHandler, TxtHandler, PythonHandler)
 
 file_handlers = {
     "json": JsonHandler(),
@@ -10,7 +13,8 @@ file_handlers = {
     "yml": YamlHandler(),
     "pickle": PickleHandler(),
     "pkl": PickleHandler(),
-    "txt": TxtHandler()
+    "txt": TxtHandler(),
+    "py": PythonHandler(),
 }
 
 

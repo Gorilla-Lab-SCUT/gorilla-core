@@ -31,7 +31,6 @@ def test_construct():
     assert isinstance(cfg, Config)
     assert cfg.filename == cfg_file
     assert cfg.text == open(cfg_file, 'r').read()
-    assert cfg.dump() == cfg.pretty_text
     with tempfile.TemporaryDirectory() as temp_config_dir:
         dump_file = osp.join(temp_config_dir, 'a.py')
         cfg.dump(dump_file)
@@ -64,34 +63,6 @@ def test_construct():
         assert cfg.dump() == open(dump_file, 'r').read()
         assert Config.fromfile(dump_file)
 
-    # test h.py
-    cfg_file = osp.join(data_path, 'config/h.py')
-    cfg_dict = dict(item1='h.py',
-                    item2=f'{osp.dirname(__file__)}/data/config',
-                    item3='abc_h')
-    cfg = Config(cfg_dict, filename=cfg_file)
-    assert isinstance(cfg, Config)
-    assert cfg.filename == cfg_file
-    assert cfg.text == open(cfg_file, 'r').read()
-    assert cfg.dump() == cfg.pretty_text
-    with tempfile.TemporaryDirectory() as temp_config_dir:
-        dump_file = osp.join(temp_config_dir, 'h.py')
-        cfg.dump(dump_file)
-        assert cfg.dump() == open(dump_file, 'r').read()
-        assert Config.fromfile(dump_file)
-        assert Config.fromfile(dump_file)['item1'] == cfg_dict['item1']
-        assert Config.fromfile(dump_file)['item2'] == cfg_dict['item2']
-        assert Config.fromfile(dump_file)['item3'] == cfg_dict['item3']
-
-    # test no use_predefined_variable
-    cfg_dict = dict(item1='{{fileBasename}}',
-                    item2='{{ fileDirname}}',
-                    item3='abc_{{ fileBasenameNoExtension }}')
-    assert Config.fromfile(cfg_file, False)
-    assert Config.fromfile(cfg_file, False)['item1'] == cfg_dict['item1']
-    assert Config.fromfile(cfg_file, False)['item2'] == cfg_dict['item2']
-    assert Config.fromfile(cfg_file, False)['item3'] == cfg_dict['item3']
-
     # test p.yaml
     cfg_file = osp.join(data_path, 'config/p.yaml')
     cfg_dict = dict(item1=f'{osp.dirname(__file__)}/data/config')
@@ -108,8 +79,8 @@ def test_construct():
         assert Config.fromfile(dump_file)['item1'] == cfg_dict['item1']
 
     # test no use_predefined_variable
-    assert Config.fromfile(cfg_file, False)
-    assert Config.fromfile(cfg_file, False)['item1'] == '{{ fileDirname }}'
+    assert Config.fromfile(cfg_file)
+    assert Config.fromfile(cfg_file)['item1'] == '{{ fileDirname }}'
 
     # test o.json
     cfg_file = osp.join(data_path, 'config/o.json')
@@ -127,8 +98,8 @@ def test_construct():
         assert Config.fromfile(dump_file)['item1'] == cfg_dict['item1']
 
     # test no use_predefined_variable
-    assert Config.fromfile(cfg_file, False)
-    assert Config.fromfile(cfg_file, False)['item1'] == '{{ fileDirname }}'
+    assert Config.fromfile(cfg_file)
+    assert Config.fromfile(cfg_file)['item1'] == '{{ fileDirname }}'
 
 
 def test_fromfile():
@@ -137,8 +108,7 @@ def test_fromfile():
         cfg = Config.fromfile(cfg_file)
         assert isinstance(cfg, Config)
         assert cfg.filename == cfg_file
-        assert cfg.text == osp.abspath(osp.expanduser(cfg_file)) + '\n' + \
-            open(cfg_file, 'r').read()
+        assert cfg.text == open(cfg_file, 'r').read()
 
     # test custom_imports for Config.fromfile
     cfg_file = osp.join(data_path, 'config', 'q.py')
@@ -148,14 +118,12 @@ def test_fromfile():
     # Since the imported config will be regarded as a tmp file
     # it should be copied to the directory at the same level
     shutil.copy(imported_file, target_pkg)
-    Config.fromfile(cfg_file, import_custom_modules=True)
-
-    assert os.environ.pop('TEST_VALUE') == 'test'
+    Config.fromfile(cfg_file)
     os.remove(target_pkg)
 
     with pytest.raises(FileNotFoundError):
         Config.fromfile('no_such_file.py')
-    with pytest.raises(IOError):
+    with pytest.raises(TypeError):
         Config.fromfile(osp.join(data_path, 'color.jpg'))
 
 
@@ -165,19 +133,11 @@ def test_fromstring():
         file_format = osp.splitext(filename)[-1]
         in_cfg = Config.fromfile(cfg_file)
 
-        out_cfg = Config.fromstring(in_cfg.pretty_text, '.py')
-        assert in_cfg._cfg_dict == out_cfg._cfg_dict
-
         cfg_str = open(cfg_file, 'r').read()
         out_cfg = Config.fromstring(cfg_str, file_format)
         assert in_cfg._cfg_dict == out_cfg._cfg_dict
 
-    # test pretty_text only supports py file format
     cfg_file = osp.join(data_path, 'config', 'b.json')
-    in_cfg = Config.fromfile(cfg_file)
-    with pytest.raises(Exception):
-        Config.fromstring(in_cfg.pretty_text, '.json')
-
     # test file format error
     cfg_str = open(cfg_file, 'r').read()
     with pytest.raises(Exception):
@@ -190,10 +150,8 @@ def test_merge_from_base():
     assert isinstance(cfg, Config)
     assert cfg.filename == cfg_file
     base_cfg_file = osp.join(data_path, 'config/base.py')
-    merge_text = osp.abspath(osp.expanduser(base_cfg_file)) + '\n' + \
-        open(base_cfg_file, 'r').read()
-    merge_text += '\n' + osp.abspath(osp.expanduser(cfg_file)) + '\n' + \
-                  open(cfg_file, 'r').read()
+    merge_text = open(base_cfg_file, 'r').read()
+    merge_text += '\n' + open(cfg_file, 'r').read()
     assert cfg.text == merge_text
     assert cfg.item1 == [2, 3]
     assert cfg.item2.a == 1
@@ -353,17 +311,6 @@ def test_setattr():
     assert cfg.item2.a == 0
     assert cfg._cfg_dict['item5'] == {'a': {'b': None}}
     assert cfg.item5.a.b is None
-
-
-def test_pretty_text():
-    cfg_file = osp.join(data_path, 'config/l.py')
-    cfg = Config.fromfile(cfg_file)
-    with tempfile.TemporaryDirectory() as temp_config_dir:
-        text_cfg_filename = osp.join(temp_config_dir, '_text_config.py')
-        with open(text_cfg_filename, 'w') as f:
-            f.write(cfg.pretty_text)
-        text_cfg = Config.fromfile(text_cfg_filename)
-    assert text_cfg._cfg_dict == cfg._cfg_dict
 
 
 def test_dump_mapping():

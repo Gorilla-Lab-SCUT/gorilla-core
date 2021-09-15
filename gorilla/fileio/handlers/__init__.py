@@ -4,5 +4,6 @@ from .json_handler import JsonHandler
 from .pickle_handler import PickleHandler
 from .yaml_handler import YamlHandler
 from .txt_handler import TxtHandler
+from .python_handler import PythonHandler
 
 __all__ = [k for k in globals().keys() if not k.startswith("_")]
