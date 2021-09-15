@@ -6,7 +6,7 @@ from typing import Callable, Optional, Dict, Type
 from typing import Any, Dict, Iterable, Iterator, Tuple
 
 from tabulate import tabulate
-
+from termcolor import colored
 
 class Registry(Iterable[Tuple[str, Any]]):
     """
@@ -106,9 +106,11 @@ class Registry(Iterable[Tuple[str, Any]]):
         return name in self._obj_map
 
     def __repr__(self) -> str:
-        table_headers = ["Names", "Objects"]
+        table_headers = [colored("Names", "red"), colored("Objects", "green")]
         table = tabulate(
-            self._obj_map.items(), headers=table_headers, tablefmt="fancy_grid"
+            ((colored(k, "blue"), v) for k, v in self._obj_map.items()),
+            headers=table_headers,
+            tablefmt="fancy_grid"
         )
         return f"Registry of {self._name}:\n" + table
 
