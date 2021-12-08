@@ -1,5 +1,4 @@
 # Copyright (c) Open-MMLab. All rights reserved.
-import argparse
 import json
 import os
 import os.path as osp

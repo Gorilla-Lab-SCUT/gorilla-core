@@ -8,7 +8,7 @@ import pkgutil
 import warnings
 from collections import OrderedDict
 from importlib import import_module
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Dict, Optional, Tuple, Union
 
 import numpy as np
 import torchvision
@@ -18,7 +18,7 @@ import torch.distributed as dist
 from torch.optim import Optimizer
 from torch.utils import model_zoo
 from torch.nn.parallel import DataParallel, DistributedDataParallel
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import _LRScheduler, ReduceLROnPlateau
 
 from ..core import get_dist_info, master_only
 
@@ -143,7 +143,7 @@ def load_checkpoint(model: nn.Module,
 def resume(model: nn.Module,
            filename: str,
            optimizer: Optional[Optimizer] = None,
-           scheduler: Optional[_LRScheduler] = None,
+           scheduler: Optional[Tuple[_LRScheduler, ReduceLROnPlateau]] = None,
            resume_optimizer: bool = True,
            resume_scheduler: bool = True,
            map_location: Optional[Union[str, Callable]] = "default",
@@ -190,14 +190,15 @@ def resume(model: nn.Module,
     if "scheduler" in checkpoint and resume_scheduler:
         if scheduler is None:
             warnings.warn("scheduler is None, skip the scheduler loading")
-        elif isinstance(scheduler, _LRScheduler):
+        elif isinstance(scheduler, (_LRScheduler, ReduceLROnPlateau)):
             scheduler.load_state_dict(checkpoint['scheduler'])
         elif isinstance(scheduler, dict):
             for k in scheduler.keys():
                 scheduler[k].load_state_dict(checkpoint["scheduler"][k])
         else:
             raise TypeError(
-                f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}"
+                f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler/ReduceLROnPlateau "
+                f"but got {type(scheduler)}"
             )
         logger.info(f"Loading scheduler from {filename}")
 
@@ -270,7 +271,7 @@ def save_checkpoint(model,
 
         # save lr_scheduler state dict in the checkpoint
         if scheduler is not None:
-            if isinstance(scheduler, _LRScheduler):
+            if isinstance(scheduler, (_LRScheduler, ReduceLROnPlateau)):
                 checkpoint["scheduler"] = scheduler.state_dict()
             elif isinstance(scheduler, dict):
                 checkpoint["scheduler"] = {}
@@ -278,7 +279,8 @@ def save_checkpoint(model,
                     checkpoint["scheduler"][name] = sche.state_dict()
             else:
                 raise TypeError(
-                    f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler but got {type(scheduler)}"
+                    f"scheduler should be dict or torch.optim.lr_scheduler._LRScheduler/ReduceLROnPlateau "
+                    f"but got {type(scheduler)}"
                 )
 
         # immediately flush buffer

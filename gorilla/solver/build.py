@@ -1,7 +1,8 @@
 # Copyright (c) Gorilla-Lab. and its affiliates.
-from typing import Callable, Dict
+from typing import Callable, Dict, Tuple
 
 import torch
+from torch.optim.lr_scheduler import _LRScheduler, ReduceLROnPlateau
 
 from ..data import DistributedSampler, DataLoaderX
 from ..config import Config
@@ -70,7 +71,7 @@ def build_optimizer(
 def build_lr_scheduler(
         optimizer: torch.optim.Optimizer,
         lr_scheduler_cfg: [Config, Dict] = SCHEDULER,
-        lambda_func=None) -> torch.optim.lr_scheduler._LRScheduler:
+        lambda_func=None) -> Tuple[_LRScheduler, ReduceLROnPlateau]:
     r"""Author: liang.zhihao
     Build a LR scheduler from config.
 
@@ -90,7 +91,7 @@ def build_lr_scheduler(
         lr_scheduler = build_lr_scheduler(optimizer, cfg.lr_scheduler)
 
     Returns:
-        _LRScheduler: the learning rate scheduler
+        _LRScheduler/ReduceLROnPlateau: the learning rate scheduler
     """
     if isinstance(optimizer,
                   dict):  # multi optimizer with the same lr_scheduler config
